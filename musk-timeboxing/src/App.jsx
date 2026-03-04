@@ -1,9 +1,12 @@
 import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { useState } from 'react'
+import CategoryFab from './components/Category/CategoryFab'
+import CategoryManagerModal from './components/Category/CategoryManagerModal'
 import Header from './components/Header'
 import BigThree from './components/LeftPanel/BigThree'
 import BrainDump from './components/LeftPanel/BrainDump'
 import Timeline from './components/Timeline'
+import { useCategoryMeta } from './hooks/useCategoryMeta'
 import { useDailyData } from './hooks/useDailyData'
 import { useToast } from './hooks/useToast'
 import { hasOverlap, TOTAL_SLOTS } from './utils/timeSlot'
@@ -25,10 +28,13 @@ function App() {
     addTimeBox,
     updateTimeBox,
     removeTimeBox,
+    clearTimeBoxCategory,
   } = useDailyData()
+  const { categories, addCategory, updateCategory, removeCategory } = useCategoryMeta()
 
   const { showToast, ToastContainer } = useToast()
   const [mobileTab, setMobileTab] = useState('timeline')
+  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
@@ -126,6 +132,34 @@ function App() {
 
   }
 
+  const handleAddCategory = (name, color) => {
+    const result = addCategory(name, color)
+    if (!result.ok) {
+      showToast(result.error)
+    } else {
+      showToast('카테고리를 추가했습니다')
+    }
+
+    return result
+  }
+
+  const handleUpdateCategory = (id, name, color) => {
+    const result = updateCategory(id, name, color)
+    if (!result.ok) {
+      showToast(result.error)
+    } else {
+      showToast('카테고리를 저장했습니다')
+    }
+
+    return result
+  }
+
+  const handleDeleteCategory = (id) => {
+    removeCategory(id)
+    clearTimeBoxCategory(id)
+    showToast('카테고리를 삭제했습니다')
+  }
+
   const dumpSection = (
     <BrainDump
       items={data.brainDump}
@@ -146,6 +180,7 @@ function App() {
   const timelineSection = (
     <Timeline
       data={data}
+      categories={categories}
       addTimeBox={addTimeBox}
       updateTimeBox={updateTimeBox}
       removeTimeBox={removeTimeBox}
@@ -209,6 +244,16 @@ function App() {
         </div>
 
         <ToastContainer />
+        <CategoryFab onClick={() => setIsCategoryManagerOpen(true)} />
+        {isCategoryManagerOpen ? (
+          <CategoryManagerModal
+            categories={categories}
+            onClose={() => setIsCategoryManagerOpen(false)}
+            onAddCategory={handleAddCategory}
+            onUpdateCategory={handleUpdateCategory}
+            onDeleteCategory={handleDeleteCategory}
+          />
+        ) : null}
       </div>
     </DndContext>
   )

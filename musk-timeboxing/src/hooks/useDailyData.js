@@ -24,6 +24,14 @@ const normalizeCategory = (value) => {
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : null
 }
+const normalizeCategoryId = (value) => {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
 
 export const useDailyData = () => {
   const today = formatDate(new Date())
@@ -121,7 +129,7 @@ export const useDailyData = () => {
     }))
   }
 
-  const addTimeBox = ({ content, sourceId, startSlot, endSlot, category = null }) => {
+  const addTimeBox = ({ content, sourceId, startSlot, endSlot, category = null, categoryId = null }) => {
     const trimmed = String(content || '').trim()
     if (!trimmed) return null
 
@@ -146,6 +154,7 @@ export const useDailyData = () => {
           status: 'PLANNED',
           actualMinutes: null,
           category: normalizeCategory(category),
+          categoryId: normalizeCategoryId(categoryId),
         },
       ],
     }))
@@ -172,8 +181,21 @@ export const useDailyData = () => {
             Object.prototype.hasOwnProperty.call(changes ?? {}, 'category')
               ? normalizeCategory(changes?.category)
               : box.category ?? null,
+          categoryId:
+            Object.prototype.hasOwnProperty.call(changes ?? {}, 'categoryId')
+              ? normalizeCategoryId(changes?.categoryId)
+              : box.categoryId ?? null,
         }
       }),
+    }))
+  }
+
+  const clearTimeBoxCategory = (categoryId) => {
+    setData((prev) => ({
+      ...prev,
+      timeBoxes: prev.timeBoxes.map((box) =>
+        box.categoryId === categoryId ? { ...box, categoryId: null } : box,
+      ),
     }))
   }
 
@@ -197,5 +219,6 @@ export const useDailyData = () => {
     addTimeBox,
     updateTimeBox,
     removeTimeBox,
+    clearTimeBoxCategory,
   }
 }
