@@ -16,6 +16,22 @@ npm install
 npm run dev
 ```
 
+## Docker 개발 실행 (핫리로드)
+
+컨테이너만 켜져 있으면 `http://localhost:5173`으로 접속할 수 있습니다.
+
+```bash
+docker compose up -d --build
+```
+
+- 소스코드는 볼륨 마운트(`.:/app`)되어 변경 시 자동 반영됩니다.
+- 파일 감시는 `CHOKIDAR_USEPOLLING=true`로 설정되어 도커 환경에서도 안정적으로 동작합니다.
+- 종료:
+
+```bash
+docker compose down
+```
+
 ## 프로덕션 빌드
 
 ```bash
