@@ -5,6 +5,7 @@ import TimeBoxCard from './TimeBoxCard'
 import TimeSlotGrid from './TimeSlotGrid'
 
 const SLOT_HEIGHT = 32
+const DEFAULT_BOX_SLOTS = 1
 
 function Timeline({ data, addTimeBox, updateTimeBox, removeTimeBox, showToast }) {
   const [pendingInput, setPendingInput] = useState(null)
@@ -26,7 +27,7 @@ function Timeline({ data, addTimeBox, updateTimeBox, removeTimeBox, showToast })
       content,
       sourceId,
       startSlot,
-      endSlot: Math.min(startSlot + 2, TOTAL_SLOTS),
+      endSlot: Math.min(startSlot + DEFAULT_BOX_SLOTS, TOTAL_SLOTS),
     }
 
     if (hasOverlap(data.timeBoxes, newBox)) {
@@ -152,7 +153,7 @@ function Timeline({ data, addTimeBox, updateTimeBox, removeTimeBox, showToast })
                 style={{
                   top: pendingInput.slotIndex * SLOT_HEIGHT,
                 }}
-                placeholder="일정을 입력하고 엔터"
+                placeholder="일정을 입력하고 엔터 (기본 30분)"
               />
             ) : null}
           </div>

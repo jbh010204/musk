@@ -8,6 +8,8 @@ import { useDailyData } from './hooks/useDailyData'
 import { useToast } from './hooks/useToast'
 import { hasOverlap, TOTAL_SLOTS } from './utils/timeSlot'
 
+const DEFAULT_BOX_SLOTS = 1
+
 function App() {
   const {
     currentDate,
@@ -62,7 +64,7 @@ function App() {
       overData.type === 'TIMELINE_SLOT'
     ) {
       const startSlot = overData.slotIndex
-      const endSlot = Math.min(startSlot + 2, TOTAL_SLOTS)
+      const endSlot = Math.min(startSlot + DEFAULT_BOX_SLOTS, TOTAL_SLOTS)
       const newBox = {
         content: activeData.content,
         sourceId: activeData.id,
@@ -76,6 +78,35 @@ function App() {
       }
 
       addTimeBox(newBox)
+      return
+    }
+
+    if (activeData.type === 'TIME_BOX' && overData.type === 'TIMELINE_SLOT') {
+      const duration = Math.max(1, (activeData.endSlot ?? 0) - (activeData.startSlot ?? 0))
+
+      let startSlot = Math.max(0, overData.slotIndex)
+      let endSlot = startSlot + duration
+
+      if (endSlot > TOTAL_SLOTS) {
+        endSlot = TOTAL_SLOTS
+        startSlot = Math.max(0, endSlot - duration)
+      }
+
+      if (startSlot === activeData.startSlot && endSlot === activeData.endSlot) {
+        return
+      }
+
+      const movedBox = {
+        startSlot,
+        endSlot,
+      }
+
+      if (hasOverlap(data.timeBoxes, movedBox, activeData.id)) {
+        showToast('해당 시간에 이미 일정이 있습니다')
+        return
+      }
+
+      updateTimeBox(activeData.id, { startSlot, endSlot })
     }
   }
 

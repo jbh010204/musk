@@ -1,3 +1,5 @@
+import { useDraggable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 import { useMemo, useRef } from 'react'
 import { TOTAL_SLOTS, slotDurationMinutes } from '../../utils/timeSlot'
 
@@ -17,6 +19,16 @@ function TimeBoxCard({
   onResizePreview,
   onResizeEnd,
 }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `time-box-${timeBox.id}`,
+    data: {
+      type: 'TIME_BOX',
+      id: timeBox.id,
+      startSlot: timeBox.startSlot,
+      endSlot: timeBox.endSlot,
+    },
+  })
+
   const currentEndSlot = previewEndSlot ?? timeBox.endSlot
   const plannedMinutes = slotDurationMinutes(timeBox.startSlot, currentEndSlot)
 
@@ -38,6 +50,11 @@ function TimeBoxCard({
     startY: 0,
     startEnd: 0,
     currentEnd: currentEndSlot,
+  })
+  const pointerRef = useRef({
+    startX: 0,
+    startY: 0,
+    moved: false,
   })
 
   const handleResizeMouseDown = (event) => {
@@ -75,16 +92,46 @@ function TimeBoxCard({
 
   return (
     <button
+      ref={setNodeRef}
       type="button"
       className={`absolute left-0 right-0 overflow-hidden rounded px-2 py-1 text-left text-xs shadow pointer-events-auto ${
         COLOR_BY_STATUS[timeBox.status] || COLOR_BY_STATUS.PLANNED
-      }`}
+      } ${isDragging ? 'z-40 opacity-80' : ''}`}
       style={{
         top: timeBox.startSlot * slotHeight,
         height: (currentEndSlot - timeBox.startSlot) * slotHeight,
+        transform: CSS.Translate.toString(transform),
       }}
-      onClick={() => onTimeBoxClick(timeBox)}
+      onPointerDown={(event) => {
+        pointerRef.current = {
+          startX: event.clientX,
+          startY: event.clientY,
+          moved: false,
+        }
+      }}
+      onPointerMove={(event) => {
+        if (pointerRef.current.moved) {
+          return
+        }
+
+        const movedX = Math.abs(event.clientX - pointerRef.current.startX)
+        const movedY = Math.abs(event.clientY - pointerRef.current.startY)
+        if (movedX > 4 || movedY > 4) {
+          pointerRef.current.moved = true
+        }
+      }}
+      onClick={(event) => {
+        if (pointerRef.current.moved) {
+          event.preventDefault()
+          pointerRef.current.moved = false
+          return
+        }
+
+        onTimeBoxClick(timeBox)
+      }}
       title={timeBox.content}
+      {...listeners}
+      {...attributes}
     >
       <div className="truncate font-medium">{timeBox.content}</div>
       {timeBox.status === 'COMPLETED' && actualDiff ? (
@@ -96,6 +143,9 @@ function TimeBoxCard({
 
       <div
         className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize bg-black/20"
+        onPointerDown={(event) => {
+          event.stopPropagation()
+        }}
         onMouseDown={handleResizeMouseDown}
       />
     </button>
