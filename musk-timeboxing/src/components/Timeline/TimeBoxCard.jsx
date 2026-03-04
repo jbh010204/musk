@@ -133,6 +133,11 @@ function TimeBoxCard({
       {...listeners}
       {...attributes}
     >
+      {timeBox.category ? (
+        <div className="mb-1 inline-flex max-w-full rounded bg-black/20 px-1.5 py-0.5 text-[10px] text-gray-100">
+          <span className="truncate">#{timeBox.category}</span>
+        </div>
+      ) : null}
       <div className="truncate font-medium">{timeBox.content}</div>
       {timeBox.status === 'COMPLETED' && actualDiff ? (
         <div className={`mt-1 truncate text-[11px] ${actualDiff.className}`}>{actualDiff.text}</div>

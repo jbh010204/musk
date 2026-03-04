@@ -17,6 +17,13 @@ function Timeline({ data, addTimeBox, updateTimeBox, removeTimeBox, showToast })
     () => [...data.timeBoxes].sort((a, b) => a.startSlot - b.startSlot),
     [data.timeBoxes],
   )
+  const categoryOptions = useMemo(() => {
+    const categories = data.timeBoxes
+      .map((box) => (typeof box.category === 'string' ? box.category.trim() : ''))
+      .filter((category) => category.length > 0)
+
+    return [...new Set(categories)]
+  }, [data.timeBoxes])
   const selectedBox = useMemo(
     () => data.timeBoxes.find((box) => box.id === selectedBoxId) || null,
     [data.timeBoxes, selectedBoxId],
@@ -164,6 +171,7 @@ function Timeline({ data, addTimeBox, updateTimeBox, removeTimeBox, showToast })
         <CompletionModal
           key={selectedBox.id}
           timeBox={selectedBox}
+          categoryOptions={categoryOptions}
           onClose={() => setSelectedBoxId(null)}
           onUpdate={updateTimeBox}
           onDelete={(id) => {

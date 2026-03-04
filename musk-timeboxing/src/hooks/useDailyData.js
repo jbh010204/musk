@@ -16,6 +16,14 @@ const shiftDate = (dateStr, offset) => {
 }
 
 const createId = () => crypto.randomUUID()
+const normalizeCategory = (value) => {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
 
 export const useDailyData = () => {
   const today = formatDate(new Date())
@@ -113,7 +121,7 @@ export const useDailyData = () => {
     }))
   }
 
-  const addTimeBox = ({ content, sourceId, startSlot, endSlot }) => {
+  const addTimeBox = ({ content, sourceId, startSlot, endSlot, category = null }) => {
     const trimmed = String(content || '').trim()
     if (!trimmed) return null
 
@@ -137,6 +145,7 @@ export const useDailyData = () => {
           endSlot: normalizedEnd,
           status: 'PLANNED',
           actualMinutes: null,
+          category: normalizeCategory(category),
         },
       ],
     }))
@@ -159,6 +168,10 @@ export const useDailyData = () => {
             typeof changes?.content === 'string' && changes.content.trim().length > 0
               ? changes.content
               : box.content,
+          category:
+            Object.prototype.hasOwnProperty.call(changes ?? {}, 'category')
+              ? normalizeCategory(changes?.category)
+              : box.category ?? null,
         }
       }),
     }))

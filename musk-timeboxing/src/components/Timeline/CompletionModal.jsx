@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { slotDurationMinutes } from '../../utils/timeSlot'
 
-function CompletionModal({ timeBox, onClose, onUpdate, onDelete }) {
+function CompletionModal({ timeBox, categoryOptions, onClose, onUpdate, onDelete }) {
   const [content, setContent] = useState(timeBox.content)
+  const [category, setCategory] = useState(timeBox.category ?? '')
   const [status, setStatus] = useState(
     timeBox.status === 'COMPLETED' || timeBox.status === 'SKIPPED' ? timeBox.status : null,
   )
@@ -39,6 +40,7 @@ function CompletionModal({ timeBox, onClose, onUpdate, onDelete }) {
     if (selectedStatus === 'SKIPPED') {
       onUpdate(timeBox.id, {
         content: trimmedContent,
+        category,
         status: 'SKIPPED',
         actualMinutes: null,
       })
@@ -54,6 +56,7 @@ function CompletionModal({ timeBox, onClose, onUpdate, onDelete }) {
 
       onUpdate(timeBox.id, {
         content: trimmedContent,
+        category,
         status: 'COMPLETED',
         actualMinutes: actual,
       })
@@ -61,7 +64,7 @@ function CompletionModal({ timeBox, onClose, onUpdate, onDelete }) {
       return
     }
 
-    onUpdate(timeBox.id, { content: trimmedContent })
+    onUpdate(timeBox.id, { content: trimmedContent, category })
     onClose()
   }
 
@@ -94,6 +97,28 @@ function CompletionModal({ timeBox, onClose, onUpdate, onDelete }) {
           />
         </div>
         <p className="mt-2 text-sm text-gray-400">계획: {plannedMinutes}분</p>
+
+        <div className="mt-3">
+          <label className="mb-1 block text-sm text-gray-300" htmlFor="timebox-category">
+            카테고리
+          </label>
+          <input
+            id="timebox-category"
+            type="text"
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            list="timebox-category-options"
+            placeholder="예: 개발, 운동, 학습"
+            className="w-full rounded bg-gray-700 p-2 text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          {categoryOptions.length > 0 ? (
+            <datalist id="timebox-category-options">
+              {categoryOptions.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
+          ) : null}
+        </div>
 
         <div className="mt-4 flex gap-2">
           <button
