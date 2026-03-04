@@ -206,6 +206,10 @@ export const useDailyData = () => {
     }))
   }
 
+  const reloadCurrentDay = () => {
+    setData(loadDay(currentDate))
+  }
+
   return {
     currentDate,
     data,
@@ -220,5 +224,6 @@ export const useDailyData = () => {
     updateTimeBox,
     removeTimeBox,
     clearTimeBoxCategory,
+    reloadCurrentDay,
   }
 }

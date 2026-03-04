@@ -2,7 +2,9 @@ import { expect, test } from '@playwright/test'
 
 const getStorageState = async (page) => {
   return page.evaluate(() => {
-    const key = Object.keys(window.localStorage).find((item) => item.startsWith('musk-planner-'))
+    const key = Object.keys(window.localStorage).find((item) =>
+      /^musk-planner-\d{4}-\d{2}-\d{2}$/.test(item),
+    )
     if (!key) {
       return null
     }

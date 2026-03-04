@@ -2,6 +2,8 @@ import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { useState } from 'react'
 import CategoryFab from './components/Category/CategoryFab'
 import CategoryManagerModal from './components/Category/CategoryManagerModal'
+import DataFab from './components/Data/DataFab'
+import DataTransferModal from './components/Data/DataTransferModal'
 import Header from './components/Header'
 import BigThree from './components/LeftPanel/BigThree'
 import BrainDump from './components/LeftPanel/BrainDump'
@@ -29,12 +31,14 @@ function App() {
     updateTimeBox,
     removeTimeBox,
     clearTimeBoxCategory,
+    reloadCurrentDay,
   } = useDailyData()
-  const { categories, addCategory, updateCategory, removeCategory } = useCategoryMeta()
+  const { categories, addCategory, updateCategory, removeCategory, reloadCategories } = useCategoryMeta()
 
   const { showToast, ToastContainer } = useToast()
   const [mobileTab, setMobileTab] = useState('timeline')
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false)
+  const [isDataModalOpen, setIsDataModalOpen] = useState(false)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
@@ -160,6 +164,11 @@ function App() {
     showToast('카테고리를 삭제했습니다')
   }
 
+  const handleImported = () => {
+    reloadCategories()
+    reloadCurrentDay()
+  }
+
   const dumpSection = (
     <BrainDump
       items={data.brainDump}
@@ -244,7 +253,16 @@ function App() {
         </div>
 
         <ToastContainer />
+        <DataFab onClick={() => setIsDataModalOpen(true)} />
         <CategoryFab onClick={() => setIsCategoryManagerOpen(true)} />
+        {isDataModalOpen ? (
+          <DataTransferModal
+            currentDate={currentDate}
+            onClose={() => setIsDataModalOpen(false)}
+            onImported={handleImported}
+            showToast={showToast}
+          />
+        ) : null}
         {isCategoryManagerOpen ? (
           <CategoryManagerModal
             categories={categories}

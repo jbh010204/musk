@@ -30,7 +30,9 @@ test('category manager assigns managed category to timebox', async ({ page }) =>
   await expect(page.locator('button[title="CatTest Task"]:visible').first()).toContainText('#Deep Work')
 
   const storage = await page.evaluate(() => {
-    const dayKey = Object.keys(window.localStorage).find((key) => key.startsWith('musk-planner-'))
+    const dayKey = Object.keys(window.localStorage).find((key) =>
+      /^musk-planner-\d{4}-\d{2}-\d{2}$/.test(key),
+    )
     const dayData = dayKey ? JSON.parse(window.localStorage.getItem(dayKey)) : null
     const metaData = JSON.parse(window.localStorage.getItem('musk-planner-meta') || '{}')
 

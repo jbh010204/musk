@@ -78,10 +78,15 @@ export const useCategoryMeta = () => {
     setCategories((prev) => prev.filter((category) => category.id !== id))
   }
 
+  const reloadCategories = () => {
+    setCategories(loadMeta().categories)
+  }
+
   return {
     categories,
     addCategory,
     updateCategory,
     removeCategory,
+    reloadCategories,
   }
 }
