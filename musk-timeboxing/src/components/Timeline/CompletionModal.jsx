@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { slotDurationMinutes } from '../../utils/timeSlot'
 
 function CompletionModal({ timeBox, onClose, onUpdate, onDelete }) {
+  const [content, setContent] = useState(timeBox.content)
   const [status, setStatus] = useState(
     timeBox.status === 'COMPLETED' || timeBox.status === 'SKIPPED' ? timeBox.status : null,
   )
@@ -28,21 +29,40 @@ function CompletionModal({ timeBox, onClose, onUpdate, onDelete }) {
   }, [actualMinutes, plannedMinutes, status])
 
   const handleSave = () => {
-    if (status === 'SKIPPED') {
-      onUpdate(timeBox.id, { status: 'SKIPPED', actualMinutes: null })
+    const trimmedContent = content.trim()
+    if (!trimmedContent) {
+      return
+    }
+
+    const selectedStatus = status ?? timeBox.status
+
+    if (selectedStatus === 'SKIPPED') {
+      onUpdate(timeBox.id, {
+        content: trimmedContent,
+        status: 'SKIPPED',
+        actualMinutes: null,
+      })
       onClose()
       return
     }
 
-    if (status === 'COMPLETED') {
+    if (selectedStatus === 'COMPLETED') {
       const actual = Number(actualMinutes)
       if (!Number.isFinite(actual) || actual <= 0) {
         return
       }
 
-      onUpdate(timeBox.id, { status: 'COMPLETED', actualMinutes: actual })
+      onUpdate(timeBox.id, {
+        content: trimmedContent,
+        status: 'COMPLETED',
+        actualMinutes: actual,
+      })
       onClose()
+      return
     }
+
+    onUpdate(timeBox.id, { content: trimmedContent })
+    onClose()
   }
 
   const handleDelete = () => {
@@ -61,7 +81,18 @@ function CompletionModal({ timeBox, onClose, onUpdate, onDelete }) {
         onClick={(event) => event.stopPropagation()}
       >
         <h3 className="text-lg font-semibold">완료 처리</h3>
-        <p className="mt-2 text-sm text-gray-300">{timeBox.content}</p>
+        <div className="mt-3">
+          <label className="mb-1 block text-sm text-gray-300" htmlFor="timebox-content">
+            일정 이름
+          </label>
+          <input
+            id="timebox-content"
+            type="text"
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+            className="w-full rounded bg-gray-700 p-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
         <p className="mt-2 text-sm text-gray-400">계획: {plannedMinutes}분</p>
 
         <div className="mt-4 flex gap-2">

@@ -162,6 +162,7 @@ function Timeline({ data, addTimeBox, updateTimeBox, removeTimeBox, showToast })
 
       {selectedBox ? (
         <CompletionModal
+          key={selectedBox.id}
           timeBox={selectedBox}
           onClose={() => setSelectedBoxId(null)}
           onUpdate={updateTimeBox}
