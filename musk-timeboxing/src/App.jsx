@@ -1,9 +1,8 @@
 import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { useState } from 'react'
-import CategoryFab from './components/Category/CategoryFab'
 import CategoryManagerModal from './components/Category/CategoryManagerModal'
-import DataFab from './components/Data/DataFab'
 import DataTransferModal from './components/Data/DataTransferModal'
+import FloatingActionDock from './components/Floating/FloatingActionDock'
 import Header from './components/Header'
 import BigThree from './components/LeftPanel/BigThree'
 import BrainDump from './components/LeftPanel/BrainDump'
@@ -253,8 +252,10 @@ function App() {
         </div>
 
         <ToastContainer />
-        <DataFab onClick={() => setIsDataModalOpen(true)} />
-        <CategoryFab onClick={() => setIsCategoryManagerOpen(true)} />
+        <FloatingActionDock
+          onOpenCategory={() => setIsCategoryManagerOpen(true)}
+          onOpenData={() => setIsDataModalOpen(true)}
+        />
         {isDataModalOpen ? (
           <DataTransferModal
             currentDate={currentDate}

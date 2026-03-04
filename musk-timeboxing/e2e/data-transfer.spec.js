@@ -5,6 +5,7 @@ test('export and import planner data restores timebox and category', async ({ pa
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
 
+  await page.locator('button[aria-label="빠른 메뉴"]:visible').first().click()
   await page.locator('button[aria-label="카테고리 관리"]:visible').first().click()
   await page.getByPlaceholder('예: Deep Work').fill('백업카테고리')
   await page.getByRole('button', { name: '추가' }).click()
@@ -22,6 +23,7 @@ test('export and import planner data restores timebox and category', async ({ pa
   await page.selectOption('#timebox-category', { label: '백업카테고리' })
   await page.getByRole('button', { name: '저장' }).click()
 
+  await page.locator('button[aria-label="빠른 메뉴"]:visible').first().click()
   await page.locator('button[aria-label="데이터 백업 복원"]:visible').first().click()
   await page.getByRole('button', { name: '전체 내보내기' }).click()
 
@@ -36,6 +38,7 @@ test('export and import planner data restores timebox and category', async ({ pa
 
   await expect(page.locator('button[title="백업테스트일정"]:visible').first()).toHaveCount(0)
 
+  await page.locator('button[aria-label="빠른 메뉴"]:visible').first().click()
   await page.locator('button[aria-label="데이터 백업 복원"]:visible').first().click()
   await page.getByPlaceholder('JSON을 붙여넣고 가져오기를 실행하세요').fill(exportedJson)
   await page.getByRole('button', { name: '가져오기 실행' }).click()
