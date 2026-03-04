@@ -6,7 +6,7 @@ import TimeSlotGrid from './TimeSlotGrid'
 
 const SLOT_HEIGHT = 32
 
-function Timeline({ data, addTimeBox, updateTimeBox, showToast }) {
+function Timeline({ data, addTimeBox, updateTimeBox, removeTimeBox, showToast }) {
   const [pendingInput, setPendingInput] = useState(null)
   const [selectedBoxId, setSelectedBoxId] = useState(null)
   const [resizePreview, setResizePreview] = useState({})
@@ -164,6 +164,10 @@ function Timeline({ data, addTimeBox, updateTimeBox, showToast }) {
           timeBox={selectedBox}
           onClose={() => setSelectedBoxId(null)}
           onUpdate={updateTimeBox}
+          onDelete={(id) => {
+            removeTimeBox(id)
+            setSelectedBoxId(null)
+          }}
         />
       ) : null}
     </section>

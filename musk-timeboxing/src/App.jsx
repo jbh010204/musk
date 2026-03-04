@@ -21,6 +21,7 @@ function App() {
     removeBigThreeItem,
     addTimeBox,
     updateTimeBox,
+    removeTimeBox,
   } = useDailyData()
 
   const { showToast, ToastContainer } = useToast()
@@ -96,7 +97,13 @@ function App() {
   )
 
   const timelineSection = (
-    <Timeline data={data} addTimeBox={addTimeBox} updateTimeBox={updateTimeBox} showToast={showToast} />
+    <Timeline
+      data={data}
+      addTimeBox={addTimeBox}
+      updateTimeBox={updateTimeBox}
+      removeTimeBox={removeTimeBox}
+      showToast={showToast}
+    />
   )
 
   return (

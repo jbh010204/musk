@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { slotDurationMinutes } from '../../utils/timeSlot'
 
-function CompletionModal({ timeBox, onClose, onUpdate }) {
+function CompletionModal({ timeBox, onClose, onUpdate, onDelete }) {
   const [status, setStatus] = useState(
     timeBox.status === 'COMPLETED' || timeBox.status === 'SKIPPED' ? timeBox.status : null,
   )
@@ -43,6 +43,15 @@ function CompletionModal({ timeBox, onClose, onUpdate }) {
       onUpdate(timeBox.id, { status: 'COMPLETED', actualMinutes: actual })
       onClose()
     }
+  }
+
+  const handleDelete = () => {
+    const confirmed = window.confirm('이 일정을 삭제할까요?')
+    if (!confirmed) {
+      return
+    }
+
+    onDelete(timeBox.id)
   }
 
   return (
@@ -94,6 +103,13 @@ function CompletionModal({ timeBox, onClose, onUpdate }) {
         ) : null}
 
         <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="rounded bg-red-700 px-3 py-2 text-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            삭제
+          </button>
           <button
             type="button"
             onClick={onClose}
