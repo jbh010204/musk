@@ -1,0 +1,46 @@
+# Musk Time-Boxing Planner
+
+할 일 목록이 아니라 시간 블록 설계에 집중하는 로컬 웹 플래너입니다.
+
+## 기술 스택
+
+- Vite + React 18
+- Tailwind CSS v3
+- dnd-kit (`@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`)
+- localStorage (날짜별 `musk-planner-YYYY-MM-DD` 키)
+
+## 개발 실행
+
+```bash
+npm install
+npm run dev
+```
+
+## 프로덕션 빌드
+
+```bash
+npm run build
+```
+
+빌드 결과물은 `dist/` 폴더에 생성됩니다.
+
+## 정적 배포
+
+`vite.config.js`의 `base: './'`가 설정되어 있어 상대 경로 정적 호스팅이 가능합니다.
+
+### GitHub Pages
+
+1. `npm run build`
+2. 생성된 `dist/` 내용을 배포 브랜치(`gh-pages`) 또는 `docs/`로 업로드
+3. 저장소 Settings > Pages에서 배포 브랜치/폴더 선택
+
+### Vercel
+
+1. 프로젝트를 Vercel에 연결
+2. Build Command: `npm run build`
+3. Output Directory: `dist`
+4. Deploy
+
+## 참고
+
+현재 Vite 7은 Node.js `20.19+`를 권장합니다. Node.js가 `20.17` 이하이면 경고가 표시될 수 있습니다.
