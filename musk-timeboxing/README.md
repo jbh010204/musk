@@ -2,6 +2,23 @@
 
 할 일 목록이 아니라 시간 블록 설계에 집중하는 로컬 웹 플래너입니다.
 
+## 바로 실행 (Docker)
+
+```bash
+./scripts/docker-dev.sh up
+```
+
+- 접속: `http://localhost:5173`
+- 종료: `./scripts/docker-dev.sh down`
+- 상태: `./scripts/docker-dev.sh ps`
+- 로그: `./scripts/docker-dev.sh logs`
+
+또는 npm 명령:
+
+```bash
+npm run docker:up
+```
+
 ## 기술 스택
 
 - Vite + React 18
