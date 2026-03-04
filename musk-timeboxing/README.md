@@ -44,3 +44,8 @@ npm run build
 ## 참고
 
 현재 Vite 7은 Node.js `20.19+`를 권장합니다. Node.js가 `20.17` 이하이면 경고가 표시될 수 있습니다.
+
+## AI 협업 문서
+
+- 세션 운영 가이드: `.agents/SESSION_PLAYBOOK.md`
+- 엔지니어링 컨벤션: `docs/ENGINEERING_CONVENTIONS.md`
