@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { getCategoryColor } from '../../utils/categoryVisual'
 import { slotDurationMinutes } from '../../utils/timeSlot'
 
 function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
@@ -12,6 +13,11 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
   )
 
   const plannedMinutes = slotDurationMinutes(timeBox.startSlot, timeBox.endSlot)
+  const selectedCategoryMeta = useMemo(
+    () => categories.find((category) => category.id === categoryId) || null,
+    [categories, categoryId],
+  )
+  const selectedCategoryColor = getCategoryColor(selectedCategoryMeta, timeBox)
 
   const diffSummary = useMemo(() => {
     const actual = Number(actualMinutes)
@@ -121,6 +127,15 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
               </option>
             ))}
           </select>
+          {categoryId ? (
+            <div className="mt-2 inline-flex items-center gap-2 rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-200">
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: selectedCategoryColor }}
+              />
+              선택된 카테고리 색상
+            </div>
+          ) : null}
           {typeof timeBox.category === 'string' && timeBox.category.trim().length > 0 ? (
             <p className="mt-1 text-xs text-gray-400">
               기존 텍스트 카테고리: <span className="text-gray-300">{timeBox.category}</span>

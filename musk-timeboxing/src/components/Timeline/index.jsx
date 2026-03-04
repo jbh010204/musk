@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { getCategoryColor, getCategoryLabel } from '../../utils/categoryVisual'
 import { hasOverlap, TOTAL_SLOTS } from '../../utils/timeSlot'
 import CompletionModal from './CompletionModal'
 import TimeBoxCard from './TimeBoxCard'
@@ -25,6 +26,31 @@ function Timeline({ data, categories, addTimeBox, updateTimeBox, removeTimeBox, 
     () => data.timeBoxes.find((box) => box.id === selectedBoxId) || null,
     [data.timeBoxes, selectedBoxId],
   )
+  const categoryLegend = useMemo(() => {
+    const legendMap = new Map()
+
+    sortedBoxes.forEach((box) => {
+      const meta = box.categoryId ? categoryMap.get(box.categoryId) : null
+      const label = getCategoryLabel(meta, box)
+
+      if (!label) {
+        return
+      }
+
+      const key = meta?.id || `legacy:${label.toLowerCase()}`
+      if (legendMap.has(key)) {
+        return
+      }
+
+      legendMap.set(key, {
+        key,
+        label,
+        color: getCategoryColor(meta, box),
+      })
+    })
+
+    return [...legendMap.values()]
+  }, [categoryMap, sortedBoxes])
 
   const createBox = ({ content, sourceId = null, startSlot }) => {
     const newBox = {
@@ -104,6 +130,20 @@ function Timeline({ data, categories, addTimeBox, updateTimeBox, removeTimeBox, 
   return (
     <section className="h-full p-4">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-400">⏱ 타임라인</h2>
+
+      {categoryLegend.length > 0 ? (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {categoryLegend.map((item) => (
+            <span
+              key={item.key}
+              className="inline-flex items-center gap-1 rounded border border-gray-700 bg-gray-800/70 px-2 py-1 text-xs text-gray-200"
+            >
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+              {item.label}
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       <div className="overflow-x-auto">
         <div className="relative min-w-[520px]">

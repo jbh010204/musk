@@ -1,13 +1,8 @@
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { useMemo, useRef } from 'react'
+import { getCategoryColor, getCategoryLabel, getTimeBoxVisual } from '../../utils/categoryVisual'
 import { TOTAL_SLOTS, slotDurationMinutes } from '../../utils/timeSlot'
-
-const COLOR_BY_STATUS = {
-  PLANNED: 'bg-indigo-600',
-  COMPLETED: 'bg-green-700',
-  SKIPPED: 'bg-amber-700',
-}
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 
@@ -33,12 +28,9 @@ function TimeBoxCard({
   const currentEndSlot = previewEndSlot ?? timeBox.endSlot
   const plannedMinutes = slotDurationMinutes(timeBox.startSlot, currentEndSlot)
   const snappedDragY = transform ? Math.round(transform.y / slotHeight) * slotHeight : 0
-  const categoryLabel =
-    categoryMeta?.name ||
-    (typeof timeBox.category === 'string' && timeBox.category.trim().length > 0
-      ? timeBox.category.trim()
-      : null)
-  const categoryColor = categoryMeta?.color || (categoryLabel ? '#6b7280' : null)
+  const categoryLabel = getCategoryLabel(categoryMeta, timeBox)
+  const categoryColor = getCategoryColor(categoryMeta, timeBox)
+  const visual = getTimeBoxVisual(categoryColor, timeBox.status)
 
   const actualDiff = useMemo(() => {
     if (timeBox.status !== 'COMPLETED' || timeBox.actualMinutes == null) {
@@ -102,14 +94,15 @@ function TimeBoxCard({
     <button
       ref={setNodeRef}
       type="button"
-      className={`absolute left-0 right-0 overflow-hidden rounded px-2 py-1 text-left text-xs shadow pointer-events-auto ${
-        COLOR_BY_STATUS[timeBox.status] || COLOR_BY_STATUS.PLANNED
-      } ${isDragging ? 'z-40 opacity-80' : ''}`}
+      className={`absolute left-0 right-0 overflow-hidden rounded px-2 py-1 text-left text-xs text-white shadow pointer-events-auto ${
+        isDragging ? 'z-40 opacity-80' : ''
+      }`}
       style={{
         top: timeBox.startSlot * slotHeight,
         height: (currentEndSlot - timeBox.startSlot) * slotHeight,
         transform: transform ? CSS.Translate.toString({ x: 0, y: snappedDragY }) : undefined,
-        borderLeft: categoryColor ? `4px solid ${categoryColor}` : undefined,
+        background: visual.cardBackground,
+        borderLeft: `8px solid ${visual.categoryStripe}`,
       }}
       onPointerDown={(event) => {
         pointerRef.current = {
@@ -142,20 +135,33 @@ function TimeBoxCard({
       {...listeners}
       {...attributes}
     >
+      <span
+        className="absolute right-2 top-2 rounded border px-1.5 py-0.5 text-[10px] font-semibold"
+        style={{
+          backgroundColor: visual.statusBadgeBackground,
+          borderColor: visual.statusBadgeBorder,
+        }}
+      >
+        {visual.statusLabel}
+      </span>
+
       {categoryLabel ? (
         <div
-          className="mb-1 inline-flex max-w-full rounded px-1.5 py-0.5 text-[10px] text-gray-100"
-          style={{ backgroundColor: categoryColor ? `${categoryColor}66` : '#374151' }}
+          className="mb-1 inline-flex max-w-[80%] rounded border px-1.5 py-0.5 text-[10px] text-white"
+          style={{
+            backgroundColor: visual.categoryBadgeBackground,
+            borderColor: visual.categoryBadgeBorder,
+          }}
         >
           <span className="truncate">#{categoryLabel}</span>
         </div>
       ) : null}
-      <div className="truncate font-medium">{timeBox.content}</div>
+      <div className="truncate pr-11 font-medium">{timeBox.content}</div>
       {timeBox.status === 'COMPLETED' && actualDiff ? (
         <div className={`mt-1 truncate text-[11px] ${actualDiff.className}`}>{actualDiff.text}</div>
       ) : null}
       {timeBox.status === 'PLANNED' ? (
-        <div className="mt-1 truncate text-[11px] text-indigo-100">계획 {plannedMinutes}분</div>
+        <div className="mt-1 truncate text-[11px] text-white/85">계획 {plannedMinutes}분</div>
       ) : null}
 
       <div
