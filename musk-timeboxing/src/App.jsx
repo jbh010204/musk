@@ -82,11 +82,17 @@ function App() {
       return
     }
 
-    if (activeData.type === 'TIME_BOX' && overData.type === 'TIMELINE_SLOT') {
-      const duration = Math.max(1, (activeData.endSlot ?? 0) - (activeData.startSlot ?? 0))
+    if (activeData.type === 'TIME_BOX') {
+      const activeStart = Number(activeData.startSlot) || 0
+      const activeEnd = Number(activeData.endSlot) || activeStart + 1
+      const duration = Math.max(1, activeEnd - activeStart)
       const slotDelta = Math.round((delta?.y ?? 0) / SLOT_HEIGHT)
 
-      let startSlot = (activeData.startSlot ?? 0) + slotDelta
+      if (slotDelta === 0) {
+        return
+      }
+
+      let startSlot = activeStart + slotDelta
       startSlot = Math.max(0, Math.min(startSlot, TOTAL_SLOTS - duration))
       let endSlot = startSlot + duration
 
@@ -95,7 +101,7 @@ function App() {
         startSlot = Math.max(0, endSlot - duration)
       }
 
-      if (startSlot === activeData.startSlot && endSlot === activeData.endSlot) {
+      if (startSlot === activeStart && endSlot === activeEnd) {
         return
       }
 
@@ -110,6 +116,7 @@ function App() {
       }
 
       updateTimeBox(activeData.id, { startSlot, endSlot })
+      return
     }
   }
 
