@@ -8,6 +8,7 @@ import TimeSlotGrid from './TimeSlotGrid'
 
 const SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
+const DURATION_PRESETS = [1, 2, 3, 4]
 
 function Timeline({ data, categories, addTimeBox, updateTimeBox, removeTimeBox, showToast }) {
   const [pendingInput, setPendingInput] = useState(null)
@@ -53,12 +54,13 @@ function Timeline({ data, categories, addTimeBox, updateTimeBox, removeTimeBox, 
     return [...legendMap.values()]
   }, [categoryMap, sortedBoxes])
 
-  const createBox = ({ content, sourceId = null, startSlot }) => {
+  const createBox = ({ content, sourceId = null, startSlot, durationSlots = DEFAULT_BOX_SLOTS }) => {
+    const duration = Math.max(1, Math.min(TOTAL_SLOTS, Number(durationSlots) || DEFAULT_BOX_SLOTS))
     const newBox = {
       content,
       sourceId,
       startSlot,
-      endSlot: Math.min(startSlot + DEFAULT_BOX_SLOTS, TOTAL_SLOTS),
+      endSlot: Math.min(startSlot + duration, TOTAL_SLOTS),
     }
 
     if (hasOverlap(data.timeBoxes, newBox)) {
@@ -71,7 +73,7 @@ function Timeline({ data, categories, addTimeBox, updateTimeBox, removeTimeBox, 
   }
 
   const handleSlotClick = (slotIndex) => {
-    setPendingInput({ slotIndex, content: '' })
+    setPendingInput({ slotIndex, content: '', durationSlots: DEFAULT_BOX_SLOTS })
   }
 
   const handlePendingSubmit = () => {
@@ -85,7 +87,11 @@ function Timeline({ data, categories, addTimeBox, updateTimeBox, removeTimeBox, 
       return
     }
 
-    const created = createBox({ content, startSlot: pendingInput.slotIndex })
+    const created = createBox({
+      content,
+      startSlot: pendingInput.slotIndex,
+      durationSlots: pendingInput.durationSlots,
+    })
     if (created) {
       setPendingInput(null)
     }
@@ -166,42 +172,78 @@ function Timeline({ data, categories, addTimeBox, updateTimeBox, removeTimeBox, 
             ))}
 
             {pendingInput ? (
-              <input
-                type="text"
-                autoFocus
-                value={pendingInput.content}
-                onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={() => setIsComposing(false)}
-                onChange={(event) =>
-                  setPendingInput((prev) => (prev ? { ...prev, content: event.target.value } : prev))
-                }
-                onKeyDown={(event) => {
-                  const nativeComposing = event.nativeEvent?.isComposing || event.keyCode === 229
-
-                  if (isComposing || nativeComposing) {
-                    return
-                  }
-
-                  if (event.key === 'Enter') {
-                    if (event.repeat) {
-                      return
-                    }
-
-                    event.preventDefault()
-                    handlePendingSubmit()
-                  }
-
-                  if (event.key === 'Escape') {
-                    setPendingInput(null)
-                  }
-                }}
-                onBlur={() => setPendingInput(null)}
-                className="pointer-events-auto absolute left-0 right-0 z-20 rounded border border-indigo-500 bg-gray-800 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              <div
+                className="pointer-events-auto absolute left-0 right-0 z-20 flex items-center gap-2 rounded border border-indigo-500 bg-gray-800 px-2 py-1"
                 style={{
                   top: pendingInput.slotIndex * SLOT_HEIGHT,
                 }}
-                placeholder="일정을 입력하고 엔터 (기본 30분)"
-              />
+              >
+                <input
+                  type="text"
+                  autoFocus
+                  value={pendingInput.content}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={() => setIsComposing(false)}
+                  onChange={(event) =>
+                    setPendingInput((prev) => (prev ? { ...prev, content: event.target.value } : prev))
+                  }
+                  onKeyDown={(event) => {
+                    const nativeComposing = event.nativeEvent?.isComposing || event.keyCode === 229
+
+                    if (isComposing || nativeComposing) {
+                      return
+                    }
+
+                    if (event.key === 'Enter') {
+                      if (event.repeat) {
+                        return
+                      }
+
+                      event.preventDefault()
+                      handlePendingSubmit()
+                    }
+
+                    if (event.key === 'Escape') {
+                      setPendingInput(null)
+                    }
+                  }}
+                  onBlur={(event) => {
+                    const related = event.relatedTarget
+                    if (related && related.dataset.durationPreset) {
+                      return
+                    }
+                    setPendingInput(null)
+                  }}
+                  className="min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+                  placeholder="일정을 입력하고 엔터 (기본 30분)"
+                />
+                <div className="flex items-center gap-1">
+                  {DURATION_PRESETS.map((presetSlots) => {
+                    const isActive = pendingInput.durationSlots === presetSlots
+                    return (
+                      <button
+                        key={presetSlots}
+                        type="button"
+                        data-duration-preset="true"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() =>
+                          setPendingInput((prev) =>
+                            prev ? { ...prev, durationSlots: presetSlots } : prev,
+                          )
+                        }
+                        className={`rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                          isActive
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                        }`}
+                        aria-label={`${presetSlots * 30}분 프리셋`}
+                      >
+                        {presetSlots * 30}분
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             ) : null}
           </div>
         </div>
