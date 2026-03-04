@@ -41,44 +41,9 @@ function App() {
   }
 
   const handleDragEnd = ({ active, over, delta }) => {
-    if (!over) {
-      return
-    }
-
     const activeData = active.data.current
-    const overData = over.data.current
 
-    if (!activeData || !overData) {
-      return
-    }
-
-    if (activeData.type === 'BRAIN_DUMP' && overData.type === 'BIG_THREE_SLOT') {
-      const success = sendToBigThree(activeData.id)
-      if (!success) {
-        showToast('빅 3이 이미 가득 찼습니다')
-      }
-      return
-    }
-
-    if (
-      (activeData.type === 'BRAIN_DUMP' || activeData.type === 'BIG_THREE') &&
-      overData.type === 'TIMELINE_SLOT'
-    ) {
-      const startSlot = overData.slotIndex
-      const endSlot = Math.min(startSlot + DEFAULT_BOX_SLOTS, TOTAL_SLOTS)
-      const newBox = {
-        content: activeData.content,
-        sourceId: activeData.id,
-        startSlot,
-        endSlot,
-      }
-
-      if (hasOverlap(data.timeBoxes, newBox)) {
-        showToast('해당 시간에 이미 일정이 있습니다')
-        return
-      }
-
-      addTimeBox(newBox)
+    if (!activeData) {
       return
     }
 
@@ -118,6 +83,47 @@ function App() {
       updateTimeBox(activeData.id, { startSlot, endSlot })
       return
     }
+
+    if (!over) {
+      return
+    }
+
+    const overData = over.data.current
+
+    if (!overData) {
+      return
+    }
+
+    if (activeData.type === 'BRAIN_DUMP' && overData.type === 'BIG_THREE_SLOT') {
+      const success = sendToBigThree(activeData.id)
+      if (!success) {
+        showToast('빅 3이 이미 가득 찼습니다')
+      }
+      return
+    }
+
+    if (
+      (activeData.type === 'BRAIN_DUMP' || activeData.type === 'BIG_THREE') &&
+      overData.type === 'TIMELINE_SLOT'
+    ) {
+      const startSlot = overData.slotIndex
+      const endSlot = Math.min(startSlot + DEFAULT_BOX_SLOTS, TOTAL_SLOTS)
+      const newBox = {
+        content: activeData.content,
+        sourceId: activeData.id,
+        startSlot,
+        endSlot,
+      }
+
+      if (hasOverlap(data.timeBoxes, newBox)) {
+        showToast('해당 시간에 이미 일정이 있습니다')
+        return
+      }
+
+      addTimeBox(newBox)
+      return
+    }
+
   }
 
   const dumpSection = (
