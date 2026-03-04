@@ -54,6 +54,14 @@ export const useDailyData = () => {
     setCurrentDate((prev) => shiftDate(prev, -1))
   }
 
+  const goToDate = (dateStr) => {
+    if (typeof dateStr !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return
+    }
+
+    setCurrentDate(dateStr)
+  }
+
   const addBrainDumpItem = (content) => {
     const trimmed = content.trim()
     if (!trimmed) return
@@ -215,6 +223,7 @@ export const useDailyData = () => {
     data,
     goNextDay,
     goPrevDay,
+    goToDate,
     addBrainDumpItem,
     removeBrainDumpItem,
     sendToBigThree,

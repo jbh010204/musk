@@ -1,5 +1,5 @@
 import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import CategoryManagerModal from './components/Category/CategoryManagerModal'
 import DataTransferModal from './components/Data/DataTransferModal'
 import FloatingActionDock from './components/Floating/FloatingActionDock'
@@ -10,10 +10,38 @@ import Timeline from './components/Timeline'
 import { useCategoryMeta } from './hooks/useCategoryMeta'
 import { useDailyData } from './hooks/useDailyData'
 import { useToast } from './hooks/useToast'
+import { loadDay } from './utils/storage'
 import { hasOverlap, TOTAL_SLOTS } from './utils/timeSlot'
 
 const DEFAULT_BOX_SLOTS = 1
 const SLOT_HEIGHT = 32
+const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
+
+const parseDate = (dateStr) => new Date(`${dateStr}T00:00:00`)
+const formatDate = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const startOfWeekMonday = (dateStr) => {
+  const date = parseDate(dateStr)
+  const day = date.getDay()
+  const offset = day === 0 ? -6 : 1 - day
+  date.setDate(date.getDate() + offset)
+  return date
+}
+
+const summarizeDay = (dayData) => {
+  const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
+  const total = timeBoxes.length
+  const completed = timeBoxes.filter((box) => box.status === 'COMPLETED').length
+  return {
+    total,
+    completed,
+  }
+}
 
 function App() {
   const {
@@ -21,6 +49,7 @@ function App() {
     data,
     goNextDay,
     goPrevDay,
+    goToDate,
     addBrainDumpItem,
     removeBrainDumpItem,
     sendToBigThree,
@@ -40,6 +69,26 @@ function App() {
   const [isDataModalOpen, setIsDataModalOpen] = useState(false)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
+  const weekStrip = useMemo(() => {
+    const startDate = startOfWeekMonday(currentDate)
+
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(startDate)
+      date.setDate(startDate.getDate() + index)
+      const dateStr = formatDate(date)
+      const dayData = dateStr === currentDate ? data : loadDay(dateStr)
+      const summary = summarizeDay(dayData)
+
+      return {
+        dateStr,
+        dayLabel: DAY_LABELS[date.getDay()],
+        dayNumber: date.getDate(),
+        total: summary.total,
+        completed: summary.completed,
+        isCurrent: dateStr === currentDate,
+      }
+    })
+  }, [currentDate, data])
 
   const handleSendToBigThree = (brainDumpId) => {
     const success = sendToBigThree(brainDumpId)
@@ -200,7 +249,13 @@ function App() {
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="dark h-screen bg-gray-900 text-gray-100">
         <div className="flex h-full flex-col overflow-hidden bg-gray-900">
-          <Header currentDate={currentDate} goNextDay={goNextDay} goPrevDay={goPrevDay} />
+          <Header
+            currentDate={currentDate}
+            goNextDay={goNextDay}
+            goPrevDay={goPrevDay}
+            weekStrip={weekStrip}
+            goToDate={goToDate}
+          />
 
           <div className="hidden min-h-0 flex-1 overflow-hidden md:flex">
             <aside className="w-80 flex-shrink-0 overflow-y-auto border-r border-gray-700">
