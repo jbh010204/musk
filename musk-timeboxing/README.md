@@ -32,6 +32,10 @@ docker compose up -d --build
 docker compose down
 ```
 
+상세 의도/운영 가이드:
+
+- `docs/DOCKER_DEV_WORKFLOW.md`
+
 ## 프로덕션 빌드
 
 ```bash
@@ -75,3 +79,4 @@ npm run build
 
 - 세션 운영 가이드: `.agents/SESSION_PLAYBOOK.md`
 - 엔지니어링 컨벤션: `docs/ENGINEERING_CONVENTIONS.md`
+- 도커 개발 워크플로: `docs/DOCKER_DEV_WORKFLOW.md`
