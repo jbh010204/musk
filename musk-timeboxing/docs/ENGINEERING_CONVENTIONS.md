@@ -36,11 +36,19 @@
 - UI 행위 중심 테스트 우선 (사용자 관점)
 - 핵심 회귀 시나리오:
   - 타임박스 생성/이동/리사이즈/겹침방지
+  - 카테고리 FAB 진입, 카테고리 CRUD, 타임박스 카테고리 반영
   - 완료/건너뜀/실제시간 저장
   - 일정명/카테고리 수정
   - 날짜별 localStorage 분리
 
-## 5) Deployment Rules
+## 5) Category Rules
+
+- 카테고리 마스터 데이터는 `musk-planner-meta`에 저장
+- 타임박스는 `categoryId`로 참조하고, legacy `category` 문자열은 점진적으로 제거
+- 카테고리 삭제 시 현재 날짜 타임박스의 동일 `categoryId`는 `null`로 해제
+- 카테고리 색상은 타임박스 카드의 좌측 컬러 바와 배지에 함께 반영
+
+## 6) Deployment Rules
 
 - 정적 배포만 허용
 - `vite.config.js`의 `base: './'` 유지
