@@ -7,7 +7,7 @@ import TimeSlotGrid from './TimeSlotGrid'
 const SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
 
-function Timeline({ data, addTimeBox, updateTimeBox, removeTimeBox, showToast }) {
+function Timeline({ data, categories, addTimeBox, updateTimeBox, removeTimeBox, showToast }) {
   const [pendingInput, setPendingInput] = useState(null)
   const [selectedBoxId, setSelectedBoxId] = useState(null)
   const [resizePreview, setResizePreview] = useState({})
@@ -17,13 +17,10 @@ function Timeline({ data, addTimeBox, updateTimeBox, removeTimeBox, showToast })
     () => [...data.timeBoxes].sort((a, b) => a.startSlot - b.startSlot),
     [data.timeBoxes],
   )
-  const categoryOptions = useMemo(() => {
-    const categories = data.timeBoxes
-      .map((box) => (typeof box.category === 'string' ? box.category.trim() : ''))
-      .filter((category) => category.length > 0)
-
-    return [...new Set(categories)]
-  }, [data.timeBoxes])
+  const categoryMap = useMemo(
+    () => new Map(categories.map((category) => [category.id, category])),
+    [categories],
+  )
   const selectedBox = useMemo(
     () => data.timeBoxes.find((box) => box.id === selectedBoxId) || null,
     [data.timeBoxes, selectedBoxId],
@@ -121,6 +118,7 @@ function Timeline({ data, addTimeBox, updateTimeBox, removeTimeBox, showToast })
                 previewEndSlot={resizePreview[box.id]}
                 onResizePreview={handleResizePreview}
                 onResizeEnd={handleResizeEnd}
+                categoryMeta={box.categoryId ? categoryMap.get(box.categoryId) : null}
                 onTimeBoxClick={(timeBox) => setSelectedBoxId(timeBox.id)}
               />
             ))}
@@ -171,7 +169,7 @@ function Timeline({ data, addTimeBox, updateTimeBox, removeTimeBox, showToast })
         <CompletionModal
           key={selectedBox.id}
           timeBox={selectedBox}
-          categoryOptions={categoryOptions}
+          categories={categories}
           onClose={() => setSelectedBoxId(null)}
           onUpdate={updateTimeBox}
           onDelete={(id) => {

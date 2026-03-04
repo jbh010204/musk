@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { slotDurationMinutes } from '../../utils/timeSlot'
 
-function CompletionModal({ timeBox, categoryOptions, onClose, onUpdate, onDelete }) {
+function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
   const [content, setContent] = useState(timeBox.content)
-  const [category, setCategory] = useState(timeBox.category ?? '')
+  const [categoryId, setCategoryId] = useState(timeBox.categoryId ?? '')
   const [status, setStatus] = useState(
     timeBox.status === 'COMPLETED' || timeBox.status === 'SKIPPED' ? timeBox.status : null,
   )
@@ -40,7 +40,8 @@ function CompletionModal({ timeBox, categoryOptions, onClose, onUpdate, onDelete
     if (selectedStatus === 'SKIPPED') {
       onUpdate(timeBox.id, {
         content: trimmedContent,
-        category,
+        categoryId: categoryId || null,
+        category: null,
         status: 'SKIPPED',
         actualMinutes: null,
       })
@@ -56,7 +57,8 @@ function CompletionModal({ timeBox, categoryOptions, onClose, onUpdate, onDelete
 
       onUpdate(timeBox.id, {
         content: trimmedContent,
-        category,
+        categoryId: categoryId || null,
+        category: null,
         status: 'COMPLETED',
         actualMinutes: actual,
       })
@@ -64,7 +66,11 @@ function CompletionModal({ timeBox, categoryOptions, onClose, onUpdate, onDelete
       return
     }
 
-    onUpdate(timeBox.id, { content: trimmedContent, category })
+    onUpdate(timeBox.id, {
+      content: trimmedContent,
+      categoryId: categoryId || null,
+      category: null,
+    })
     onClose()
   }
 
@@ -102,21 +108,23 @@ function CompletionModal({ timeBox, categoryOptions, onClose, onUpdate, onDelete
           <label className="mb-1 block text-sm text-gray-300" htmlFor="timebox-category">
             카테고리
           </label>
-          <input
+          <select
             id="timebox-category"
-            type="text"
-            value={category}
-            onChange={(event) => setCategory(event.target.value)}
-            list="timebox-category-options"
-            placeholder="예: 개발, 운동, 학습"
-            className="w-full rounded bg-gray-700 p-2 text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          {categoryOptions.length > 0 ? (
-            <datalist id="timebox-category-options">
-              {categoryOptions.map((option) => (
-                <option key={option} value={option} />
-              ))}
-            </datalist>
+            value={categoryId}
+            onChange={(event) => setCategoryId(event.target.value)}
+            className="w-full rounded bg-gray-700 p-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="">미분류</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+          {typeof timeBox.category === 'string' && timeBox.category.trim().length > 0 ? (
+            <p className="mt-1 text-xs text-gray-400">
+              기존 텍스트 카테고리: <span className="text-gray-300">{timeBox.category}</span>
+            </p>
           ) : null}
         </div>
 

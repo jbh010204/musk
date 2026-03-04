@@ -13,6 +13,7 @@ const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 
 function TimeBoxCard({
   timeBox,
+  categoryMeta,
   onTimeBoxClick,
   slotHeight = 32,
   previewEndSlot,
@@ -32,6 +33,12 @@ function TimeBoxCard({
   const currentEndSlot = previewEndSlot ?? timeBox.endSlot
   const plannedMinutes = slotDurationMinutes(timeBox.startSlot, currentEndSlot)
   const snappedDragY = transform ? Math.round(transform.y / slotHeight) * slotHeight : 0
+  const categoryLabel =
+    categoryMeta?.name ||
+    (typeof timeBox.category === 'string' && timeBox.category.trim().length > 0
+      ? timeBox.category.trim()
+      : null)
+  const categoryColor = categoryMeta?.color || (categoryLabel ? '#6b7280' : null)
 
   const actualDiff = useMemo(() => {
     if (timeBox.status !== 'COMPLETED' || timeBox.actualMinutes == null) {
@@ -102,6 +109,7 @@ function TimeBoxCard({
         top: timeBox.startSlot * slotHeight,
         height: (currentEndSlot - timeBox.startSlot) * slotHeight,
         transform: transform ? CSS.Translate.toString({ x: 0, y: snappedDragY }) : undefined,
+        borderLeft: categoryColor ? `4px solid ${categoryColor}` : undefined,
       }}
       onPointerDown={(event) => {
         pointerRef.current = {
@@ -134,9 +142,12 @@ function TimeBoxCard({
       {...listeners}
       {...attributes}
     >
-      {timeBox.category ? (
-        <div className="mb-1 inline-flex max-w-full rounded bg-black/20 px-1.5 py-0.5 text-[10px] text-gray-100">
-          <span className="truncate">#{timeBox.category}</span>
+      {categoryLabel ? (
+        <div
+          className="mb-1 inline-flex max-w-full rounded px-1.5 py-0.5 text-[10px] text-gray-100"
+          style={{ backgroundColor: categoryColor ? `${categoryColor}66` : '#374151' }}
+        >
+          <span className="truncate">#{categoryLabel}</span>
         </div>
       ) : null}
       <div className="truncate font-medium">{timeBox.content}</div>
