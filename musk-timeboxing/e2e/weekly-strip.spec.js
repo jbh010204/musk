@@ -21,7 +21,7 @@ test('weekly strip allows direct date jump', async ({ page }) => {
   })
 
   await page.locator('button[aria-label="다음 날짜"]').click()
-  await expect(page.locator('button[title="주간스트립-테스트"]:visible').first()).toHaveCount(0)
+  await expect(page.locator('button[title="주간스트립-테스트"]:visible').first()).toBeVisible()
 
   await page.locator(`button[aria-label="${currentDate} 이동"]`).click()
   await expect(page.locator('button[title="주간스트립-테스트"]:visible').first()).toBeVisible()

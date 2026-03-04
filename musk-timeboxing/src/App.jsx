@@ -47,7 +47,7 @@ function App() {
   const {
     currentDate,
     data,
-    goNextDay,
+    goNextDay: goNextDayRaw,
     goPrevDay,
     goToDate,
     addBrainDumpItem,
@@ -69,6 +69,19 @@ function App() {
   const [isDataModalOpen, setIsDataModalOpen] = useState(false)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
+  const goNextDay = () => {
+    const result = goNextDayRaw({ autoCarry: true })
+
+    if (result.moved > 0) {
+      showToast(`미완료 일정 ${result.moved}건을 다음 날로 이월했습니다`)
+      return
+    }
+
+    if (result.skipped > 0) {
+      showToast(`이월 가능한 일정이 없어 ${result.skipped}건을 건너뛰었습니다`)
+    }
+  }
+
   const weekStrip = useMemo(() => {
     const startDate = startOfWeekMonday(currentDate)
 

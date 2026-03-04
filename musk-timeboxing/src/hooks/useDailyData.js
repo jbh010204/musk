@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { loadDay, saveDay } from '../utils/storage'
-import { TOTAL_SLOTS } from '../utils/timeSlot'
+import { hasOverlap, TOTAL_SLOTS } from '../utils/timeSlot'
 
 const formatDate = (date) => {
   const year = date.getFullYear()
@@ -33,6 +33,30 @@ const normalizeCategoryId = (value) => {
   return trimmed.length > 0 ? trimmed : null
 }
 
+const clampSlot = (value) => Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(value) || 0))
+
+const findAvailableStartSlot = (timeBoxes, preferredStart, duration) => {
+  const normalizedDuration = Math.max(1, Math.min(TOTAL_SLOTS, Number(duration) || 1))
+  const maxStart = TOTAL_SLOTS - normalizedDuration
+  const safePreferred = Math.max(0, Math.min(maxStart, clampSlot(preferredStart)))
+  const findFrom = (startIndex) => {
+    for (let slot = startIndex; slot <= maxStart; slot += 1) {
+      const candidate = {
+        startSlot: slot,
+        endSlot: slot + normalizedDuration,
+      }
+
+      if (!hasOverlap(timeBoxes, candidate)) {
+        return slot
+      }
+    }
+
+    return null
+  }
+
+  return findFrom(safePreferred) ?? findFrom(0)
+}
+
 export const useDailyData = () => {
   const today = formatDate(new Date())
   const [currentDate, setCurrentDate] = useState(today)
@@ -46,8 +70,68 @@ export const useDailyData = () => {
     saveDay(currentDate, data)
   }, [currentDate, data])
 
-  const goNextDay = () => {
-    setCurrentDate((prev) => shiftDate(prev, 1))
+  const carryOverUnfinished = (fromDate, toDate) => {
+    const source = fromDate === currentDate ? data : loadDay(fromDate)
+    const target = loadDay(toDate)
+    const nextBoxes = [...target.timeBoxes]
+    const pendingBoxes = source.timeBoxes.filter((box) => box.status !== 'COMPLETED')
+    let moved = 0
+    let skipped = 0
+
+    pendingBoxes.forEach((box) => {
+      const alreadyMoved = nextBoxes.some(
+        (targetBox) =>
+          targetBox.carryOverFromDate === fromDate && targetBox.carryOverFromBoxId === box.id,
+      )
+
+      if (alreadyMoved) {
+        skipped += 1
+        return
+      }
+
+      const duration = Math.max(1, Math.min(TOTAL_SLOTS, box.endSlot - box.startSlot))
+      const startSlot = findAvailableStartSlot(nextBoxes, box.startSlot, duration)
+
+      if (startSlot == null) {
+        skipped += 1
+        return
+      }
+
+      nextBoxes.push({
+        id: createId(),
+        content: box.content,
+        sourceId: box.sourceId ?? null,
+        startSlot,
+        endSlot: startSlot + duration,
+        status: 'PLANNED',
+        actualMinutes: null,
+        category: normalizeCategory(box.category),
+        categoryId: normalizeCategoryId(box.categoryId),
+        carryOverFromDate: fromDate,
+        carryOverFromBoxId: box.id,
+      })
+      moved += 1
+    })
+
+    if (moved > 0) {
+      saveDay(toDate, {
+        ...target,
+        timeBoxes: nextBoxes,
+      })
+    }
+
+    return {
+      moved,
+      skipped,
+    }
+  }
+
+  const goNextDay = (options = {}) => {
+    const nextDate = shiftDate(currentDate, 1)
+    const shouldCarry = options.autoCarry !== false
+    const result = shouldCarry ? carryOverUnfinished(currentDate, nextDate) : { moved: 0, skipped: 0 }
+    setCurrentDate(nextDate)
+    return result
   }
 
   const goPrevDay = () => {
