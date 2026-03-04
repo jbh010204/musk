@@ -9,6 +9,7 @@ import { useToast } from './hooks/useToast'
 import { hasOverlap, TOTAL_SLOTS } from './utils/timeSlot'
 
 const DEFAULT_BOX_SLOTS = 1
+const SLOT_HEIGHT = 32
 
 function App() {
   const {
@@ -39,7 +40,7 @@ function App() {
     }
   }
 
-  const handleDragEnd = ({ active, over }) => {
+  const handleDragEnd = ({ active, over, delta }) => {
     if (!over) {
       return
     }
@@ -83,8 +84,10 @@ function App() {
 
     if (activeData.type === 'TIME_BOX' && overData.type === 'TIMELINE_SLOT') {
       const duration = Math.max(1, (activeData.endSlot ?? 0) - (activeData.startSlot ?? 0))
+      const slotDelta = Math.round((delta?.y ?? 0) / SLOT_HEIGHT)
 
-      let startSlot = Math.max(0, overData.slotIndex)
+      let startSlot = (activeData.startSlot ?? 0) + slotDelta
+      startSlot = Math.max(0, Math.min(startSlot, TOTAL_SLOTS - duration))
       let endSlot = startSlot + duration
 
       if (endSlot > TOTAL_SLOTS) {

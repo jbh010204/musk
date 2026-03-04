@@ -31,6 +31,7 @@ function TimeBoxCard({
 
   const currentEndSlot = previewEndSlot ?? timeBox.endSlot
   const plannedMinutes = slotDurationMinutes(timeBox.startSlot, currentEndSlot)
+  const snappedDragY = transform ? Math.round(transform.y / slotHeight) * slotHeight : 0
 
   const actualDiff = useMemo(() => {
     if (timeBox.status !== 'COMPLETED' || timeBox.actualMinutes == null) {
@@ -100,7 +101,7 @@ function TimeBoxCard({
       style={{
         top: timeBox.startSlot * slotHeight,
         height: (currentEndSlot - timeBox.startSlot) * slotHeight,
-        transform: CSS.Translate.toString(transform),
+        transform: transform ? CSS.Translate.toString({ x: 0, y: snappedDragY }) : undefined,
       }}
       onPointerDown={(event) => {
         pointerRef.current = {
