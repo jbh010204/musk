@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { getCategoryColor, getCategoryLabel } from '../../utils/categoryVisual'
 import { hasOverlap, TOTAL_SLOTS } from '../../utils/timeSlot'
 import CompletionModal from './CompletionModal'
+import DailyRecapCard from './DailyRecapCard'
 import TimeBoxCard from './TimeBoxCard'
 import TimeSlotGrid from './TimeSlotGrid'
 
@@ -130,6 +131,7 @@ function Timeline({ data, categories, addTimeBox, updateTimeBox, removeTimeBox, 
   return (
     <section className="h-full p-4">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-400">⏱ 타임라인</h2>
+      <DailyRecapCard timeBoxes={sortedBoxes} categoryMap={categoryMap} />
 
       {categoryLegend.length > 0 ? (
         <div className="mb-3 flex flex-wrap items-center gap-2">
