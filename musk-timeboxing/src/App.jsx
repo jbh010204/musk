@@ -17,7 +17,7 @@ import { useCategoryMeta } from './hooks/useCategoryMeta'
 import { useDailyData } from './hooks/useDailyData'
 import { useToast } from './hooks/useToast'
 import { loadDay } from './utils/storage'
-import { hasOverlap, TOTAL_SLOTS } from './utils/timeSlot'
+import { hasOverlap, slotDurationMinutes, TOTAL_SLOTS } from './utils/timeSlot'
 
 const DEFAULT_BOX_SLOTS = 1
 const SLOT_HEIGHT = 32
@@ -80,6 +80,76 @@ const getSkipBasedSuggestion = (dayData) => {
   }
 
   return SKIP_SUGGESTION_BY_REASON[topReason] || SKIP_SUGGESTION_BY_REASON.기타
+}
+
+const buildWeeklyReport = ({ currentDate, currentDayData }) => {
+  const startDate = startOfWeekMonday(currentDate)
+  let total = 0
+  let completed = 0
+  let skipped = 0
+  let completedPlannedMinutes = 0
+  let completedActualMinutes = 0
+  const skipReasonCounter = new Map()
+
+  const byDay = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(startDate)
+    date.setDate(startDate.getDate() + index)
+    const dateStr = formatDate(date)
+    const dayData = dateStr === currentDate ? currentDayData : loadDay(dateStr)
+    const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
+    const dayTotal = timeBoxes.length
+    const dayCompleted = timeBoxes.filter((box) => box.status === 'COMPLETED').length
+    const daySkipped = timeBoxes.filter((box) => box.status === 'SKIPPED').length
+
+    total += dayTotal
+    completed += dayCompleted
+    skipped += daySkipped
+
+    timeBoxes.forEach((box) => {
+      if (
+        box.status === 'COMPLETED' &&
+        Number.isFinite(box.actualMinutes) &&
+        Number(box.actualMinutes) > 0
+      ) {
+        completedPlannedMinutes += slotDurationMinutes(box.startSlot, box.endSlot)
+        completedActualMinutes += Number(box.actualMinutes)
+      }
+
+      if (box.status !== 'SKIPPED') {
+        return
+      }
+
+      const reason =
+        typeof box.skipReason === 'string' && box.skipReason.trim().length > 0 ? box.skipReason.trim() : '기타'
+      skipReasonCounter.set(reason, (skipReasonCounter.get(reason) || 0) + 1)
+    })
+
+    return {
+      dateStr,
+      dayLabel: DAY_LABELS[date.getDay()],
+      total: dayTotal,
+      completed: dayCompleted,
+    }
+  })
+
+  const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
+  const diff = completedActualMinutes - completedPlannedMinutes
+  const topSkipReasons = [...skipReasonCounter.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([reason, count]) => ({ reason, count }))
+
+  return {
+    total,
+    completed,
+    skipped,
+    completionRate,
+    completedPlannedMinutes,
+    completedActualMinutes,
+    diff,
+    byDay,
+    topSkipReasons,
+  }
 }
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
@@ -257,6 +327,14 @@ function App() {
       }
     })
   }, [currentDate, data])
+  const weeklyReport = useMemo(
+    () =>
+      buildWeeklyReport({
+        currentDate,
+        currentDayData: data,
+      }),
+    [currentDate, data],
+  )
   const bigThreeProgress = useMemo(() => {
     const statuses = [0, 1, 2].map((index) => {
       const item = data.bigThree[index]
@@ -499,6 +577,7 @@ function App() {
     <Timeline
       data={data}
       categories={categories}
+      weeklyReport={weeklyReport}
       addTimeBox={addTimeBox}
       updateTimeBox={updateTimeBox}
       removeTimeBox={removeTimeBox}

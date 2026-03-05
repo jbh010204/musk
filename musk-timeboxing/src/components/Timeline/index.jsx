@@ -5,6 +5,7 @@ import CompletionModal from './CompletionModal'
 import DailyRecapCard from './DailyRecapCard'
 import TimeBoxCard from './TimeBoxCard'
 import TimeSlotGrid from './TimeSlotGrid'
+import WeeklyReportCard from './WeeklyReportCard'
 
 const SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
@@ -13,6 +14,7 @@ const DURATION_PRESETS = [1, 2, 3, 4]
 function Timeline({
   data,
   categories,
+  weeklyReport,
   addTimeBox,
   updateTimeBox,
   removeTimeBox,
@@ -153,6 +155,7 @@ function Timeline({
           브레인 덤프/빅3 항목을 원하는 시간 슬롯에 드롭하면 일정이 추가됩니다.
         </div>
       ) : null}
+      <WeeklyReportCard report={weeklyReport} />
       <DailyRecapCard timeBoxes={sortedBoxes} categoryMap={categoryMap} />
 
       {categoryLegend.length > 0 ? (
