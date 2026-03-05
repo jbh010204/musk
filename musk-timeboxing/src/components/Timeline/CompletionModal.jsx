@@ -2,6 +2,15 @@ import { useMemo, useState } from 'react'
 import { getCategoryColor } from '../../utils/categoryVisual'
 import { slotDurationMinutes } from '../../utils/timeSlot'
 
+const SKIP_REASON_OPTIONS = [
+  '우선순위 변경',
+  '예상보다 오래 걸림',
+  '외부 일정/방해',
+  '컨디션 저하',
+  '자료/준비 부족',
+  '기타',
+]
+
 function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
   const [content, setContent] = useState(timeBox.content)
   const [categoryId, setCategoryId] = useState(timeBox.categoryId ?? '')
@@ -11,6 +20,7 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
   const [actualMinutes, setActualMinutes] = useState(
     timeBox.actualMinutes != null ? String(timeBox.actualMinutes) : '',
   )
+  const [skipReason, setSkipReason] = useState(timeBox.skipReason ?? '')
 
   const plannedMinutes = slotDurationMinutes(timeBox.startSlot, timeBox.endSlot)
   const selectedCategoryMeta = useMemo(
@@ -50,6 +60,7 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
         category: null,
         status: 'SKIPPED',
         actualMinutes: null,
+        skipReason,
       })
       onClose()
       return
@@ -67,6 +78,7 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
         category: null,
         status: 'COMPLETED',
         actualMinutes: actual,
+        skipReason: null,
       })
       onClose()
       return
@@ -76,6 +88,7 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
       content: trimmedContent,
       categoryId: categoryId || null,
       category: null,
+      skipReason: null,
     })
     onClose()
   }
@@ -178,6 +191,27 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
               className="w-full rounded bg-gray-700 p-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             {diffSummary ? <p className={`text-sm ${diffSummary.className}`}>{diffSummary.text}</p> : null}
+          </div>
+        ) : null}
+
+        {status === 'SKIPPED' ? (
+          <div className="mt-4 space-y-2">
+            <label className="block text-sm text-gray-300" htmlFor="skip-reason">
+              건너뜀 사유
+            </label>
+            <select
+              id="skip-reason"
+              value={skipReason}
+              onChange={(event) => setSkipReason(event.target.value)}
+              className="w-full rounded bg-gray-700 p-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="">사유 선택 (선택)</option>
+              {SKIP_REASON_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </div>
         ) : null}
 

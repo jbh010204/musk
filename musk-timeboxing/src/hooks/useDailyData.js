@@ -32,6 +32,14 @@ const normalizeCategoryId = (value) => {
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : null
 }
+const normalizeSkipReason = (value) => {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
 
 const clampSlot = (value) => Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(value) || 0))
 
@@ -103,6 +111,7 @@ export const useDailyData = () => {
         actualMinutes: null,
         category: normalizeCategory(box.category),
         categoryId: normalizeCategoryId(box.categoryId),
+        skipReason: normalizeSkipReason(box.skipReason),
         carryOverFromDate: fromDate,
         carryOverFromBoxId: box.id,
       })
@@ -247,6 +256,7 @@ export const useDailyData = () => {
           actualMinutes: null,
           category: normalizeCategory(category),
           categoryId: normalizeCategoryId(categoryId),
+          skipReason: null,
         },
       ],
     }))
@@ -277,6 +287,10 @@ export const useDailyData = () => {
             Object.prototype.hasOwnProperty.call(changes ?? {}, 'categoryId')
               ? normalizeCategoryId(changes?.categoryId)
               : box.categoryId ?? null,
+          skipReason:
+            Object.prototype.hasOwnProperty.call(changes ?? {}, 'skipReason')
+              ? normalizeSkipReason(changes?.skipReason)
+              : box.skipReason ?? null,
         }
       }),
     }))

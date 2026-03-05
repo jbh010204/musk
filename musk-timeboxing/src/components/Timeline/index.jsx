@@ -10,7 +10,15 @@ const SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
 const DURATION_PRESETS = [1, 2, 3, 4]
 
-function Timeline({ data, categories, addTimeBox, updateTimeBox, removeTimeBox, showToast }) {
+function Timeline({
+  data,
+  categories,
+  addTimeBox,
+  updateTimeBox,
+  removeTimeBox,
+  showToast,
+  showDropGuide = false,
+}) {
   const [pendingInput, setPendingInput] = useState(null)
   const [selectedBoxId, setSelectedBoxId] = useState(null)
   const [resizePreview, setResizePreview] = useState({})
@@ -137,6 +145,14 @@ function Timeline({ data, categories, addTimeBox, updateTimeBox, removeTimeBox, 
   return (
     <section className="h-full p-4">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-400">⏱ 타임라인</h2>
+      {showDropGuide ? (
+        <div
+          data-testid="timeline-drop-guide"
+          className="mb-3 rounded border border-indigo-400/70 bg-indigo-500/10 px-3 py-2 text-xs text-indigo-100"
+        >
+          브레인 덤프/빅3 항목을 원하는 시간 슬롯에 드롭하면 일정이 추가됩니다.
+        </div>
+      ) : null}
       <DailyRecapCard timeBoxes={sortedBoxes} categoryMap={categoryMap} />
 
       {categoryLegend.length > 0 ? (
@@ -155,7 +171,7 @@ function Timeline({ data, categories, addTimeBox, updateTimeBox, removeTimeBox, 
 
       <div className="overflow-x-auto">
         <div className="relative min-w-[520px]">
-          <TimeSlotGrid onSlotClick={handleSlotClick} />
+          <TimeSlotGrid onSlotClick={handleSlotClick} showDropGuide={showDropGuide} />
 
           <div className="pointer-events-none absolute inset-y-0 left-16 right-2">
             {sortedBoxes.map((box) => (

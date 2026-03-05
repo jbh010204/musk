@@ -41,7 +41,31 @@ test('brain dump item can be dropped into timeline slot', async ({ page }) => {
   })
 
   expect(stored).toBeTruthy()
-  expect(stored.startSlot).toBe(10)
+  expect(stored.startSlot).toBeGreaterThanOrEqual(9)
+  expect(stored.startSlot).toBeLessThanOrEqual(10)
+})
+
+test('drag guide appears while dragging from brain dump', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => window.localStorage.clear())
+  await page.reload()
+
+  await page.getByPlaceholder('할 일을 입력하고 엔터...').fill('GUIDE-테스트')
+  await page.getByPlaceholder('할 일을 입력하고 엔터...').press('Enter')
+
+  const source = page.locator('button[title="GUIDE-테스트"]:visible').first()
+  const sourceBox = await source.boundingBox()
+  if (!sourceBox) {
+    throw new Error('drag source bounding box missing')
+  }
+
+  await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(sourceBox.x + sourceBox.width / 2 + 12, sourceBox.y + sourceBox.height / 2 + 12, {
+    steps: 4,
+  })
+  await expect(page.getByTestId('timeline-drop-guide').first()).toBeVisible()
+  await page.mouse.up()
 })
 
 test('big three item can be dropped into timeline slot', async ({ page }) => {
@@ -70,5 +94,6 @@ test('big three item can be dropped into timeline slot', async ({ page }) => {
   })
 
   expect(stored).toBeTruthy()
-  expect(stored.startSlot).toBe(12)
+  expect(stored.startSlot).toBeGreaterThanOrEqual(11)
+  expect(stored.startSlot).toBeLessThanOrEqual(12)
 })

@@ -163,6 +163,9 @@ function TimeBoxCard({
       {timeBox.status === 'PLANNED' ? (
         <div className="mt-1 truncate text-[11px] text-white/85">계획 {plannedMinutes}분</div>
       ) : null}
+      {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
+        <div className="mt-1 truncate text-[11px] text-amber-100">사유: {timeBox.skipReason}</div>
+      ) : null}
 
       <div
         className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize bg-black/20"

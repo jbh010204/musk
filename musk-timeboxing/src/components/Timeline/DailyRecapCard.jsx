@@ -36,6 +36,17 @@ function DailyRecapCard({ timeBoxes, categoryMap }) {
     const focusCategory =
       [...categoryCounter.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || '미분류'
 
+    const skipReasonCounter = new Map()
+    timeBoxes.forEach((box) => {
+      if (box.status !== 'SKIPPED' || typeof box.skipReason !== 'string' || box.skipReason.trim() === '') {
+        return
+      }
+
+      const count = skipReasonCounter.get(box.skipReason) || 0
+      skipReasonCounter.set(box.skipReason, count + 1)
+    })
+    const topSkipReason = [...skipReasonCounter.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null
+
     return {
       total,
       completed,
@@ -47,6 +58,7 @@ function DailyRecapCard({ timeBoxes, categoryMap }) {
       diffText,
       diffTone,
       focusCategory,
+      topSkipReason,
     }
   }, [categoryMap, timeBoxes])
 
@@ -69,6 +81,10 @@ function DailyRecapCard({ timeBoxes, categoryMap }) {
           </p>
           <p className="text-gray-200">
             집중 카테고리 <span className="font-semibold text-white">#{recap.focusCategory}</span>
+          </p>
+          <p className="text-gray-200">
+            주요 스킵 사유{' '}
+            <span className="font-semibold text-white">{recap.topSkipReason ?? '없음'}</span>
           </p>
           <p className="text-gray-300 md:col-span-2">
             완료 일정 기준 계획 {recap.completedPlannedMinutes}분 → 실제 {recap.completedActualMinutes}분 (

@@ -5,7 +5,7 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import CategoryManagerModal from './components/Category/CategoryManagerModal'
 import DataTransferModal from './components/Data/DataTransferModal'
 import FloatingActionDock from './components/Floating/FloatingActionDock'
@@ -51,6 +51,72 @@ const summarizeDay = (dayData) => {
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 
+const getVisibleTimelineGridAtPoint = (clientX, clientY) => {
+  if (typeof document === 'undefined') {
+    return null
+  }
+
+  const grids = [...document.querySelectorAll('[data-timeline-grid="true"]')]
+  return (
+    grids.find((grid) => {
+      const rect = grid.getBoundingClientRect()
+      if (rect.width < 40 || rect.height < SLOT_HEIGHT) {
+        return false
+      }
+
+      return (
+        clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
+      )
+    }) || null
+  )
+}
+
+const resolveSlotFromGridPoint = (grid, clientY) => {
+  const gridRect = grid.getBoundingClientRect()
+  const firstSlot = grid.querySelector('[data-timeline-slot-index="0"]')
+  const rowHeight = Math.max(1, Number(firstSlot?.getBoundingClientRect?.().height) || SLOT_HEIGHT)
+  const slotOffset = Math.floor((clientY - gridRect.top) / rowHeight)
+  return clamp(slotOffset, 0, TOTAL_SLOTS - 1)
+}
+
+const resolveSlotFromPointerPosition = (pointer) => {
+  if (typeof document === 'undefined') {
+    return null
+  }
+
+  const clientX = Number(pointer?.clientX)
+  const clientY = Number(pointer?.clientY)
+
+  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) {
+    return null
+  }
+
+  const element = document.elementFromPoint(clientX, clientY)
+  const slotElement = element?.closest?.('[data-timeline-slot-index]')
+
+  if (slotElement) {
+    const slotIndex = Number(slotElement.getAttribute('data-timeline-slot-index'))
+    return Number.isInteger(slotIndex) ? slotIndex : null
+  }
+
+  const grid = getVisibleTimelineGridAtPoint(clientX, clientY)
+  if (!grid) {
+    return null
+  }
+
+  const gridRect = grid.getBoundingClientRect()
+  if (
+    clientX < gridRect.left ||
+    clientX > gridRect.right ||
+    clientY < gridRect.top ||
+    clientY > gridRect.bottom
+  ) {
+    return null
+  }
+
+  return resolveSlotFromGridPoint(grid, clientY)
+}
+
 const resolveSlotFromFinalPosition = (active, delta) => {
   if (typeof document === 'undefined') {
     return null
@@ -74,7 +140,7 @@ const resolveSlotFromFinalPosition = (active, delta) => {
     return null
   }
 
-  const grid = document.querySelector('[data-timeline-grid="true"]')
+  const grid = getVisibleTimelineGridAtPoint(centerX, centerY)
   if (!grid) {
     return null
   }
@@ -89,8 +155,7 @@ const resolveSlotFromFinalPosition = (active, delta) => {
     return null
   }
 
-  const slotOffset = Math.floor((centerY - gridRect.top) / SLOT_HEIGHT)
-  return clamp(slotOffset, 0, TOTAL_SLOTS - 1)
+  return resolveSlotFromGridPoint(grid, centerY)
 }
 
 function App() {
@@ -118,6 +183,8 @@ function App() {
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false)
   const [isDataModalOpen, setIsDataModalOpen] = useState(false)
   const [activeDragPreview, setActiveDragPreview] = useState(null)
+  const lastPointerRef = useRef(null)
+  const pointerTrackingRef = useRef(false)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
   const goNextDay = () => {
@@ -162,12 +229,44 @@ function App() {
     }
   }
 
-  const handleDragStart = ({ active }) => {
+  const trackPointerMove = (event) => {
+    lastPointerRef.current = {
+      clientX: Number(event?.clientX),
+      clientY: Number(event?.clientY),
+    }
+  }
+
+  const startPointerTracking = () => {
+    if (pointerTrackingRef.current || typeof window === 'undefined') {
+      return
+    }
+
+    pointerTrackingRef.current = true
+    window.addEventListener('pointermove', trackPointerMove)
+  }
+
+  const stopPointerTracking = () => {
+    if (!pointerTrackingRef.current || typeof window === 'undefined') {
+      return
+    }
+
+    pointerTrackingRef.current = false
+    window.removeEventListener('pointermove', trackPointerMove)
+  }
+
+  const handleDragStart = ({ active, activatorEvent }) => {
     const payload = active?.data?.current
+    lastPointerRef.current = {
+      clientX: Number(activatorEvent?.clientX),
+      clientY: Number(activatorEvent?.clientY),
+    }
+
     if (!payload) {
       setActiveDragPreview(null)
       return
     }
+
+    startPointerTracking()
 
     if (payload.type === 'BRAIN_DUMP' || payload.type === 'BIG_THREE') {
       setActiveDragPreview({
@@ -182,14 +281,21 @@ function App() {
 
   const handleDragCancel = () => {
     setActiveDragPreview(null)
+    lastPointerRef.current = null
+    stopPointerTracking()
   }
 
   const handleDragEnd = ({ active, over, delta }) => {
     setActiveDragPreview(null)
+    const finalize = () => {
+      lastPointerRef.current = null
+      stopPointerTracking()
+    }
 
     const activeData = active.data.current
 
     if (!activeData) {
+      finalize()
       return
     }
 
@@ -200,6 +306,7 @@ function App() {
       const slotDelta = Math.round((delta?.y ?? 0) / SLOT_HEIGHT)
 
       if (slotDelta === 0) {
+        finalize()
         return
       }
 
@@ -213,6 +320,7 @@ function App() {
       }
 
       if (startSlot === activeStart && endSlot === activeEnd) {
+        finalize()
         return
       }
 
@@ -223,10 +331,12 @@ function App() {
 
       if (hasOverlap(data.timeBoxes, movedBox, activeData.id)) {
         showToast('해당 시간에 이미 일정이 있습니다')
+        finalize()
         return
       }
 
       updateTimeBox(activeData.id, { startSlot, endSlot })
+      finalize()
       return
     }
 
@@ -237,16 +347,19 @@ function App() {
       if (!success) {
         showToast('빅 3이 이미 가득 찼습니다')
       }
+      finalize()
       return
     }
 
     if (activeData.type === 'BRAIN_DUMP' || activeData.type === 'BIG_THREE') {
       const startSlot =
-        overData?.type === 'TIMELINE_SLOT'
-          ? overData.slotIndex
-          : resolveSlotFromFinalPosition(active, delta)
+        resolveSlotFromFinalPosition(active, delta) ??
+        resolveSlotFromPointerPosition(lastPointerRef.current) ??
+        (overData?.type === 'TIMELINE_SLOT' ? overData.slotIndex : null) ??
+        null
 
       if (!Number.isInteger(startSlot)) {
+        finalize()
         return
       }
 
@@ -260,11 +373,13 @@ function App() {
 
       if (hasOverlap(data.timeBoxes, newBox)) {
         showToast('해당 시간에 이미 일정이 있습니다')
+        finalize()
         return
       }
 
       addTimeBox(newBox)
     }
+    finalize()
   }
 
   const handleAddCategory = (name, color) => {
@@ -325,6 +440,9 @@ function App() {
       updateTimeBox={updateTimeBox}
       removeTimeBox={removeTimeBox}
       showToast={showToast}
+      showDropGuide={
+        activeDragPreview?.type === 'BRAIN_DUMP' || activeDragPreview?.type === 'BIG_THREE'
+      }
     />
   )
 
@@ -419,7 +537,7 @@ function App() {
       </div>
       <DragOverlay>
         {activeDragPreview ? (
-          <div className="max-w-xs rounded border border-indigo-400 bg-indigo-600/90 px-3 py-2 text-sm text-white shadow-lg">
+          <div className="pointer-events-none max-w-xs rounded border border-indigo-400 bg-indigo-600/90 px-3 py-2 text-sm text-white shadow-lg">
             {activeDragPreview.content}
           </div>
         ) : null}
