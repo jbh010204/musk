@@ -1,9 +1,7 @@
 import {
   DndContext,
+  DragOverlay,
   PointerSensor,
-  closestCorners,
-  pointerWithin,
-  rectIntersection,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
@@ -51,41 +49,48 @@ const summarizeDay = (dayData) => {
   }
 }
 
-const collisionDetection = (args) => {
-  const pointerMatches = pointerWithin(args)
-  if (pointerMatches.length > 0) {
-    return pointerMatches
-  }
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 
-  const cornerMatches = closestCorners(args)
-  if (cornerMatches.length > 0) {
-    return cornerMatches
-  }
-
-  return rectIntersection(args)
-}
-
-const resolveSlotFromPointer = (activatorEvent) => {
+const resolveSlotFromFinalPosition = (active, delta) => {
   if (typeof document === 'undefined') {
     return null
   }
 
-  const clientX = Number(activatorEvent?.clientX)
-  const clientY = Number(activatorEvent?.clientY)
+  const translatedRect = active?.rect?.current?.translated
+  const initialRect = active?.rect?.current?.initial
 
-  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) {
+  let centerX = null
+  let centerY = null
+
+  if (translatedRect) {
+    centerX = translatedRect.left + translatedRect.width / 2
+    centerY = translatedRect.top + translatedRect.height / 2
+  } else if (initialRect) {
+    centerX = initialRect.left + initialRect.width / 2 + Number(delta?.x || 0)
+    centerY = initialRect.top + initialRect.height / 2 + Number(delta?.y || 0)
+  }
+
+  if (!Number.isFinite(centerX) || !Number.isFinite(centerY)) {
     return null
   }
 
-  const element = document.elementFromPoint(clientX, clientY)
-  const slotElement = element?.closest?.('[data-timeline-slot-index]')
-
-  if (!slotElement) {
+  const grid = document.querySelector('[data-timeline-grid="true"]')
+  if (!grid) {
     return null
   }
 
-  const slotIndex = Number(slotElement.getAttribute('data-timeline-slot-index'))
-  return Number.isInteger(slotIndex) ? slotIndex : null
+  const gridRect = grid.getBoundingClientRect()
+  if (
+    centerX < gridRect.left ||
+    centerX > gridRect.right ||
+    centerY < gridRect.top ||
+    centerY > gridRect.bottom
+  ) {
+    return null
+  }
+
+  const slotOffset = Math.floor((centerY - gridRect.top) / SLOT_HEIGHT)
+  return clamp(slotOffset, 0, TOTAL_SLOTS - 1)
 }
 
 function App() {
@@ -112,6 +117,7 @@ function App() {
   const [mobileTab, setMobileTab] = useState('timeline')
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false)
   const [isDataModalOpen, setIsDataModalOpen] = useState(false)
+  const [activeDragPreview, setActiveDragPreview] = useState(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
   const goNextDay = () => {
@@ -156,7 +162,31 @@ function App() {
     }
   }
 
-  const handleDragEnd = ({ active, over, delta, activatorEvent }) => {
+  const handleDragStart = ({ active }) => {
+    const payload = active?.data?.current
+    if (!payload) {
+      setActiveDragPreview(null)
+      return
+    }
+
+    if (payload.type === 'BRAIN_DUMP' || payload.type === 'BIG_THREE') {
+      setActiveDragPreview({
+        type: payload.type,
+        content: payload.content,
+      })
+      return
+    }
+
+    setActiveDragPreview(null)
+  }
+
+  const handleDragCancel = () => {
+    setActiveDragPreview(null)
+  }
+
+  const handleDragEnd = ({ active, over, delta }) => {
+    setActiveDragPreview(null)
+
     const activeData = active.data.current
 
     if (!activeData) {
@@ -211,8 +241,10 @@ function App() {
     }
 
     if (activeData.type === 'BRAIN_DUMP' || activeData.type === 'BIG_THREE') {
-      const slotFromDroppable = overData?.type === 'TIMELINE_SLOT' ? overData.slotIndex : null
-      const startSlot = slotFromDroppable ?? resolveSlotFromPointer(activatorEvent)
+      const startSlot =
+        overData?.type === 'TIMELINE_SLOT'
+          ? overData.slotIndex
+          : resolveSlotFromFinalPosition(active, delta)
 
       if (!Number.isInteger(startSlot)) {
         return
@@ -297,7 +329,12 @@ function App() {
   )
 
   return (
-    <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragCancel={handleDragCancel}
+      onDragEnd={handleDragEnd}
+    >
       <div className="dark h-screen bg-gray-900 text-gray-100">
         <div className="flex h-full flex-col overflow-hidden bg-gray-900">
           <Header
@@ -380,6 +417,13 @@ function App() {
           />
         ) : null}
       </div>
+      <DragOverlay>
+        {activeDragPreview ? (
+          <div className="max-w-xs rounded border border-indigo-400 bg-indigo-600/90 px-3 py-2 text-sm text-white shadow-lg">
+            {activeDragPreview.content}
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   )
 }

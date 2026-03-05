@@ -1,8 +1,7 @@
 import { useDraggable } from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
 
 function BrainDumpItem({ item, onRemove, onSendToBigThree }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `brain-dump-${item.id}`,
     data: {
       type: 'BRAIN_DUMP',
@@ -11,18 +10,13 @@ function BrainDumpItem({ item, onRemove, onSendToBigThree }) {
     },
   })
 
-  const style = {
-    transform: CSS.Translate.toString(transform),
-  }
-
   return (
     <div
-      ref={setNodeRef}
-      style={style}
       className={`rounded p-2 hover:bg-gray-700 ${isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-center justify-between gap-2">
         <button
+          ref={setNodeRef}
           type="button"
           className="min-w-0 flex-1 cursor-grab truncate text-left active:cursor-grabbing"
           {...listeners}

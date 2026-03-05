@@ -41,6 +41,7 @@ test('brain dump item can be dropped into timeline slot', async ({ page }) => {
   })
 
   expect(stored).toBeTruthy()
+  expect(stored.startSlot).toBe(10)
 })
 
 test('big three item can be dropped into timeline slot', async ({ page }) => {
@@ -69,4 +70,5 @@ test('big three item can be dropped into timeline slot', async ({ page }) => {
   })
 
   expect(stored).toBeTruthy()
+  expect(stored.startSlot).toBe(12)
 })

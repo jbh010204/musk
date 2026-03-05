@@ -33,7 +33,7 @@ function TimeSlotRow({ slotIndex, onSlotClick }) {
 
 function TimeSlotGrid({ onSlotClick }) {
   return (
-    <div className="relative">
+    <div className="relative" data-timeline-grid="true">
       {Array.from({ length: TOTAL_SLOTS }).map((_, slotIndex) => (
         <TimeSlotRow key={slotIndex} slotIndex={slotIndex} onSlotClick={onSlotClick} />
       ))}

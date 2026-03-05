@@ -1,13 +1,17 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 
 function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [isComposing, setIsComposing] = useState(false)
 
-  const draggable = useDraggable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDraggableNodeRef,
+    isDragging,
+  } = useDraggable({
     id: `big-three-item-${slot?.id ?? slotIndex}`,
     disabled: !slot,
     data: slot
@@ -19,7 +23,7 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
       : null,
   })
 
-  const droppable = useDroppable({
+  const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
     id: `big-three-slot-${slotIndex}`,
     disabled: Boolean(slot),
     data: {
@@ -27,18 +31,6 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
       slotIndex,
     },
   })
-
-  const setRefs = useCallback(
-    (node) => {
-      draggable.setNodeRef(node)
-      droppable.setNodeRef(node)
-    },
-    [draggable, droppable],
-  )
-
-  const style = {
-    transform: CSS.Translate.toString(draggable.transform),
-  }
 
   const handleSubmit = () => {
     const trimmed = draft.trim()
@@ -57,12 +49,11 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
 
   return (
     <div
-      ref={setRefs}
-      style={style}
+      ref={setDroppableNodeRef}
       className={`rounded border p-3 ${
         slot ? 'border-gray-600 bg-gray-800' : 'border-dashed border-gray-600 bg-gray-800/70'
-      } ${droppable.isOver && !slot ? 'border-indigo-400 bg-gray-700/60' : ''} ${
-        draggable.isDragging ? 'opacity-50' : ''
+      } ${isOver && !slot ? 'border-indigo-400 bg-gray-700/60' : ''} ${
+        isDragging ? 'opacity-50' : ''
       }`}
     >
       <div className="mb-1 text-xs text-gray-500">슬롯 {slotIndex + 1}</div>
@@ -117,10 +108,11 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
       {slot ? (
         <div className="flex items-start justify-between gap-2">
           <button
+            ref={setDraggableNodeRef}
             type="button"
             className="min-w-0 flex-1 cursor-grab truncate text-left text-sm active:cursor-grabbing"
-            {...draggable.listeners}
-            {...draggable.attributes}
+            {...listeners}
+            {...attributes}
             title={slot.content}
           >
             {slot.content}
