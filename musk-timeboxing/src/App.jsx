@@ -220,6 +220,32 @@ function App() {
       }
     })
   }, [currentDate, data])
+  const bigThreeProgress = useMemo(() => {
+    const statuses = [0, 1, 2].map((index) => {
+      const item = data.bigThree[index]
+      if (!item) {
+        return 'EMPTY'
+      }
+
+      const done = data.timeBoxes.some(
+        (box) =>
+          box.status === 'COMPLETED' &&
+          (box.sourceId === item.id || (box.sourceId == null && box.content === item.content)),
+      )
+
+      return done ? 'DONE' : 'PENDING'
+    })
+
+    const completedCount = statuses.filter((status) => status === 'DONE').length
+    const filledCount = statuses.filter((status) => status !== 'EMPTY').length
+
+    return {
+      statuses,
+      completedCount,
+      filledCount,
+      isPerfect: completedCount === 3,
+    }
+  }, [data.bigThree, data.timeBoxes])
 
   const handleSendToBigThree = (brainDumpId) => {
     const success = sendToBigThree(brainDumpId)
@@ -461,6 +487,7 @@ function App() {
             goPrevDay={goPrevDay}
             weekStrip={weekStrip}
             goToDate={goToDate}
+            bigThreeProgress={bigThreeProgress}
           />
 
           <div className="hidden min-h-0 flex-1 overflow-hidden md:flex">
