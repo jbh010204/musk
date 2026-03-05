@@ -22,6 +22,7 @@ function TimeSlotRow({ slotIndex, onSlotClick }) {
       <button
         ref={setNodeRef}
         type="button"
+        data-timeline-slot-index={slotIndex}
         onClick={() => onSlotClick(slotIndex)}
         className={`relative block flex-1 text-left ${isOver ? 'bg-indigo-500/20' : 'bg-transparent'}`}
         aria-label={`${label} 슬롯`}

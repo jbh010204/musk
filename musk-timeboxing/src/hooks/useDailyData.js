@@ -63,10 +63,6 @@ export const useDailyData = () => {
   const [data, setData] = useState(() => loadDay(today))
 
   useEffect(() => {
-    setData(loadDay(currentDate))
-  }, [currentDate])
-
-  useEffect(() => {
     saveDay(currentDate, data)
   }, [currentDate, data])
 
@@ -131,11 +127,14 @@ export const useDailyData = () => {
     const shouldCarry = options.autoCarry !== false
     const result = shouldCarry ? carryOverUnfinished(currentDate, nextDate) : { moved: 0, skipped: 0 }
     setCurrentDate(nextDate)
+    setData(loadDay(nextDate))
     return result
   }
 
   const goPrevDay = () => {
-    setCurrentDate((prev) => shiftDate(prev, -1))
+    const prevDate = shiftDate(currentDate, -1)
+    setCurrentDate(prevDate)
+    setData(loadDay(prevDate))
   }
 
   const goToDate = (dateStr) => {
@@ -144,6 +143,7 @@ export const useDailyData = () => {
     }
 
     setCurrentDate(dateStr)
+    setData(loadDay(dateStr))
   }
 
   const addBrainDumpItem = (content) => {

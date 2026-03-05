@@ -1,4 +1,12 @@
-import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import {
+  DndContext,
+  PointerSensor,
+  closestCorners,
+  pointerWithin,
+  rectIntersection,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
 import { useMemo, useState } from 'react'
 import CategoryManagerModal from './components/Category/CategoryManagerModal'
 import DataTransferModal from './components/Data/DataTransferModal'
@@ -41,6 +49,43 @@ const summarizeDay = (dayData) => {
     total,
     completed,
   }
+}
+
+const collisionDetection = (args) => {
+  const pointerMatches = pointerWithin(args)
+  if (pointerMatches.length > 0) {
+    return pointerMatches
+  }
+
+  const cornerMatches = closestCorners(args)
+  if (cornerMatches.length > 0) {
+    return cornerMatches
+  }
+
+  return rectIntersection(args)
+}
+
+const resolveSlotFromPointer = (activatorEvent) => {
+  if (typeof document === 'undefined') {
+    return null
+  }
+
+  const clientX = Number(activatorEvent?.clientX)
+  const clientY = Number(activatorEvent?.clientY)
+
+  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) {
+    return null
+  }
+
+  const element = document.elementFromPoint(clientX, clientY)
+  const slotElement = element?.closest?.('[data-timeline-slot-index]')
+
+  if (!slotElement) {
+    return null
+  }
+
+  const slotIndex = Number(slotElement.getAttribute('data-timeline-slot-index'))
+  return Number.isInteger(slotIndex) ? slotIndex : null
 }
 
 function App() {
@@ -111,7 +156,7 @@ function App() {
     }
   }
 
-  const handleDragEnd = ({ active, over, delta }) => {
+  const handleDragEnd = ({ active, over, delta, activatorEvent }) => {
     const activeData = active.data.current
 
     if (!activeData) {
@@ -155,17 +200,9 @@ function App() {
       return
     }
 
-    if (!over) {
-      return
-    }
+    const overData = over?.data?.current ?? null
 
-    const overData = over.data.current
-
-    if (!overData) {
-      return
-    }
-
-    if (activeData.type === 'BRAIN_DUMP' && overData.type === 'BIG_THREE_SLOT') {
+    if (activeData.type === 'BRAIN_DUMP' && overData?.type === 'BIG_THREE_SLOT') {
       const success = sendToBigThree(activeData.id)
       if (!success) {
         showToast('빅 3이 이미 가득 찼습니다')
@@ -173,11 +210,14 @@ function App() {
       return
     }
 
-    if (
-      (activeData.type === 'BRAIN_DUMP' || activeData.type === 'BIG_THREE') &&
-      overData.type === 'TIMELINE_SLOT'
-    ) {
-      const startSlot = overData.slotIndex
+    if (activeData.type === 'BRAIN_DUMP' || activeData.type === 'BIG_THREE') {
+      const slotFromDroppable = overData?.type === 'TIMELINE_SLOT' ? overData.slotIndex : null
+      const startSlot = slotFromDroppable ?? resolveSlotFromPointer(activatorEvent)
+
+      if (!Number.isInteger(startSlot)) {
+        return
+      }
+
       const endSlot = Math.min(startSlot + DEFAULT_BOX_SLOTS, TOTAL_SLOTS)
       const newBox = {
         content: activeData.content,
@@ -192,9 +232,7 @@ function App() {
       }
 
       addTimeBox(newBox)
-      return
     }
-
   }
 
   const handleAddCategory = (name, color) => {
@@ -259,7 +297,7 @@ function App() {
   )
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragEnd={handleDragEnd}>
       <div className="dark h-screen bg-gray-900 text-gray-100">
         <div className="flex h-full flex-col overflow-hidden bg-gray-900">
           <Header
