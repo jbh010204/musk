@@ -1,14 +1,32 @@
+import { useState } from 'react'
+
 function WeeklyReportCard({ report }) {
+  const [isExpanded, setIsExpanded] = useState(true)
   const diffPrefix = report.diff > 0 ? '+' : ''
   const diffTone = report.diff > 0 ? 'text-orange-300' : report.diff < 0 ? 'text-green-300' : 'text-gray-300'
 
   return (
     <div className="mb-4 rounded-lg border border-gray-700 bg-gray-800/70 p-3">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">주간 리포트</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">주간 리포트</h3>
+        <button
+          type="button"
+          onClick={() => setIsExpanded((prev) => !prev)}
+          className="rounded border border-gray-600 px-2 py-0.5 text-[11px] text-gray-300 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          {isExpanded ? '접기' : '펼치기'}
+        </button>
+      </div>
 
-      {report.total === 0 ? (
+      {!isExpanded ? (
+        <p className="mt-2 text-sm text-gray-400">요약이 접혀 있습니다.</p>
+      ) : null}
+
+      {isExpanded && report.total === 0 ? (
         <p className="mt-2 text-sm text-gray-400">이번 주 데이터가 아직 없습니다.</p>
-      ) : (
+      ) : null}
+
+      {isExpanded && report.total > 0 ? (
         <div className="mt-2 space-y-2 text-sm">
           <p className="text-gray-200">
             총 일정 <span className="font-semibold text-white">{report.total}개</span> · 완료율{' '}
@@ -45,7 +63,7 @@ function WeeklyReportCard({ report }) {
               : '없음'}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

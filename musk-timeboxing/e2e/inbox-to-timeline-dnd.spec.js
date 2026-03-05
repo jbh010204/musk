@@ -54,17 +54,18 @@ test('drag guide appears while dragging from brain dump', async ({ page }) => {
   await page.getByPlaceholder('할 일을 입력하고 엔터...').press('Enter')
 
   const source = page.locator('button[title="GUIDE-테스트"]:visible').first()
+  const targetSlot = page.locator('button[aria-label="10:00 슬롯"]:visible').first()
   const sourceBox = await source.boundingBox()
-  if (!sourceBox) {
+  const targetBox = await targetSlot.boundingBox()
+  if (!sourceBox || !targetBox) {
     throw new Error('drag source bounding box missing')
   }
 
   await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2)
   await page.mouse.down()
-  await page.mouse.move(sourceBox.x + sourceBox.width / 2 + 12, sourceBox.y + sourceBox.height / 2 + 12, {
-    steps: 4,
-  })
-  await expect(page.getByTestId('timeline-drop-guide').first()).toBeVisible()
+  await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 10 })
+  await expect(page.locator('[data-testid="timeline-drop-guide"]:visible').first()).toBeVisible()
+  await expect(page.locator('[data-testid="timeline-drop-preview"]:visible').first()).toBeVisible()
   await page.mouse.up()
 })
 

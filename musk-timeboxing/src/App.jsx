@@ -30,6 +30,11 @@ const formatDate = (date) => {
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
+const shiftDate = (dateStr, offset) => {
+  const date = new Date(`${dateStr}T00:00:00`)
+  date.setDate(date.getDate() + offset)
+  return formatDate(date)
+}
 
 const startOfWeekMonday = (dateStr) => {
   const date = parseDate(dateStr)
@@ -266,8 +271,8 @@ function App() {
     currentDate,
     data,
     goNextDay: goNextDayRaw,
-    goPrevDay,
-    goToDate,
+    goPrevDay: goPrevDayRaw,
+    goToDate: goToDateRaw,
     addBrainDumpItem,
     removeBrainDumpItem,
     sendToBigThree,
@@ -286,12 +291,33 @@ function App() {
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false)
   const [isDataModalOpen, setIsDataModalOpen] = useState(false)
   const [activeDragPreview, setActiveDragPreview] = useState(null)
+  const [dropPreviewSlot, setDropPreviewSlot] = useState(null)
+  const [dailySuggestion, setDailySuggestion] = useState(null)
   const lastPointerRef = useRef(null)
+  const dropPreviewSlotRef = useRef(null)
+  const activeDragTypeRef = useRef(null)
   const pointerTrackingRef = useRef(false)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
+  const updateDropPreviewSlot = (slot) => {
+    const normalized = Number.isInteger(slot) ? slot : null
+    dropPreviewSlotRef.current = normalized
+    setDropPreviewSlot((prev) => (prev === normalized ? prev : normalized))
+  }
+
+  const updateDropPreviewFromPointer = (pointer) => {
+    if (activeDragTypeRef.current !== 'BRAIN_DUMP' && activeDragTypeRef.current !== 'BIG_THREE') {
+      updateDropPreviewSlot(null)
+      return
+    }
+
+    const slot = resolveSlotFromPointerPosition(pointer)
+    updateDropPreviewSlot(slot)
+  }
+
   const goNextDay = () => {
     const skipSuggestion = getSkipBasedSuggestion(data)
+    const nextDate = shiftDate(currentDate, 1)
     const result = goNextDayRaw({ autoCarry: true })
 
     if (result.moved > 0) {
@@ -301,10 +327,22 @@ function App() {
     }
 
     if (skipSuggestion) {
-      window.setTimeout(() => {
-        showToast(skipSuggestion, 3000)
-      }, 260)
+      setDailySuggestion({
+        forDate: nextDate,
+        message: skipSuggestion,
+      })
+      return
     }
+
+    setDailySuggestion(null)
+  }
+  const goPrevDay = () => {
+    goPrevDayRaw()
+    setDailySuggestion(null)
+  }
+  const goToDate = (dateStr) => {
+    goToDateRaw(dateStr)
+    setDailySuggestion(null)
   }
 
   const weekStrip = useMemo(() => {
@@ -371,10 +409,12 @@ function App() {
   }
 
   const trackPointerMove = (event) => {
-    lastPointerRef.current = {
+    const pointer = {
       clientX: Number(event?.clientX),
       clientY: Number(event?.clientY),
     }
+    lastPointerRef.current = pointer
+    updateDropPreviewFromPointer(pointer)
   }
 
   const startPointerTracking = () => {
@@ -397,39 +437,73 @@ function App() {
 
   const handleDragStart = ({ active, activatorEvent }) => {
     const payload = active?.data?.current
-    lastPointerRef.current = {
+    const pointer = {
       clientX: Number(activatorEvent?.clientX),
       clientY: Number(activatorEvent?.clientY),
     }
+    lastPointerRef.current = pointer
 
     if (!payload) {
       setActiveDragPreview(null)
+      updateDropPreviewSlot(null)
       return
     }
 
     startPointerTracking()
+    activeDragTypeRef.current = payload.type ?? null
 
     if (payload.type === 'BRAIN_DUMP' || payload.type === 'BIG_THREE') {
       setActiveDragPreview({
         type: payload.type,
         content: payload.content,
       })
+      updateDropPreviewFromPointer(pointer)
       return
     }
 
     setActiveDragPreview(null)
+    updateDropPreviewSlot(null)
   }
 
   const handleDragCancel = () => {
     setActiveDragPreview(null)
     lastPointerRef.current = null
+    activeDragTypeRef.current = null
+    updateDropPreviewSlot(null)
     stopPointerTracking()
+  }
+
+  const handleDragMove = ({ over, activatorEvent, active, delta }) => {
+    if (activeDragTypeRef.current !== 'BRAIN_DUMP' && activeDragTypeRef.current !== 'BIG_THREE') {
+      return
+    }
+
+    const overData = over?.data?.current
+    if (overData?.type === 'TIMELINE_SLOT' && Number.isInteger(overData.slotIndex)) {
+      updateDropPreviewSlot(overData.slotIndex)
+      return
+    }
+
+    let pointerSlot = null
+    const clientX = Number(activatorEvent?.clientX)
+    const clientY = Number(activatorEvent?.clientY)
+
+    if (Number.isFinite(clientX) && Number.isFinite(clientY)) {
+      const pointer = { clientX, clientY }
+      lastPointerRef.current = pointer
+      pointerSlot = resolveSlotFromPointerPosition(pointer)
+    }
+
+    const rectSlot = resolveSlotFromFinalPosition(active, delta)
+    updateDropPreviewSlot(pointerSlot ?? rectSlot)
   }
 
   const handleDragEnd = ({ active, over, delta }) => {
     setActiveDragPreview(null)
     const finalize = () => {
       lastPointerRef.current = null
+      activeDragTypeRef.current = null
+      updateDropPreviewSlot(null)
       stopPointerTracking()
     }
 
@@ -494,6 +568,7 @@ function App() {
 
     if (activeData.type === 'BRAIN_DUMP' || activeData.type === 'BIG_THREE') {
       const startSlot =
+        dropPreviewSlotRef.current ??
         resolveSlotFromFinalPosition(active, delta) ??
         resolveSlotFromPointerPosition(lastPointerRef.current) ??
         (overData?.type === 'TIMELINE_SLOT' ? overData.slotIndex : null) ??
@@ -578,6 +653,9 @@ function App() {
       data={data}
       categories={categories}
       weeklyReport={weeklyReport}
+      suggestionMessage={dailySuggestion?.forDate === currentDate ? dailySuggestion.message : null}
+      onDismissSuggestion={() => setDailySuggestion(null)}
+      dropPreviewSlot={dropPreviewSlot}
       addTimeBox={addTimeBox}
       updateTimeBox={updateTimeBox}
       removeTimeBox={removeTimeBox}
@@ -592,6 +670,7 @@ function App() {
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
       onDragCancel={handleDragCancel}
       onDragEnd={handleDragEnd}
     >

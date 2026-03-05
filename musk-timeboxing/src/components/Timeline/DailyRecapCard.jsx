@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { getCategoryLabel } from '../../utils/categoryVisual'
 import { slotDurationMinutes } from '../../utils/timeSlot'
 
 function DailyRecapCard({ timeBoxes, categoryMap }) {
+  const [isExpanded, setIsExpanded] = useState(true)
   const recap = useMemo(() => {
     const total = timeBoxes.length
     const completed = timeBoxes.filter((box) => box.status === 'COMPLETED').length
@@ -64,11 +65,24 @@ function DailyRecapCard({ timeBoxes, categoryMap }) {
 
   return (
     <div className="mb-4 rounded-lg border border-gray-700 bg-gray-800/70 p-3">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">오늘 리캡</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">오늘 리캡</h3>
+        <button
+          type="button"
+          onClick={() => setIsExpanded((prev) => !prev)}
+          className="rounded border border-gray-600 px-2 py-0.5 text-[11px] text-gray-300 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          {isExpanded ? '접기' : '펼치기'}
+        </button>
+      </div>
 
-      {recap.total === 0 ? (
+      {!isExpanded ? <p className="mt-2 text-sm text-gray-400">요약이 접혀 있습니다.</p> : null}
+
+      {isExpanded && recap.total === 0 ? (
         <p className="mt-2 text-sm text-gray-400">아직 등록된 일정이 없습니다.</p>
-      ) : (
+      ) : null}
+
+      {isExpanded && recap.total > 0 ? (
         <div className="mt-2 grid gap-2 text-sm md:grid-cols-2">
           <p className="text-gray-200">
             총 일정 <span className="font-semibold text-white">{recap.total}</span>개
@@ -91,7 +105,7 @@ function DailyRecapCard({ timeBoxes, categoryMap }) {
             <span className={recap.diffTone}>{recap.diffText}</span>)
           </p>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

@@ -18,7 +18,10 @@ test('shows skip-based suggestion when moving to next day', async ({ page }) => 
 
   await page.locator('button[aria-label="다음 날짜"]').click()
 
-  await expect(
-    page.getByText('자동 제안: 외부 일정 변동이 있었어요. 버퍼 30분 블록을 먼저 배치해보세요.').first(),
-  ).toBeVisible()
+  const suggestion = page.locator('[data-testid="daily-suggestion-panel"]:visible').first()
+  await expect(suggestion).toContainText(
+    '자동 제안: 외부 일정 변동이 있었어요. 버퍼 30분 블록을 먼저 배치해보세요.',
+  )
+  await suggestion.getByRole('button', { name: '닫기' }).click()
+  await expect(suggestion).toHaveCount(0)
 })

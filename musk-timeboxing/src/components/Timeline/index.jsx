@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { getCategoryColor, getCategoryLabel } from '../../utils/categoryVisual'
-import { hasOverlap, TOTAL_SLOTS } from '../../utils/timeSlot'
+import { hasOverlap, slotToTime, TOTAL_SLOTS } from '../../utils/timeSlot'
 import CompletionModal from './CompletionModal'
 import DailyRecapCard from './DailyRecapCard'
 import TimeBoxCard from './TimeBoxCard'
@@ -15,6 +15,9 @@ function Timeline({
   data,
   categories,
   weeklyReport,
+  suggestionMessage = null,
+  onDismissSuggestion = () => {},
+  dropPreviewSlot = null,
   addTimeBox,
   updateTimeBox,
   removeTimeBox,
@@ -155,6 +158,21 @@ function Timeline({
           브레인 덤프/빅3 항목을 원하는 시간 슬롯에 드롭하면 일정이 추가됩니다.
         </div>
       ) : null}
+      {suggestionMessage ? (
+        <div
+          data-testid="daily-suggestion-panel"
+          className="mb-3 flex items-start justify-between gap-2 rounded border border-sky-400/60 bg-sky-500/10 px-3 py-2 text-xs text-sky-100"
+        >
+          <p>{suggestionMessage}</p>
+          <button
+            type="button"
+            onClick={onDismissSuggestion}
+            className="rounded border border-sky-300/60 px-2 py-0.5 text-[11px] text-sky-100 hover:bg-sky-500/20 focus:outline-none focus:ring-2 focus:ring-sky-300"
+          >
+            닫기
+          </button>
+        </div>
+      ) : null}
       <WeeklyReportCard report={weeklyReport} />
       <DailyRecapCard timeBoxes={sortedBoxes} categoryMap={categoryMap} />
 
@@ -175,6 +193,19 @@ function Timeline({
       <div className="overflow-x-auto">
         <div className="relative min-w-[520px]">
           <TimeSlotGrid onSlotClick={handleSlotClick} showDropGuide={showDropGuide} />
+          {showDropGuide && Number.isInteger(dropPreviewSlot) ? (
+            <div
+              data-testid="timeline-drop-preview"
+              className="pointer-events-none absolute left-16 right-2 z-10"
+              style={{ top: dropPreviewSlot * SLOT_HEIGHT }}
+            >
+              <div className="relative border-t-2 border-indigo-400/90">
+                <span className="absolute -left-14 -top-3 rounded bg-indigo-600/80 px-1.5 py-0.5 text-[10px] text-white">
+                  {slotToTime(dropPreviewSlot)}
+                </span>
+              </div>
+            </div>
+          ) : null}
 
           <div className="pointer-events-none absolute inset-y-0 left-16 right-2">
             {sortedBoxes.map((box) => (
