@@ -49,6 +49,39 @@ const summarizeDay = (dayData) => {
   }
 }
 
+const SKIP_SUGGESTION_BY_REASON = {
+  '외부 일정/방해': '자동 제안: 외부 일정 변동이 있었어요. 버퍼 30분 블록을 먼저 배치해보세요.',
+  '예상보다 오래 걸림': '자동 제안: 주요 일정 예상 시간을 +30분 늘려 계획해보세요.',
+  '우선순위 변경': '자동 제안: 타임라인 배치 전에 빅3를 먼저 확정해보세요.',
+  '컨디션 저하': '자동 제안: 오전 첫 블록을 30분 저강도 작업으로 시작해보세요.',
+  '자료/준비 부족': '자동 제안: 실행 전에 준비/정리 30분 블록을 먼저 잡아보세요.',
+  기타: '자동 제안: 건너뜀이 반복됩니다. 오늘은 버퍼 블록 1개를 먼저 배치해보세요.',
+}
+
+const getSkipBasedSuggestion = (dayData) => {
+  const skipped = (Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []).filter(
+    (box) => box.status === 'SKIPPED',
+  )
+
+  if (skipped.length === 0) {
+    return null
+  }
+
+  const reasonCounter = new Map()
+  skipped.forEach((box) => {
+    const reason =
+      typeof box.skipReason === 'string' && box.skipReason.trim().length > 0 ? box.skipReason.trim() : '기타'
+    reasonCounter.set(reason, (reasonCounter.get(reason) || 0) + 1)
+  })
+
+  const [topReason, topCount] = [...reasonCounter.entries()].sort((a, b) => b[1] - a[1])[0] || ['기타', 0]
+  if (topCount < 1) {
+    return null
+  }
+
+  return SKIP_SUGGESTION_BY_REASON[topReason] || SKIP_SUGGESTION_BY_REASON.기타
+}
+
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 
 const getVisibleTimelineGridAtPoint = (clientX, clientY) => {
@@ -188,15 +221,19 @@ function App() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
   const goNextDay = () => {
+    const skipSuggestion = getSkipBasedSuggestion(data)
     const result = goNextDayRaw({ autoCarry: true })
 
     if (result.moved > 0) {
       showToast(`미완료 일정 ${result.moved}건을 다음 날로 이월했습니다`)
-      return
+    } else if (result.skipped > 0) {
+      showToast(`이월 가능한 일정이 없어 ${result.skipped}건을 건너뛰었습니다`)
     }
 
-    if (result.skipped > 0) {
-      showToast(`이월 가능한 일정이 없어 ${result.skipped}건을 건너뛰었습니다`)
+    if (skipSuggestion) {
+      window.setTimeout(() => {
+        showToast(skipSuggestion, 3000)
+      }, 260)
     }
   }
 
