@@ -244,10 +244,7 @@ export const useDailyData = () => {
 
     setData((prev) => ({
       ...prev,
-      brainDump: sortBrainDumpItems([
-        ...prev.brainDump,
-        { id: createId(), content: trimmed, isDone: false, priority: 0 },
-      ]),
+      brainDump: [...prev.brainDump, { id: createId(), content: trimmed, isDone: false, priority: 0 }],
     }))
   }
 
@@ -279,7 +276,7 @@ export const useDailyData = () => {
 
       return {
         ...prev,
-        brainDump: sortBrainDumpItems(next),
+        brainDump: next,
       }
     })
 
@@ -310,7 +307,7 @@ export const useDailyData = () => {
 
       return {
         ...prev,
-        brainDump: sortBrainDumpItems(nextBrainDump),
+        brainDump: nextBrainDump,
       }
     })
 

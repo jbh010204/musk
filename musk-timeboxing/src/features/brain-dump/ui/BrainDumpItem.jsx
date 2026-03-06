@@ -20,17 +20,17 @@ function PriorityBattery({ priority = 0, onClick = () => {}, disabled = false, i
       aria-label={`중요도 ${label} (${priority}/4)`}
       title={`중요도 ${label}`}
       data-testid={`brain-dump-priority-${itemId}`}
-      className={`shrink-0 rounded-2xl p-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+      className={`shrink-0 rounded-xl p-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
         priority > 0
           ? 'bg-slate-100 shadow-sm hover:bg-slate-50 dark:bg-slate-800/90 dark:hover:bg-slate-700/80'
           : 'bg-slate-100/80 hover:bg-slate-50 dark:bg-slate-800/70 dark:hover:bg-slate-700/70'
       } ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:-translate-y-0.5'}`}
     >
-      <span className="flex h-6 w-11 items-center gap-0.5 rounded-xl bg-slate-200/90 px-1 shadow-inner dark:bg-slate-900/90">
+      <span className="flex h-5 w-9 items-center gap-px rounded-lg bg-slate-200/90 px-1 shadow-inner dark:bg-slate-900/90">
         {PRIORITY_SEGMENT_CLASSES.map((className, index) => (
           <span
             key={index}
-            className={`h-3 flex-1 rounded-full transition-all ${
+            className={`h-2.5 flex-1 rounded-full transition-all ${
               index < priority ? className : 'bg-slate-300/80 dark:bg-slate-700/80'
             }`}
           />
@@ -84,7 +84,7 @@ function BrainDumpItem({ item, onRemove, onCyclePriority, onSendToBigThree }) {
       } ${isRemoving ? 'pointer-events-none translate-x-6 opacity-0' : 'translate-x-0 opacity-100'}`}
     >
       <div className="flex items-start gap-3">
-        <div className="flex shrink-0 flex-col items-center gap-1 pt-0.5">
+        <div className="flex shrink-0 items-center pt-0.5">
           <PriorityBattery
             priority={priority}
             itemId={item.id}
@@ -92,9 +92,6 @@ function BrainDumpItem({ item, onRemove, onCyclePriority, onSendToBigThree }) {
             disabled={isRemoving}
             onClick={() => onCyclePriority(item.id)}
           />
-          <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
-            {priorityLabel}
-          </span>
         </div>
 
         <div className="min-w-0 flex-1">
@@ -102,12 +99,14 @@ function BrainDumpItem({ item, onRemove, onCyclePriority, onSendToBigThree }) {
             ref={setNodeRef}
             type="button"
             disabled={isRemoving}
-            className="w-full cursor-grab rounded-xl px-2 py-1 text-left text-sm active:cursor-grabbing hover:bg-slate-50 disabled:cursor-not-allowed dark:hover:bg-slate-700/65"
+            className="w-full cursor-grab rounded-xl px-2 py-1 text-left text-sm leading-5 active:cursor-grabbing hover:bg-slate-50 disabled:cursor-not-allowed dark:hover:bg-slate-700/65"
             {...listeners}
             {...attributes}
             title={item.content}
           >
-            <span className="block truncate">{item.content}</span>
+            <span className="block overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
+              {item.content}
+            </span>
           </button>
         </div>
 

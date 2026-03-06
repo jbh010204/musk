@@ -1,4 +1,4 @@
-# Musk Planner Task Execution Board (25 Tasks)
+# Musk Planner Task Execution Board (27 Tasks)
 
 이 문서는 현재 합의된 작업을 한 번에 처리하지 않고,
 작업 단위를 쪼개서 순차 실행하기 위한 운영 보드다.
@@ -58,6 +58,8 @@
   - `T23` 브레인 덤프 priority 기반 자동 정렬
   - `T24` 브레인 덤프 priority 기반 빅3 추천
   - `T25` priority E2E/문서/패치노트 동기화
+  - `T26` 브레인 덤프 priority 레이아웃 압축
+  - `T27` 브레인 덤프 priority 정렬 UX 완화
 
 ## 3. Prioritized Task List
 
@@ -424,6 +426,51 @@
 
 권장 커밋 메시지:
 - `docs(priority): sync tests notes and execution board`
+
+---
+
+### T26. 브레인 덤프 priority 레이아웃 압축
+목표: priority 배터리 시각은 유지하면서 텍스트 가독성을 높이기 위해 좌측 점유 폭을 줄이기
+
+하위 태스크:
+1. 배터리 컨트롤 크기 축소
+2. priority 라벨 상시 노출 제거
+3. 본문을 2줄까지 표시하는 clamp 규칙 적용
+
+완료 기준(DoD):
+- 긴 텍스트가 한 줄 `...`로 과도하게 잘리지 않음
+- 배터리 시각은 유지하되 리스트 밀도가 과하지 않음
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1 e2e/brain-dump-priority.spec.js`
+
+권장 커밋 메시지:
+- `refactor(brain-dump): compact priority battery layout`
+
+---
+
+### T27. 브레인 덤프 priority 정렬 UX 완화
+목표: priority 변경 시 항목이 즉시 위로 튀는 문제를 제거하고 추천/재진입에서만 정렬 기준을 반영
+
+하위 태스크:
+1. priority 변경 시 현재 배열 순서 유지
+2. 추천채우기 로직은 priority 정렬 유지
+3. 재진입(load) 시 정렬 상태 복원
+4. 문구/테스트 기대값 수정
+
+완료 기준(DoD):
+- priority 조정 중 현재 리스트 위치가 유지됨
+- Big3 추천과 재진입 시에는 priority 순이 반영됨
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1 e2e/brain-dump-priority.spec.js e2e/bigthree-autofill.spec.js`
+
+권장 커밋 메시지:
+- `fix(brain-dump): delay priority sorting until reload or recommendation`
 
 ---
 

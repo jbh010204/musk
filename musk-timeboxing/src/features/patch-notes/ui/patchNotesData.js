@@ -1,5 +1,28 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.16.1',
+    date: '2026-03-07',
+    title: '브레인 덤프 priority 가독성/정렬 UX 보정(T26~T27)',
+    summary:
+      'priority 배터리의 시각은 유지하면서 폭을 줄여 텍스트 가독성을 개선하고, priority 변경 시 즉시 위로 튀는 정렬을 제거했습니다.',
+    focus: [
+      '브레인 덤프 입력 단계에서 우선순위 조작이 본문 가독성을 해치지 않도록 레이아웃 밀도를 재조정',
+      'priority 변경 중 사용자가 맥락을 잃지 않도록 현재 세션에서는 아이템 위치를 유지',
+      '추천 정확도는 유지하기 위해 빅3 추천과 재진입에서는 여전히 priority 정렬을 사용',
+    ],
+    improvements: [
+      'priority 배터리 크기 축소 및 상시 라벨 제거',
+      '브레인 덤프 본문을 2줄 clamp로 변경해 긴 텍스트 가독성 보강',
+      'priority 변경 시 즉시 재정렬 제거, 재진입 시 정렬 복원 방식으로 조정',
+      'priority E2E를 정렬 지연 UX 기준으로 업데이트',
+    ],
+    validation: [
+      'lint/build 통과',
+      'brain-dump-priority, bigthree-autofill 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.16.0',
     date: '2026-03-07',
     title: '브레인 덤프 priority 배터리 + 빅3 추천 흐름(T21~T25) 추가',

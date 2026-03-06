@@ -80,7 +80,7 @@ npm run build
 ## 브레인 덤프 우선순위
 
 - 각 항목의 배터리를 눌러 중요도를 `미지정 -> 낮음 -> 보통 -> 높음 -> 최우선` 순으로 올릴 수 있습니다.
-- 브레인 덤프는 중요도 높은 순으로 자동 정렬됩니다.
+- 현재 화면에서는 priority 변경 시 위치를 유지하고, 재진입 시 우선순위 순으로 정렬됩니다.
 - `빅3 추천채우기`는 중요도 상위 항목부터 빈 슬롯을 채웁니다.
 
 ## 정적 배포
@@ -112,7 +112,7 @@ npm run build
 - 도커 개발 워크플로: `docs/DOCKER_DEV_WORKFLOW.md`
 - 전달/리뷰 워크플로: `docs/DELIVERY_WORKFLOW.md`
 - 패치노트 운영 워크플로: `docs/PATCH_NOTES_WORKFLOW.md`
-- 태스크 실행 보드(25개): `docs/TASK_EXECUTION_BOARD.md`
+- 태스크 실행 보드(27개): `docs/TASK_EXECUTION_BOARD.md`
 - FSD 맵(1단계): `docs/FSD_PHASE1_MAP.md`
 - FSD 맵(2단계): `docs/FSD_PHASE2_MAP.md`
 - 타임박스 레이아웃 매트릭스: `docs/TIMEBOX_LAYOUT_MATRIX.md`

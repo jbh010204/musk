@@ -28,7 +28,7 @@ function BrainDump({
         </button>
       </div>
       <p className="-mt-3 text-xs text-slate-500 dark:text-slate-400">
-        배터리를 눌러 중요도를 올리면 자동 정렬되고 빅3 추천에 반영됩니다.
+        배터리로 중요도를 조정하면 빅3 추천채우기와 다음 재진입 때 우선순위가 반영됩니다.
       </p>
       <BrainDumpInput onAdd={onAdd} />
       <BrainDumpList
