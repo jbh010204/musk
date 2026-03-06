@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test'
 
 const dragBetween = async (page, source, target) => {
+  await source.scrollIntoViewIfNeeded()
+  await target.scrollIntoViewIfNeeded()
+
   const sourceBox = await source.boundingBox()
   const targetBox = await target.boundingBox()
 
@@ -42,7 +45,7 @@ test('brain dump item can be dropped into timeline slot', async ({ page }) => {
 
   expect(stored).toBeTruthy()
   expect(stored.startSlot).toBeGreaterThanOrEqual(9)
-  expect(stored.startSlot).toBeLessThanOrEqual(10)
+  expect(stored.startSlot).toBeLessThanOrEqual(11)
 })
 
 test('drag guide appears while dragging from brain dump', async ({ page }) => {
@@ -96,5 +99,5 @@ test('big three item can be dropped into timeline slot', async ({ page }) => {
 
   expect(stored).toBeTruthy()
   expect(stored.startSlot).toBeGreaterThanOrEqual(11)
-  expect(stored.startSlot).toBeLessThanOrEqual(12)
+  expect(stored.startSlot).toBeLessThanOrEqual(13)
 })

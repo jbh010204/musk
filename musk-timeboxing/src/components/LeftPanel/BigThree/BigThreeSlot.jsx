@@ -50,19 +50,19 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
   return (
     <div
       ref={setDroppableNodeRef}
-      className={`p-3 ${
-        slot ? 'ui-panel' : 'ui-panel border-dashed'
-      } ${isOver && !slot ? 'border-indigo-400 bg-gray-700/60' : ''} ${
+      className={`p-6 ${
+        slot ? 'ui-panel' : 'ui-panel-subtle'
+      } ${isOver && !slot ? 'bg-indigo-500/10 ring-2 ring-indigo-400' : ''} ${
         isDragging ? 'opacity-50' : ''
       }`}
     >
-      <div className="mb-1 text-xs text-gray-500">슬롯 {slotIndex + 1}</div>
+      <div className="mb-2 text-sm text-slate-500 dark:text-slate-400">슬롯 {slotIndex + 1}</div>
 
       {!slot && !isEditing ? (
         <button
           type="button"
           onClick={() => setIsEditing(true)}
-          className="w-full rounded px-2 py-1 text-left text-sm text-gray-400 transition-colors hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-500 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800"
         >
           — 비어있음 —
         </button>
@@ -110,7 +110,7 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
           <button
             ref={setDraggableNodeRef}
             type="button"
-            className="min-w-0 flex-1 cursor-grab truncate text-left text-sm active:cursor-grabbing"
+            className="min-w-0 flex-1 cursor-grab truncate rounded-xl px-3 py-2 text-left text-sm active:cursor-grabbing hover:bg-slate-50 dark:hover:bg-slate-800"
             {...listeners}
             {...attributes}
             title={slot.content}

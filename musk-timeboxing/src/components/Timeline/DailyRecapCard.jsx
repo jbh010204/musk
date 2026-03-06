@@ -64,9 +64,11 @@ function DailyRecapCard({ timeBoxes, categoryMap }) {
   }, [categoryMap, timeBoxes])
 
   return (
-    <div className="ui-panel mb-4 p-3">
+    <div className="ui-panel mb-6 p-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">오늘 리캡</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          오늘 리캡
+        </h3>
         <button
           type="button"
           onClick={() => setIsExpanded((prev) => !prev)}
@@ -76,19 +78,21 @@ function DailyRecapCard({ timeBoxes, categoryMap }) {
         </button>
       </div>
 
-      {!isExpanded ? <p className="mt-2 text-sm text-gray-400">요약이 접혀 있습니다.</p> : null}
+      {!isExpanded ? (
+        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">요약이 접혀 있습니다.</p>
+      ) : null}
 
       {isExpanded && recap.total === 0 ? (
-        <p className="mt-2 text-sm text-gray-400">아직 등록된 일정이 없습니다.</p>
+        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">아직 등록된 일정이 없습니다.</p>
       ) : null}
 
       {isExpanded && recap.total > 0 ? (
-        <div className="mt-2 grid gap-2 text-sm md:grid-cols-2">
+        <div className="mt-4 grid gap-4 text-sm md:grid-cols-2">
           <p className="text-gray-200">
-            총 일정 <span className="font-semibold text-gray-100">{recap.total}</span>개
+            총 일정 <span className="text-xl font-bold text-gray-100">{recap.total}</span>개
           </p>
           <p className="text-gray-200">
-            완료율 <span className="font-semibold text-gray-100">{recap.completionRate}%</span>
+            완료율 <span className="text-xl font-bold text-gray-100">{recap.completionRate}%</span>
           </p>
           <p className="text-gray-200">
             완료 {recap.completed} · 예정 {recap.planned} · 건너뜀 {recap.skipped}

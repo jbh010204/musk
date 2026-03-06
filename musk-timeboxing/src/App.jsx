@@ -898,11 +898,15 @@ function App() {
     }
 
     if (activeData.type === 'BRAIN_DUMP' || activeData.type === 'BIG_THREE') {
+      const overSlot =
+        overData?.type === 'TIMELINE_SLOT' && Number.isInteger(overData.slotIndex)
+          ? overData.slotIndex
+          : null
       const startSlot =
+        overSlot ??
         dropPreviewSlotRef.current ??
-        resolveSlotFromFinalPosition(active, delta) ??
         resolveSlotFromPointerPosition(lastPointerRef.current) ??
-        (overData?.type === 'TIMELINE_SLOT' ? overData.slotIndex : null) ??
+        resolveSlotFromFinalPosition(active, delta) ??
         null
 
       if (!Number.isInteger(startSlot)) {
@@ -1033,12 +1037,12 @@ function App() {
             }
           />
 
-          <div className="hidden min-h-0 flex-1 overflow-hidden md:flex">
-            <aside className="w-80 flex-shrink-0 overflow-y-auto border-r border-gray-700">
+          <div className="hidden min-h-0 flex-1 gap-6 overflow-hidden px-6 pb-6 md:flex">
+            <aside className="ui-panel w-80 flex-shrink-0 overflow-y-auto">
               {dumpSection}
               {bigThreeSection}
             </aside>
-            <main className="flex-1 overflow-y-auto">{timelineSection}</main>
+            <main className="ui-panel flex-1 overflow-y-auto">{timelineSection}</main>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto pb-16 md:hidden">
@@ -1047,15 +1051,15 @@ function App() {
             {mobileTab === 'timeline' ? timelineSection : null}
           </div>
 
-          <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-gray-700 bg-gray-800 md:hidden">
+          <nav className="fixed bottom-0 left-0 right-0 z-30 bg-gray-800/95 shadow-sm backdrop-blur md:hidden">
             <div className="grid grid-cols-3">
               <button
                 type="button"
                 onClick={() => setMobileTab('dump')}
                 className={`px-3 py-3 text-sm ${
                   mobileTab === 'dump'
-                    ? 'bg-gray-700 text-gray-100'
-                    : 'text-gray-300 hover:bg-gray-700'
+                    ? 'bg-indigo-600 text-gray-100'
+                    : 'text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
                 덤프
@@ -1065,8 +1069,8 @@ function App() {
                 onClick={() => setMobileTab('big3')}
                 className={`px-3 py-3 text-sm ${
                   mobileTab === 'big3'
-                    ? 'bg-gray-700 text-gray-100'
-                    : 'text-gray-300 hover:bg-gray-700'
+                    ? 'bg-indigo-600 text-gray-100'
+                    : 'text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
                 빅3
@@ -1076,8 +1080,8 @@ function App() {
                 onClick={() => setMobileTab('timeline')}
                 className={`px-3 py-3 text-sm ${
                   mobileTab === 'timeline'
-                    ? 'bg-gray-700 text-gray-100'
-                    : 'text-gray-300 hover:bg-gray-700'
+                    ? 'bg-indigo-600 text-gray-100'
+                    : 'text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
                 타임라인
@@ -1120,7 +1124,7 @@ function App() {
       </div>
       <DragOverlay>
         {activeDragPreview ? (
-          <div className="pointer-events-none max-w-xs rounded border border-indigo-400 bg-indigo-600/90 px-3 py-2 text-sm text-white shadow-lg">
+          <div className="pointer-events-none max-w-xs rounded-2xl bg-indigo-600/95 px-4 py-3 text-sm text-white shadow-lg">
             {activeDragPreview.content}
           </div>
         ) : null}

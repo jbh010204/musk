@@ -12,13 +12,13 @@ function BrainDumpItem({ item, onRemove, onSendToBigThree }) {
 
   return (
     <div
-      className={`ui-panel-subtle p-2 transition-colors hover:bg-gray-700/70 ${isDragging ? 'opacity-50' : ''}`}
+      className={`ui-panel-subtle p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-center justify-between gap-2">
         <button
           ref={setNodeRef}
           type="button"
-          className="min-w-0 flex-1 cursor-grab truncate text-left active:cursor-grabbing"
+          className="min-w-0 flex-1 cursor-grab truncate rounded-xl px-2 py-1 text-left text-sm active:cursor-grabbing hover:bg-slate-50 dark:hover:bg-slate-800"
           {...listeners}
           {...attributes}
           title={item.content}
@@ -26,7 +26,7 @@ function BrainDumpItem({ item, onRemove, onSendToBigThree }) {
           {item.content}
         </button>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => onSendToBigThree(item.id)}

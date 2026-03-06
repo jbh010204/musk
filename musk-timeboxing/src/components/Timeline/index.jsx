@@ -193,10 +193,12 @@ function Timeline({
   }
 
   return (
-    <section ref={sectionRef} className="h-full p-4 pb-24 md:pb-16">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400">⏱ 타임라인</h2>
-        <div className="ui-panel inline-flex items-center p-1 text-xs">
+    <section ref={sectionRef} className="h-full p-6 pb-24 md:pb-16">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          ⏱ 타임라인
+        </h2>
+        <div className="ui-panel-subtle inline-flex items-center p-1.5 text-xs">
           <button
             type="button"
             data-testid="timeline-scale-30"
@@ -204,7 +206,7 @@ function Timeline({
             className={`rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
               timelineScale === '30'
                 ? 'bg-indigo-600 text-white'
-                : 'text-gray-300 hover:bg-gray-700'
+                : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
             }`}
           >
             30분
@@ -216,7 +218,7 @@ function Timeline({
             className={`rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
               timelineScale === '15'
                 ? 'bg-indigo-600 text-white'
-                : 'text-gray-300 hover:bg-gray-700'
+                : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
             }`}
           >
             15분 보기
@@ -226,7 +228,7 @@ function Timeline({
       {showDropGuide ? (
         <div
           data-testid="timeline-drop-guide"
-          className="ui-panel-subtle mb-3 border-indigo-400/70 bg-indigo-500/10 px-3 py-2 text-xs text-indigo-100"
+          className="ui-panel-subtle mb-6 bg-indigo-500/10 px-4 py-3 text-sm text-indigo-100"
         >
           브레인 덤프/빅3 항목을 원하는 시간 슬롯에 드롭하면 일정이 추가됩니다.
         </div>
@@ -234,7 +236,7 @@ function Timeline({
       {suggestionMessage ? (
         <div
           data-testid="daily-suggestion-panel"
-          className="ui-panel-subtle mb-3 flex items-start justify-between gap-2 border-sky-400/60 bg-sky-500/10 px-3 py-2 text-xs text-sky-100"
+          className="ui-panel-subtle mb-6 flex items-start justify-between gap-3 bg-sky-500/10 px-4 py-3 text-sm text-sky-100"
         >
           <div className="space-y-2">
             <p>{suggestionMessage}</p>
@@ -242,7 +244,7 @@ function Timeline({
               <button
                 type="button"
                 onClick={onApplySuggestionAction}
-                className="rounded border border-sky-300/70 px-2 py-1 text-[11px] font-medium text-sky-100 transition-colors hover:bg-sky-500/20 focus:outline-none focus:ring-2 focus:ring-sky-300"
+                className="rounded-xl bg-sky-500/20 px-3 py-1.5 text-xs font-medium text-sky-100 transition-colors hover:bg-sky-500/30 focus:outline-none focus:ring-2 focus:ring-sky-300"
               >
                 {suggestionAction.label}
               </button>
@@ -251,7 +253,7 @@ function Timeline({
           <button
             type="button"
             onClick={onDismissSuggestion}
-            className="rounded border border-sky-300/60 px-2 py-0.5 text-[11px] text-sky-100 transition-colors hover:bg-sky-500/20 focus:outline-none focus:ring-2 focus:ring-sky-300"
+            className="rounded-xl bg-sky-500/20 px-3 py-1 text-xs text-sky-100 transition-colors hover:bg-sky-500/30 focus:outline-none focus:ring-2 focus:ring-sky-300"
           >
             닫기
           </button>
@@ -262,11 +264,11 @@ function Timeline({
       <DailyRecapCard timeBoxes={sortedBoxes} categoryMap={categoryMap} />
 
       {categoryLegend.length > 0 ? (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
           {categoryLegend.map((item) => (
             <span
               key={item.key}
-              className="inline-flex items-center gap-1 rounded border border-gray-700 bg-gray-800/70 px-2 py-1 text-xs text-gray-200"
+              className="inline-flex items-center gap-1 rounded-xl bg-gray-800/70 px-2.5 py-1.5 text-xs text-gray-200 shadow-sm"
             >
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
               {item.label}
@@ -343,7 +345,7 @@ function Timeline({
 
             {pendingInput ? (
               <div
-                className="pointer-events-auto absolute left-0 right-0 z-20 flex items-center gap-2 rounded border border-indigo-500 bg-gray-800 px-2 py-1"
+                className="ui-panel-subtle pointer-events-auto absolute left-0 right-0 z-20 flex items-center gap-2 px-3 py-2"
                 style={{
                   top: pendingInput.slotIndex * slotHeight,
                 }}
@@ -404,7 +406,7 @@ function Timeline({
                         className={`rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                           isActive
                             ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                            : 'bg-gray-700 text-gray-200 hover:bg-slate-50 dark:hover:bg-slate-800'
                         }`}
                         aria-label={`${presetSlots * 30}분 프리셋`}
                       >

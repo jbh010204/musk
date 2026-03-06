@@ -16,7 +16,7 @@ function TimeSlotRow({ slotIndex, onSlotClick, showDropGuide, rowHeight, showQua
   return (
     <div className="flex border-b border-gray-700" style={{ height: rowHeight }}>
       <div
-        className="w-16 shrink-0 px-2 text-right text-xs text-gray-500"
+        className="w-16 shrink-0 px-2 text-right text-xs text-slate-500 dark:text-slate-400"
         style={{ lineHeight: `${rowHeight}px` }}
       >
         {showLabel ? label : ''}
@@ -27,8 +27,10 @@ function TimeSlotRow({ slotIndex, onSlotClick, showDropGuide, rowHeight, showQua
         type="button"
         data-timeline-slot-index={slotIndex}
         onClick={() => onSlotClick(slotIndex)}
-        className={`relative block flex-1 text-left ${
-          showDropGuide ? 'bg-indigo-500/5 hover:bg-indigo-500/10' : 'bg-transparent'
+        className={`relative block flex-1 text-left transition-colors ${
+          showDropGuide
+            ? 'bg-indigo-500/5 hover:bg-indigo-500/10'
+            : 'bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800'
         } ${isOver ? 'bg-indigo-500/20 ring-1 ring-inset ring-indigo-400' : ''}`}
         aria-label={`${label} 슬롯`}
       >
@@ -63,8 +65,8 @@ function TimeSlotGrid({
       ))}
 
       <div className="flex" style={{ height: rowHeight }}>
-        <div
-          className="w-16 shrink-0 px-2 text-right text-xs text-gray-500"
+      <div
+          className="w-16 shrink-0 px-2 text-right text-xs text-slate-500 dark:text-slate-400"
           style={{ lineHeight: `${rowHeight}px` }}
         >
           24:00

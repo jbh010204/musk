@@ -62,7 +62,7 @@ function FloatingActionDock({ onOpenPatchNotes, onOpenCategory, onOpenData }) {
                   type="button"
                   aria-label={action.label}
                   onClick={() => handleAction(action.id)}
-                  className="ui-panel inline-flex min-w-[180px] items-center justify-between gap-2 px-3 py-2 text-sm font-medium text-gray-100 shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="ui-panel inline-flex min-w-[190px] items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-gray-100 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:hover:bg-slate-800"
                 >
                   <span className="inline-flex items-center gap-2">
                     <span
@@ -82,7 +82,7 @@ function FloatingActionDock({ onOpenPatchNotes, onOpenCategory, onOpenData }) {
             type="button"
             aria-label="빠른 메뉴"
             onClick={() => setOpen((prev) => !prev)}
-            className={`h-14 w-14 rounded-full border border-indigo-400/70 text-2xl font-semibold text-white shadow-xl transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+            className={`h-14 w-14 rounded-full text-2xl font-semibold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
               open ? 'bg-indigo-500 ring-2 ring-indigo-300/60' : 'bg-indigo-600 hover:bg-indigo-500'
             }`}
           >
