@@ -3,10 +3,45 @@
 @tailwind utilities;
 
 :root {
-  --surface-1: #0b1220;
-  --surface-2: #111827;
-  --surface-3: #1f2937;
-  --border-subtle: #374151;
+  --bg-app: #0b1220;
+  --text-primary: #f3f4f6;
+  --text-secondary: #94a3b8;
+
+  --surface-card: rgba(31, 41, 55, 0.75);
+  --surface-subtle: rgba(2, 6, 23, 0.7);
+  --surface-soft: rgba(30, 41, 59, 0.7);
+  --surface-hover: rgba(51, 65, 85, 0.6);
+  --surface-input: #374151;
+
+  --border-soft: rgba(148, 163, 184, 0.25);
+  --shadow-panel: none;
+  --shadow-subtle: none;
+
+  --modal-surface: rgba(15, 23, 42, 0.5);
+  --modal-border: rgba(255, 255, 255, 0.1);
+  --glass-surface: rgba(15, 23, 42, 0.5);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+.theme-light {
+  --bg-app: #f8f9fa;
+  --text-primary: #1f1f1f;
+  --text-secondary: #444746;
+
+  --surface-card: #ffffff;
+  --surface-subtle: #f1f5f9;
+  --surface-soft: #e2e8f0;
+  --surface-hover: #f8fafc;
+  --surface-input: #f1f5f9;
+
+  --border-soft: rgba(148, 163, 184, 0.45);
+  --shadow-panel: 0 0 0 1px rgba(226, 232, 240, 0.7), 0 2px 8px rgba(15, 23, 42, 0.05);
+  --shadow-subtle: 0 0 0 1px rgba(226, 232, 240, 0.65), 0 1px 4px rgba(15, 23, 42, 0.04);
+
+  --modal-surface: rgba(255, 255, 255, 0.4);
+  --modal-border: rgba(255, 255, 255, 0.3);
+  --glass-surface: rgba(255, 255, 255, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.3);
 }
 
 * {
@@ -27,11 +62,17 @@ body {
 
 @layer components {
   .ui-panel {
-    @apply rounded-2xl bg-white shadow-sm dark:bg-gray-800/75 dark:shadow-none;
+    @apply rounded-2xl shadow-sm;
+    background-color: var(--surface-card);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-panel);
   }
 
   .ui-panel-subtle {
-    @apply rounded-2xl bg-slate-100 shadow-none dark:bg-slate-950/70 dark:shadow-none;
+    @apply rounded-2xl shadow-none;
+    background-color: var(--surface-subtle);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-subtle);
   }
 
   .ui-btn {
@@ -43,7 +84,13 @@ body {
   }
 
   .ui-btn-secondary {
-    @apply ui-btn bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600;
+    @apply ui-btn;
+    background-color: var(--surface-soft);
+    color: var(--text-primary);
+  }
+
+  .ui-btn-secondary:hover {
+    background-color: var(--surface-hover);
   }
 
   .ui-btn-danger {
@@ -55,15 +102,28 @@ body {
   }
 
   .ui-btn-ghost {
-    @apply rounded-xl px-2 py-1.5 text-sm text-slate-600 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-gray-300 dark:hover:bg-gray-800;
+    @apply rounded-xl px-2 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500;
+    color: var(--text-secondary);
+  }
+
+  .ui-btn-ghost:hover {
+    background-color: var(--surface-hover);
   }
 
   .ui-input {
-    @apply w-full rounded-xl bg-slate-100 p-3 text-slate-900 shadow-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400;
+    @apply w-full rounded-xl p-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500;
+    background-color: var(--surface-input);
+    color: var(--text-primary);
+  }
+
+  .ui-input::placeholder {
+    color: var(--text-secondary);
   }
 
   .ui-select {
-    @apply w-full rounded-xl bg-slate-100 p-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100;
+    @apply w-full rounded-xl p-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500;
+    background-color: var(--surface-input);
+    color: var(--text-primary);
   }
 
   .ui-textarea-code {
@@ -71,7 +131,9 @@ body {
   }
 
   .ui-chip {
-    @apply inline-flex items-center gap-1 rounded-xl bg-slate-100 px-2 py-1 text-xs text-slate-600 shadow-sm dark:bg-gray-900/60 dark:text-gray-300;
+    @apply inline-flex items-center gap-1 rounded-xl px-2 py-1 text-xs shadow-sm;
+    background-color: var(--surface-soft);
+    color: var(--text-secondary);
   }
 
   .ui-modal-shell {
@@ -79,11 +141,17 @@ body {
   }
 
   .ui-modal-card {
-    @apply w-full rounded-3xl border border-white/30 bg-white/40 p-6 text-slate-900 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-slate-900/50 dark:text-gray-100;
+    @apply w-full rounded-3xl border p-6 shadow-2xl backdrop-blur-md;
+    background-color: var(--modal-surface);
+    border-color: var(--modal-border);
+    color: var(--text-primary);
   }
 
   .ui-glass-menu {
-    @apply rounded-2xl border border-white/30 bg-white/40 text-slate-800 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-slate-900/50 dark:text-gray-100;
+    @apply rounded-2xl border shadow-sm backdrop-blur-md;
+    background-color: var(--glass-surface);
+    border-color: var(--glass-border);
+    color: var(--text-primary);
   }
 }
 
