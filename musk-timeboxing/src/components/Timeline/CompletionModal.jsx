@@ -61,6 +61,7 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
         status: 'SKIPPED',
         actualMinutes: null,
         skipReason,
+        timerStartedAt: null,
       })
       onClose()
       return
@@ -79,6 +80,7 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
         status: 'COMPLETED',
         actualMinutes: actual,
         skipReason: null,
+        timerStartedAt: null,
       })
       onClose()
       return
