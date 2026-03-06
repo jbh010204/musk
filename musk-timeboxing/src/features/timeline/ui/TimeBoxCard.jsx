@@ -159,7 +159,10 @@ function TimeBoxCard({
       {...listeners}
       {...attributes}
     >
-      <div className={`absolute right-2 z-20 flex items-center gap-1 ${isCompact ? 'top-1.5' : 'top-2'}`}>
+      <div
+        data-testid="timebox-top-actions"
+        className={`absolute right-2 z-20 flex items-center gap-1 ${isCompact ? 'top-1.5' : 'top-2'}`}
+      >
         <span
           className={`rounded border px-1.5 py-0.5 font-semibold ${isCompact ? 'text-[9px]' : 'text-[10px]'}`}
           style={{
@@ -209,13 +212,17 @@ function TimeBoxCard({
       </div>
 
       {isCompact ? (
-        <div className={`mt-5 flex items-center gap-1.5 ${canUseTimer ? 'pr-20' : 'pr-12'}`}>
+        <div
+          data-testid="timebox-compact-row"
+          className={`mt-5 flex items-center gap-1.5 ${canUseTimer ? 'pr-20' : 'pr-12'}`}
+        >
           {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
             <span className="max-w-[50%] shrink-0 truncate rounded border border-amber-300/40 bg-amber-500/15 px-1 py-0.5 text-[10px] text-amber-100">
               사유: {timeBox.skipReason}
             </span>
           ) : categoryLabel ? (
             <span
+              data-testid="timebox-compact-tag"
               className="max-w-[42%] shrink-0 truncate rounded border px-1 py-0.5 text-[10px] text-white/95"
               style={{
                 backgroundColor: visual.categoryBadgeBackground,
