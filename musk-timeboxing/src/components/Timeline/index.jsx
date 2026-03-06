@@ -12,11 +12,52 @@ const DEFAULT_SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
 const DURATION_PRESETS = [1, 2, 3, 4]
 
+function TimelineInsightsSkeleton() {
+  return (
+    <div
+      className="mb-6 space-y-6 transition-opacity duration-300"
+      data-testid="timeline-insights-skeleton"
+    >
+      <div className="ui-panel animate-pulse p-6">
+        <div className="h-4 w-28 rounded bg-slate-200 dark:bg-slate-700" />
+        <div className="mt-4 grid gap-4 md:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="rounded-2xl bg-slate-100 p-4 dark:bg-slate-800">
+              <div className="h-3 w-16 rounded bg-slate-200 dark:bg-slate-700" />
+              <div className="mt-2 h-3 w-24 rounded bg-slate-200 dark:bg-slate-700" />
+              <div className="mt-2 h-3 w-20 rounded bg-slate-200 dark:bg-slate-700" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="ui-panel animate-pulse p-6">
+        <div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700" />
+        <div className="mt-4 space-y-3">
+          <div className="h-3 w-full rounded bg-slate-200 dark:bg-slate-700" />
+          <div className="h-3 w-4/5 rounded bg-slate-200 dark:bg-slate-700" />
+          <div className="h-3 w-3/5 rounded bg-slate-200 dark:bg-slate-700" />
+        </div>
+      </div>
+
+      <div className="ui-panel animate-pulse p-6">
+        <div className="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700" />
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="h-3 rounded bg-slate-200 dark:bg-slate-700" />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Timeline({
   data,
   categories,
   weeklyReport,
   weeklyPlanningPreview = [],
+  isInsightsLoading = false,
   onJumpToDate = () => {},
   initialFocusSlot = null,
   suggestionMessage = null,
@@ -86,6 +127,7 @@ function Timeline({
       window.clearInterval(intervalId)
     }
   }, [hasRunningTimer])
+
   const categoryLegend = useMemo(() => {
     const legendMap = new Map()
 
@@ -259,23 +301,29 @@ function Timeline({
           </button>
         </div>
       ) : null}
-      <WeeklyPlanningBoard days={weeklyPlanningPreview} onJumpToDate={onJumpToDate} />
-      <WeeklyReportCard report={weeklyReport} />
-      <DailyRecapCard timeBoxes={sortedBoxes} categoryMap={categoryMap} />
+      {isInsightsLoading ? (
+        <TimelineInsightsSkeleton />
+      ) : (
+        <div className="ui-fade-in-up">
+          <WeeklyPlanningBoard days={weeklyPlanningPreview} onJumpToDate={onJumpToDate} />
+          <WeeklyReportCard report={weeklyReport} />
+          <DailyRecapCard timeBoxes={sortedBoxes} categoryMap={categoryMap} />
 
-      {categoryLegend.length > 0 ? (
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          {categoryLegend.map((item) => (
-            <span
-              key={item.key}
-              className="inline-flex items-center gap-1 rounded-xl bg-gray-800/70 px-2.5 py-1.5 text-xs text-gray-200 shadow-sm"
-            >
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-              {item.label}
-            </span>
-          ))}
+          {categoryLegend.length > 0 ? (
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+              {categoryLegend.map((item) => (
+                <span
+                  key={item.key}
+                  className="inline-flex items-center gap-1 rounded-xl bg-gray-800/70 px-2.5 py-1.5 text-xs text-gray-200 shadow-sm"
+                >
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                  {item.label}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      )}
 
       <div className="overflow-x-auto">
         <div className="relative min-w-[520px]">

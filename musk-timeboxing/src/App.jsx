@@ -28,6 +28,7 @@ const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
 const THEME_KEY = 'musk-planner-theme'
 const THEME_DARK = 'dark'
 const THEME_LIGHT = 'light'
+const INSIGHTS_LOADING_MS = 220
 
 const parseDate = (dateStr) => new Date(`${dateStr}T00:00:00`)
 const formatDate = (date) => {
@@ -467,6 +468,7 @@ function App() {
   const [isDataModalOpen, setIsDataModalOpen] = useState(false)
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false)
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false)
+  const [isTimelineInsightsLoading, setIsTimelineInsightsLoading] = useState(true)
   const [activeDragPreview, setActiveDragPreview] = useState(null)
   const [dropPreviewSlot, setDropPreviewSlot] = useState(null)
   const [movingTimeBoxPreview, setMovingTimeBoxPreview] = useState(null)
@@ -491,6 +493,16 @@ function App() {
     }
   }, [theme])
 
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setIsTimelineInsightsLoading(false)
+    }, INSIGHTS_LOADING_MS)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [currentDate])
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
   const updateDropPreviewSlot = (slot) => {
     const normalized = Number.isInteger(slot) ? slot : null
@@ -509,6 +521,7 @@ function App() {
   }
 
   const goNextDay = () => {
+    setIsTimelineInsightsLoading(true)
     const skipSuggestion = getSkipBasedSuggestion(data)
     const nextDate = shiftDate(currentDate, 1)
     const result = goNextDayRaw({ autoCarry: true })
@@ -531,10 +544,12 @@ function App() {
     setDailySuggestion(null)
   }
   const goPrevDay = () => {
+    setIsTimelineInsightsLoading(true)
     goPrevDayRaw()
     setDailySuggestion(null)
   }
   const goToDate = (dateStr) => {
+    setIsTimelineInsightsLoading(true)
     goToDateRaw(dateStr)
     setDailySuggestion(null)
   }
@@ -989,6 +1004,7 @@ function App() {
       categories={categories}
       weeklyReport={weeklyReport}
       weeklyPlanningPreview={weeklyPlanningPreview}
+      isInsightsLoading={isTimelineInsightsLoading}
       onJumpToDate={goToDate}
       initialFocusSlot={lastFocus?.date === currentDate ? lastFocus.slot : null}
       suggestionMessage={dailySuggestion?.forDate === currentDate ? dailySuggestion.message : null}
