@@ -1,5 +1,25 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.13.1',
+    date: '2026-03-07',
+    title: 'TimeBox 높이별 레이아웃 매트릭스(T8) 적용',
+    summary: '타임박스 카드의 높이 분기 로직을 레이아웃 매트릭스로 분리해 유지보수성과 예측 가능성을 높였습니다.',
+    focus: [
+      '기존 `TimeBoxCard` 내부 조건 분기를 프로파일 함수 기반으로 정리해 향후 수정 비용 축소',
+      '30분 카드(compact)와 그 이상 카드의 노출 우선순위를 명시적으로 분리',
+      '동작 회귀 없이 구조만 정리하는 리팩토링 원칙 유지',
+    ],
+    improvements: [
+      '`src/features/timeline/ui/timeBoxLayout.js` 신설: compact/medium/spacious 밴드별 규칙 정의',
+      '`TimeBoxCard`가 매트릭스 결과(`resolveTimeBoxLayout`)를 사용하도록 치환',
+      '타임박스 레이아웃 규격 문서(`docs/TIMEBOX_LAYOUT_MATRIX.md`) 추가',
+    ],
+    validation: [
+      'lint/build 통과',
+      'E2E: timer-mode, timeline-scale, timebox-dnd, skip-reason, ui-layout-regression 통과',
+    ],
+  },
+  {
     version: 'v0.13.0',
     date: '2026-03-07',
     title: 'Shared UI Primitive 도입(T7) + 핵심 화면 치환',

@@ -23,7 +23,7 @@ test('patch note toggle width stays stable when expanding details', async ({ pag
   await page.getByRole('button', { name: '빠른 메뉴' }).click()
   await page.getByRole('button', { name: '패치노트' }).click()
 
-  const latestToggle = page.getByTestId('patch-note-toggle-v0.13.0')
+  const latestToggle = page.getByTestId('patch-note-toggle-v0.13.1')
   const before = await latestToggle.boundingBox()
   if (!before) {
     throw new Error('latest patch-note toggle not found')

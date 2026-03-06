@@ -29,8 +29,8 @@
 
 ## 2. 실행 상태 보드
 
-- Current Task: `T8`
-- Next Candidate: `T9`
+- Current Task: `T9`
+- Next Candidate: `T12`
 - Blocker: `None`
 - Completed:
   - `T1` FSD 1단계 구조 전환
@@ -40,6 +40,7 @@
   - `T5` 30분 타임박스 태그/재생버튼 정렬
   - `T6` semantic 테마 토큰 통합(1차)
   - `T7` Shared UI primitive 추출/핵심 화면 치환
+  - `T8` TimeBox 높이별 레이아웃 매트릭스 적용
   - `T10` UI 레이아웃 회귀 E2E 추가
   - `T11` 접근성(ARIA/라이브 리전) 보강
 
