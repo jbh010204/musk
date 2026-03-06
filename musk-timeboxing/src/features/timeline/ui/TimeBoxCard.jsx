@@ -159,63 +159,57 @@ function TimeBoxCard({
       {...listeners}
       {...attributes}
     >
-      {isCompact ? (
+      <div className={`absolute right-2 z-20 flex items-center gap-1 ${isCompact ? 'top-1.5' : 'top-2'}`}>
         <span
-          className={`absolute top-2 h-2.5 w-2.5 rounded-full ${canUseTimer ? 'right-8' : 'right-2'}`}
-          style={{ backgroundColor: visual.statusBadgeBackground }}
-          aria-label={visual.statusLabel}
-        />
-      ) : (
-        <span
-          className="absolute right-2 top-2 rounded border px-1.5 py-0.5 text-[10px] font-semibold"
+          className={`rounded border px-1.5 py-0.5 font-semibold ${isCompact ? 'text-[9px]' : 'text-[10px]'}`}
           style={{
             backgroundColor: visual.statusBadgeBackground,
             borderColor: visual.statusBadgeBorder,
           }}
+          aria-label={visual.statusLabel}
         >
           {visual.statusLabel}
         </span>
-      )}
 
-      {canUseTimer ? (
-        <div className={`absolute right-2 z-20 flex items-center gap-1 ${isCompact ? 'top-1.5' : 'top-8'}`}>
-          <button
-            type="button"
-            onMouseDown={(event) => event.stopPropagation()}
-            onClick={(event) =>
-              handleTimerAction(event, isRunning ? onTimerPause : onTimerStart)
-            }
-            className={`rounded border border-white/35 bg-black/20 px-1 py-0.5 text-[10px] leading-none text-white transition-all hover:scale-110 hover:bg-black/35 focus:outline-none focus:ring-2 focus:ring-indigo-300 ${
-              isRunning ? 'ring-1 ring-cyan-200/80' : ''
-            }`}
-            aria-label={isRunning ? '타이머 일시정지' : '타이머 시작'}
-          >
-            {isRunning ? '⏸' : '▶'}
-          </button>
-          {elapsedSeconds > 0 ? (
-            <>
-              {!isCompact ? (
-                <span className="rounded bg-black/20 px-1 py-0.5 text-[10px] text-white/90">
-                  {timerLabel}
-                </span>
-              ) : null}
-              <button
-                type="button"
-                onMouseDown={(event) => event.stopPropagation()}
-                onClick={(event) => handleTimerAction(event, onTimerComplete)}
-                className="rounded border border-emerald-300/50 bg-emerald-500/20 px-1 py-0.5 text-[10px] leading-none text-emerald-100 transition-all hover:scale-110 hover:bg-emerald-500/35 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-                aria-label="타이머 완료 처리"
-              >
-                ✓
-              </button>
-            </>
-          ) : null}
-        </div>
-      ) : null}
+        {canUseTimer ? (
+          <>
+            <button
+              type="button"
+              onMouseDown={(event) => event.stopPropagation()}
+              onClick={(event) =>
+                handleTimerAction(event, isRunning ? onTimerPause : onTimerStart)
+              }
+              className={`rounded border border-white/35 bg-black/20 px-1 py-0.5 text-[10px] leading-none text-white transition-all hover:scale-110 hover:bg-black/35 focus:outline-none focus:ring-2 focus:ring-indigo-300 ${
+                isRunning ? 'ring-1 ring-cyan-200/80' : ''
+              }`}
+              aria-label={isRunning ? '타이머 일시정지' : '타이머 시작'}
+            >
+              {isRunning ? '⏸' : '▶'}
+            </button>
+            {elapsedSeconds > 0 ? (
+              <>
+                {!isCompact ? (
+                  <span className="rounded bg-black/20 px-1 py-0.5 text-[10px] text-white/90">
+                    {timerLabel}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onClick={(event) => handleTimerAction(event, onTimerComplete)}
+                  className="rounded border border-emerald-300/50 bg-emerald-500/20 px-1 py-0.5 text-[10px] leading-none text-emerald-100 transition-all hover:scale-110 hover:bg-emerald-500/35 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                  aria-label="타이머 완료 처리"
+                >
+                  ✓
+                </button>
+              </>
+            ) : null}
+          </>
+        ) : null}
+      </div>
 
       {isCompact ? (
-        <div className={`mt-0.5 flex items-center gap-1.5 ${canUseTimer ? 'pr-16' : 'pr-4'}`}>
-          <span className="min-w-0 flex-1 truncate font-medium">{timeBox.content}</span>
+        <div className={`mt-5 flex items-center gap-1.5 ${canUseTimer ? 'pr-20' : 'pr-12'}`}>
           {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
             <span className="max-w-[50%] shrink-0 truncate rounded border border-amber-300/40 bg-amber-500/15 px-1 py-0.5 text-[10px] text-amber-100">
               사유: {timeBox.skipReason}
@@ -231,11 +225,12 @@ function TimeBoxCard({
               #{categoryLabel}
             </span>
           ) : null}
+          <span className="min-w-0 flex-1 truncate font-medium">{timeBox.content}</span>
         </div>
       ) : null}
 
       {!isCompact ? (
-        <div className={canUseTimer ? 'pr-20' : ''}>
+        <div className={`pt-5 ${canUseTimer ? 'pr-20' : 'pr-12'}`}>
           {categoryLabel ? (
             <div
               className="mb-1 inline-flex max-w-[80%] rounded border px-1.5 py-0.5 text-[10px] text-white"
