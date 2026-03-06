@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.12.8',
+    date: '2026-03-07',
+    title: '다크 분리/주간 강조/패치노트 안정화/30분 카드 정렬',
+    summary: '사용자 피드백 기반으로 다크 모드 경계, 주간 active 인지성, 패치노트 상세 레이아웃, 30분 카드 배치를 일괄 개선했습니다.',
+    focus: [
+      '다크 모드 브레인덤프 아이템이 배경과 섞여 보이는 문제를 tone contrast로 해소',
+      '현재 날짜를 빠르게 인식할 수 있도록 주간 스트립 active 표현을 더 강하게 조정',
+      '패치노트 모달의 라이트/다크 텍스트 충돌과 상세보기 토글 시 레이아웃 밀림을 방지',
+      '30분 타임박스에서 태그 우측 쏠림을 제거하고 상태 배지와 재생 버튼을 같은 라인으로 정렬',
+    ],
+    improvements: [
+      '브레인덤프 항목에 다크 전용 서피스 톤 + 미세 inset 라인 적용으로 항목 단위 분리 강화',
+      '주간 날짜 스트립 active 카드에 gradient tone/ring/상단 하이라이트 라인 추가',
+      '패치노트 모달을 slate 토큰으로 정리하고 토글 버튼 폭 고정으로 상세 영역 흔들림 제거',
+      '타임박스 compact 레이아웃을 `#태그 -> 제목` 순서로 통일하고 상단 액션 라인을 재배치',
+    ],
+    validation: [
+      'lint/build 통과',
+      'E2E: micro-interactions, light-mode-guideline, weekly-strip, patch-notes, timer-mode, timeline-scale, timebox-dnd, skip-reason 통과',
+    ],
+  },
+  {
     version: 'v0.12.7',
     date: '2026-03-07',
     title: 'UI 노이즈 다이어트 + 선택적 글래스모피즘 적용',
