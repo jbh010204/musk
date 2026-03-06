@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useMemo, useRef } from 'react'
 import { getCategoryColor, getCategoryLabel, getTimeBoxVisual } from '../../../utils/categoryVisual'
 import { TOTAL_SLOTS, slotDurationMinutes } from '../../../utils/timeSlot'
+import { resolveTimeBoxLayout } from './timeBoxLayout'
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 
@@ -32,12 +33,12 @@ function TimeBoxCard({
   const currentEndSlot = previewEndSlot ?? timeBox.endSlot
   const plannedMinutes = slotDurationMinutes(timeBox.startSlot, currentEndSlot)
   const boxHeight = (currentEndSlot - timeBox.startSlot) * slotHeight
-  const isCompact = boxHeight <= 44
   const snappedDragY = transform ? Math.round(transform.y / slotHeight) * slotHeight : 0
   const categoryLabel = getCategoryLabel(categoryMeta, timeBox)
   const categoryColor = getCategoryColor(categoryMeta, timeBox)
   const visual = getTimeBoxVisual(categoryColor, timeBox.status)
   const canUseTimer = timeBox.status !== 'COMPLETED' && timeBox.status !== 'SKIPPED'
+  const layout = resolveTimeBoxLayout({ boxHeight, canUseTimer })
   const isRunning = Number.isFinite(timeBox.timerStartedAt)
   const runningSeconds =
     isRunning && nowTimestamp > 0
@@ -161,10 +162,10 @@ function TimeBoxCard({
     >
       <div
         data-testid="timebox-top-actions"
-        className={`absolute right-2 z-20 flex items-center gap-1 ${isCompact ? 'top-1.5' : 'top-2'}`}
+        className={`absolute right-2 z-20 flex items-center gap-1 ${layout.topActionsTopClass}`}
       >
         <span
-          className={`rounded border px-1.5 py-0.5 font-semibold ${isCompact ? 'text-[9px]' : 'text-[10px]'}`}
+          className={`rounded border px-1.5 py-0.5 font-semibold ${layout.statusTextClass}`}
           style={{
             backgroundColor: visual.statusBadgeBackground,
             borderColor: visual.statusBadgeBorder,
@@ -191,7 +192,7 @@ function TimeBoxCard({
             </button>
             {elapsedSeconds > 0 ? (
               <>
-                {!isCompact ? (
+                {layout.showTopTimerLabel ? (
                   <span className="rounded bg-black/20 px-1 py-0.5 text-[10px] text-white/90">
                     {timerLabel}
                   </span>
@@ -211,10 +212,10 @@ function TimeBoxCard({
         ) : null}
       </div>
 
-      {isCompact ? (
+      {layout.showCompactRow ? (
         <div
           data-testid="timebox-compact-row"
-          className={`mt-5 flex items-center gap-1.5 ${canUseTimer ? 'pr-20' : 'pr-12'}`}
+          className={`${layout.compactRowMarginTopClass} flex items-center gap-1.5 ${layout.contentPaddingRightClass}`}
         >
           {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
             <span className="max-w-[50%] shrink-0 truncate rounded border border-amber-300/40 bg-amber-500/15 px-1 py-0.5 text-[10px] text-amber-100">
@@ -236,8 +237,8 @@ function TimeBoxCard({
         </div>
       ) : null}
 
-      {!isCompact ? (
-        <div className={`pt-5 ${canUseTimer ? 'pr-20' : 'pr-12'}`}>
+      {!layout.showCompactRow ? (
+        <div className={`${layout.detailPaddingTopClass} ${layout.contentPaddingRightClass}`}>
           {categoryLabel ? (
             <div
               className="mb-1 inline-flex max-w-[80%] rounded border px-1.5 py-0.5 text-[10px] text-white"
@@ -250,7 +251,7 @@ function TimeBoxCard({
             </div>
           ) : null}
           <div className="truncate pr-11 font-medium">{timeBox.content}</div>
-          {canUseTimer && elapsedSeconds > 0 ? (
+          {canUseTimer && elapsedSeconds > 0 && layout.showInlineRuntimeLabel ? (
             <div className="mt-1 truncate text-[11px] text-cyan-100">실행 {timerLabel}</div>
           ) : null}
           {timeBox.status === 'COMPLETED' && actualDiff ? (
