@@ -1,8 +1,8 @@
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { useMemo, useRef } from 'react'
-import { getCategoryColor, getCategoryLabel, getTimeBoxVisual } from '../../utils/categoryVisual'
-import { TOTAL_SLOTS, slotDurationMinutes } from '../../utils/timeSlot'
+import { getCategoryColor, getCategoryLabel, getTimeBoxVisual } from '../../../utils/categoryVisual'
+import { TOTAL_SLOTS, slotDurationMinutes } from '../../../utils/timeSlot'
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 

@@ -10,7 +10,7 @@
 ## 2) 패치노트 반영 (중요 변경 시 필수)
 
 - 중요 변경(`feat`, 사용자 체감 `fix`, UI 시스템 변경, 저장/스키마 변경)은 패치노트를 같이 업데이트
-- 업데이트 파일: `src/components/PatchNotes/patchNotesData.js`
+- 업데이트 파일: `src/features/patch-notes/ui/patchNotesData.js`
 - 상세 항목 필수:
   - `focus`: 신경 쓴 부분
   - `improvements`: 개선 사항

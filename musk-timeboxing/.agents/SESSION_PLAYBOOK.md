@@ -44,7 +44,7 @@
    - 부작용/회귀 여부 확인
    - 겹침 검사/저장 로직/IME 입력 영향 확인
 5. 중요 변경이면 패치노트 업데이트
-   - 파일: `src/components/PatchNotes/patchNotesData.js`
+   - 파일: `src/features/patch-notes/ui/patchNotesData.js`
    - 규칙: 최신 버전 항목을 맨 위에 추가하고 `focus/improvements/validation`을 채운다.
 6. 커밋 + 푸시
 7. 카테고리/DnD/모달/타임라인 수정 시 `npm run test:e2e` 실행

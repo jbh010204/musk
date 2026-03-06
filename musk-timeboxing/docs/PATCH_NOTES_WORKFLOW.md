@@ -14,7 +14,7 @@
 
 ## 2) 어디를 업데이트하나
 
-- 파일: `src/components/PatchNotes/patchNotesData.js`
+- 파일: `src/features/patch-notes/ui/patchNotesData.js`
 - 최신 버전을 배열 맨 위에 추가
 - 날짜는 `YYYY-MM-DD`
 

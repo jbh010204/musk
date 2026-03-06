@@ -19,7 +19,7 @@
 패치노트 반영 규칙:
 
 - 중요 변경은 커밋 단위로 패치노트 반영을 기본으로 한다.
-- 위치: `src/components/PatchNotes/patchNotesData.js`
+- 위치: `src/features/patch-notes/ui/patchNotesData.js`
 - 작성 필수 필드: `version`, `date`, `title`, `summary`, `focus`, `improvements`, `validation`
 - 최신 버전 항목은 배열 최상단에 유지한다.
 

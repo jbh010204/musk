@@ -1,4 +1,4 @@
-import { slotToTime } from '../../utils/timeSlot'
+import { slotToTime } from '../../../utils/timeSlot'
 
 function RescheduleAssistantModal({ plan, onClose, onApply }) {
   const planned = Array.isArray(plan?.planned) ? plan.planned : []

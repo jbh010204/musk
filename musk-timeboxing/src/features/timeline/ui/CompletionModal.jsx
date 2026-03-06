@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { getCategoryColor } from '../../utils/categoryVisual'
-import { slotDurationMinutes } from '../../utils/timeSlot'
+import { getCategoryColor } from '../../../utils/categoryVisual'
+import { slotDurationMinutes } from '../../../utils/timeSlot'
 
 const SKIP_REASON_OPTIONS = [
   '우선순위 변경',
