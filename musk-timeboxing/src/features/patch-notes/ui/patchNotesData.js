@@ -1,5 +1,26 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.13.2',
+    date: '2026-03-07',
+    title: 'PatchNotes 컴포넌트 분해(T9) 완료',
+    summary: '패치노트 모달을 Item/Header/Detail 단위로 분해해 구조를 단순화하고 유지보수성을 높였습니다.',
+    focus: [
+      '대형 단일 컴포넌트의 책임을 분리해 변경 포인트를 명확히 구분',
+      '기존 동작(test id, 토글 상태, 접근성 속성)은 유지하고 내부 구조만 리팩토링',
+      '패치노트 UI 확장 시 상세 영역/헤더 영역을 독립적으로 수정 가능하도록 정리',
+    ],
+    improvements: [
+      '`PatchNoteItem`, `PatchNoteHeader`, `PatchNoteDetail` 서브컴포넌트 추가',
+      '`PatchNotesModal`은 상태 관리/리스트 렌더 책임만 유지하도록 단순화',
+      '공통 UI primitive(Button/Card/Badge) 사용을 패치노트 영역에도 일관 적용',
+    ],
+    validation: [
+      'lint/build 통과',
+      'E2E 전체 통과(30 passed)',
+      'E2E: patch-notes, ui-layout-regression(패치노트 토글 안정성 포함) 통과',
+    ],
+  },
+  {
     version: 'v0.13.1',
     date: '2026-03-07',
     title: 'TimeBox 높이별 레이아웃 매트릭스(T8) 적용',
