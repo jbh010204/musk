@@ -309,6 +309,45 @@ export const useDailyData = () => {
     return inserted
   }
 
+  const fillBigThreeFromBrainDump = () => {
+    let insertedCount = 0
+
+    setData((prev) => {
+      if (prev.bigThree.length >= 3 || prev.brainDump.length === 0) {
+        return prev
+      }
+
+      const remainSlots = 3 - prev.bigThree.length
+      const existingSourceIds = new Set(
+        prev.bigThree
+          .map((item) => item.sourceId)
+          .filter((sourceId) => typeof sourceId === 'string' && sourceId.length > 0),
+      )
+      const candidates = prev.brainDump
+        .filter((item) => !existingSourceIds.has(item.id))
+        .slice(0, remainSlots)
+
+      if (candidates.length === 0) {
+        return prev
+      }
+
+      insertedCount = candidates.length
+      return {
+        ...prev,
+        bigThree: [
+          ...prev.bigThree,
+          ...candidates.map((source) => ({
+            id: createId(),
+            content: source.content,
+            sourceId: source.id,
+          })),
+        ],
+      }
+    })
+
+    return insertedCount
+  }
+
   const addBigThreeItem = (content) => {
     const trimmed = content.trim()
     if (!trimmed) return false
@@ -568,6 +607,7 @@ export const useDailyData = () => {
     removeBrainDumpItem,
     restoreBrainDumpItem,
     sendToBigThree,
+    fillBigThreeFromBrainDump,
     addBigThreeItem,
     removeBigThreeItem,
     addTimeBox,

@@ -10,6 +10,12 @@ import WeeklyReportCard from './WeeklyReportCard'
 const DEFAULT_SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
 const DURATION_PRESETS = [1, 2, 3, 4]
+const STATUS_FILTER_OPTIONS = [
+  { value: 'ALL', label: '전체 상태' },
+  { value: 'PLANNED', label: '예정' },
+  { value: 'COMPLETED', label: '완료' },
+  { value: 'SKIPPED', label: '스킵' },
+]
 
 function TimelineInsightsSkeleton() {
   return (
@@ -76,6 +82,9 @@ function Timeline({
   removeTimeBox,
   showToast,
   showDropGuide = false,
+  focusMode = false,
+  onToggleFocusMode = () => {},
+  onDuplicateTimeBox = () => false,
 }) {
   const sectionRef = useRef(null)
   const [pendingInput, setPendingInput] = useState(null)
@@ -83,6 +92,8 @@ function Timeline({
   const [resizePreview, setResizePreview] = useState({})
   const [isComposing, setIsComposing] = useState(false)
   const [timerNow, setTimerNow] = useState(0)
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [categoryFilter, setCategoryFilter] = useState('ALL')
 
   const sortedBoxes = useMemo(
     () => [...data.timeBoxes].sort((a, b) => a.startSlot - b.startSlot),
@@ -152,6 +163,38 @@ function Timeline({
 
     return [...legendMap.values()]
   }, [categoryMap, sortedBoxes])
+
+  const categoryFilterOptions = useMemo(() => {
+    const options = [{ value: 'ALL', label: '전체 카테고리' }, { value: 'UNCATEGORIZED', label: '미분류' }]
+    categoryLegend.forEach((item) => {
+      options.push({ value: item.key, label: item.label })
+    })
+    return options
+  }, [categoryLegend])
+
+  const filteredBoxes = useMemo(
+    () =>
+      sortedBoxes.filter((box) => {
+        if (statusFilter !== 'ALL' && box.status !== statusFilter) {
+          return false
+        }
+
+        if (categoryFilter === 'ALL') {
+          return true
+        }
+
+        const meta = box.categoryId ? categoryMap.get(box.categoryId) : null
+        const label = getCategoryLabel(meta, box)
+        const key = meta?.id || (label ? `legacy:${label.toLowerCase()}` : null)
+
+        if (categoryFilter === 'UNCATEGORIZED') {
+          return !key
+        }
+
+        return key === categoryFilter
+      }),
+    [categoryFilter, categoryMap, sortedBoxes, statusFilter],
+  )
 
   const createBox = ({ content, sourceId = null, startSlot, durationSlots = DEFAULT_BOX_SLOTS }) => {
     const duration = Math.max(1, Math.min(TOTAL_SLOTS, Number(durationSlots) || DEFAULT_BOX_SLOTS))
@@ -239,32 +282,78 @@ function Timeline({
         <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           ⏱ 타임라인
         </h2>
-        <div className="ui-panel-subtle inline-flex items-center p-1 text-[11px]">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            data-testid="timeline-scale-30"
-            onClick={() => onTimelineScaleChange('30')}
-            className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-              timelineScale === '30'
-                ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
-                : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
+            data-testid="timeline-focus-toggle"
+            onClick={onToggleFocusMode}
+            className={`rounded-xl px-2.5 py-1.5 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+              focusMode
+                ? 'bg-indigo-600 text-white'
+                : 'bg-slate-200 text-slate-700 hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600'
             }`}
           >
-            30분
+            집중 모드
           </button>
-          <button
-            type="button"
-            data-testid="timeline-scale-15"
-            onClick={() => onTimelineScaleChange('15')}
-            className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-              timelineScale === '15'
-                ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
-                : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
-            }`}
-          >
-            15분 보기
-          </button>
+          <div className="ui-panel-subtle inline-flex items-center p-1 text-[11px]">
+            <button
+              type="button"
+              data-testid="timeline-scale-30"
+              onClick={() => onTimelineScaleChange('30')}
+              className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                timelineScale === '30'
+                  ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
+                  : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
+              }`}
+            >
+              30분
+            </button>
+            <button
+              type="button"
+              data-testid="timeline-scale-15"
+              onClick={() => onTimelineScaleChange('15')}
+              className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                timelineScale === '15'
+                  ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
+                  : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
+              }`}
+            >
+              15분 보기
+            </button>
+          </div>
         </div>
+      </div>
+      <div className="mb-6 grid gap-3 md:grid-cols-2">
+        <label className="ui-panel-subtle flex items-center gap-2 p-3 text-xs text-slate-500 dark:text-slate-300">
+          상태 필터
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="ui-select !p-2 text-xs"
+            data-testid="timeline-status-filter"
+          >
+            {STATUS_FILTER_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="ui-panel-subtle flex items-center gap-2 p-3 text-xs text-slate-500 dark:text-slate-300">
+          카테고리 필터
+          <select
+            value={categoryFilter}
+            onChange={(event) => setCategoryFilter(event.target.value)}
+            className="ui-select !p-2 text-xs"
+            data-testid="timeline-category-filter"
+          >
+            {categoryFilterOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       {showDropGuide ? (
         <div
@@ -300,9 +389,9 @@ function Timeline({
           </button>
         </div>
       ) : null}
-      {isInsightsLoading ? (
+      {!focusMode && isInsightsLoading ? (
         <TimelineInsightsSkeleton />
-      ) : (
+      ) : !focusMode ? (
         <div className="ui-fade-in-up">
           <WeeklyPlanningBoard days={weeklyPlanningPreview} onJumpToDate={onJumpToDate} />
           <WeeklyReportCard report={weeklyReport} />
@@ -322,9 +411,18 @@ function Timeline({
             </div>
           ) : null}
         </div>
+      ) : (
+        <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
+          집중 모드가 활성화되어 인사이트 카드를 숨겼습니다.
+        </div>
       )}
 
       <div className="overflow-x-auto">
+        {sortedBoxes.length > 0 && filteredBoxes.length === 0 ? (
+          <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+            현재 필터 조건에 맞는 일정이 없습니다.
+          </p>
+        ) : null}
         <div className="relative min-w-[520px]">
           <TimeSlotGrid
             onSlotClick={handleSlotClick}
@@ -373,7 +471,7 @@ function Timeline({
           ) : null}
 
           <div className="pointer-events-none absolute inset-y-0 left-16 right-2">
-            {sortedBoxes.map((box) => (
+            {filteredBoxes.map((box) => (
               <TimeBoxCard
                 key={box.id}
                 timeBox={box}
@@ -475,6 +573,10 @@ function Timeline({
           categories={categories}
           onClose={() => setSelectedBoxId(null)}
           onUpdate={updateTimeBox}
+          onDuplicate={(id) => {
+            onDuplicateTimeBox(id)
+            setSelectedBoxId(null)
+          }}
           onDelete={(id) => {
             removeTimeBox(id)
             setSelectedBoxId(null)

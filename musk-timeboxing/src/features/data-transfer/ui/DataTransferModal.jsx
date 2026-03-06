@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Button, Card } from '../../../shared/ui'
 import { exportPlannerData, importPlannerData } from '../../../entities/planner'
 
@@ -6,6 +6,7 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
   const [exportText, setExportText] = useState('')
   const [importText, setImportText] = useState('')
   const [importMode, setImportMode] = useState('merge')
+  const fileInputRef = useRef(null)
 
   const handleExportAll = () => {
     const payload = exportPlannerData()
@@ -32,6 +33,42 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
       showToast('JSON을 클립보드에 복사했습니다')
     } catch {
       showToast('복사에 실패했습니다')
+    }
+  }
+
+  const handleDownloadExport = () => {
+    const payload = exportText.trim()
+    if (!payload) {
+      showToast('먼저 내보내기를 실행해 주세요')
+      return
+    }
+
+    const blob = new Blob([payload], { type: 'application/json' })
+    const url = window.URL.createObjectURL(blob)
+    const anchor = window.document.createElement('a')
+    anchor.href = url
+    anchor.download = `musk-planner-${currentDate}.json`
+    window.document.body.appendChild(anchor)
+    anchor.click()
+    window.document.body.removeChild(anchor)
+    window.URL.revokeObjectURL(url)
+    showToast('JSON 파일 다운로드를 시작했습니다')
+  }
+
+  const handleImportFileChange = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+      return
+    }
+
+    try {
+      const text = await file.text()
+      setImportText(text)
+      showToast(`파일 불러오기 완료: ${file.name}`)
+    } catch {
+      showToast('파일 읽기에 실패했습니다')
+    } finally {
+      event.target.value = ''
     }
   }
 
@@ -92,6 +129,13 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
             >
               복사
             </Button>
+            <Button
+              variant="secondary"
+              onClick={handleDownloadExport}
+              data-testid="data-export-download"
+            >
+              파일 다운로드
+            </Button>
           </div>
 
           <textarea
@@ -99,6 +143,7 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
             value={exportText}
             placeholder="내보내기 버튼을 누르면 JSON이 표시됩니다"
             className="ui-textarea-code mt-3 h-44"
+            data-testid="data-export-text"
           />
         </Card>
 
@@ -116,6 +161,21 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
               <option value="merge">병합 (기존 유지)</option>
               <option value="replace">교체 (기존 삭제)</option>
             </select>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={handleImportFileChange}
+              data-testid="data-import-file-input"
+            />
+            <Button
+              variant="secondary"
+              onClick={() => fileInputRef.current?.click()}
+              data-testid="data-import-file-button"
+            >
+              파일 선택
+            </Button>
           </div>
 
           <textarea
@@ -123,6 +183,7 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
             onChange={(event) => setImportText(event.target.value)}
             placeholder="JSON을 붙여넣고 가져오기를 실행하세요"
             className="ui-textarea-code h-44"
+            data-testid="data-import-text"
           />
 
           <div className="mt-3 flex justify-end">

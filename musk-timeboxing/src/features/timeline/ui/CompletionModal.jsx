@@ -10,7 +10,7 @@ const SKIP_REASON_OPTIONS = [
   '기타',
 ]
 
-function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
+function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete, onDuplicate = () => {} }) {
   const [content, setContent] = useState(timeBox.content)
   const [categoryId, setCategoryId] = useState(timeBox.categoryId ?? '')
   const [status, setStatus] = useState(
@@ -101,6 +101,10 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
     }
 
     onDelete(timeBox.id)
+  }
+
+  const handleDuplicate = () => {
+    onDuplicate(timeBox.id)
   }
 
   return (
@@ -221,6 +225,13 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
         ) : null}
 
         <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={handleDuplicate}
+            className="ui-btn-secondary"
+          >
+            복제
+          </button>
           <button
             type="button"
             onClick={handleDelete}

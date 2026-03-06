@@ -22,6 +22,7 @@ const BASE_SLOT_HEIGHT = 32
 const DETAIL_SLOT_HEIGHT = 64
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
 const THEME_KEY = 'musk-planner-theme'
+const TIMELINE_FOCUS_MODE_KEY = 'musk-planner-timeline-focus-mode'
 const THEME_DARK = 'dark'
 const THEME_LIGHT = 'light'
 const INSIGHTS_LOADING_MS = 220
@@ -438,6 +439,7 @@ function App() {
     removeBrainDumpItem,
     restoreBrainDumpItem,
     sendToBigThree,
+    fillBigThreeFromBrainDump,
     addBigThreeItem,
     removeBigThreeItem,
     addTimeBox,
@@ -463,6 +465,13 @@ function App() {
   })
   const [mobileTab, setMobileTab] = useState('timeline')
   const [timelineScale, setTimelineScale] = useState('30')
+  const [isTimelineFocusMode, setIsTimelineFocusMode] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false
+    }
+
+    return window.localStorage.getItem(TIMELINE_FOCUS_MODE_KEY) === 'true'
+  })
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false)
   const [isDataModalOpen, setIsDataModalOpen] = useState(false)
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false)
@@ -501,6 +510,14 @@ function App() {
       window.clearTimeout(timeoutId)
     }
   }, [currentDate])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    window.localStorage.setItem(TIMELINE_FOCUS_MODE_KEY, isTimelineFocusMode ? 'true' : 'false')
+  }, [isTimelineFocusMode])
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
   const updateDropPreviewSlot = (slot) => {
@@ -639,6 +656,22 @@ function App() {
         restoreBrainDumpItem(removedItem, removedIndex)
       },
     })
+  }
+
+  const handleFillBigThreeFromBrainDump = () => {
+    const insertedCount = fillBigThreeFromBrainDump()
+
+    if (insertedCount > 0) {
+      showToast(`브레인 덤프 ${insertedCount}개를 빅3로 채웠습니다`)
+      return
+    }
+
+    if (data.bigThree.length >= 3) {
+      showToast('빅 3이 이미 가득 찼습니다')
+      return
+    }
+
+    showToast('채울 브레인 덤프 항목이 없습니다')
   }
 
   const applySkipSuggestionAction = () => {
@@ -1071,12 +1104,39 @@ function App() {
     })
   }
 
+  const handleDuplicateTimeBox = (id) => {
+    const source = data.timeBoxes.find((box) => box.id === id)
+    if (!source) {
+      return false
+    }
+
+    const duration = Math.max(1, source.endSlot - source.startSlot)
+    const startSlot = findAvailableStartSlot(data.timeBoxes, source.endSlot, duration)
+    if (startSlot == null) {
+      showToast('복제할 빈 시간이 없습니다')
+      return false
+    }
+
+    addTimeBox({
+      content: `${source.content} (복제)`,
+      sourceId: source.sourceId ?? source.id,
+      startSlot,
+      endSlot: Math.min(TOTAL_SLOTS, startSlot + duration),
+      category: source.category ?? null,
+      categoryId: source.categoryId ?? null,
+    })
+    showToast(`일정을 ${slotDurationMinutes(startSlot, Math.min(TOTAL_SLOTS, startSlot + duration))}분 블록으로 복제했습니다`)
+    return true
+  }
+
   const dumpSection = (
     <BrainDump
       items={data.brainDump}
+      bigThreeCount={data.bigThree.length}
       onAdd={addBrainDumpItem}
       onRemove={handleRemoveBrainDumpItem}
       onSendToBigThree={handleSendToBigThree}
+      onFillBigThree={handleFillBigThreeFromBrainDump}
     />
   )
 
@@ -1106,12 +1166,15 @@ function App() {
       slotHeight={timelineSlotHeight}
       timelineScale={timelineScale}
       onTimelineScaleChange={setTimelineScale}
+      focusMode={isTimelineFocusMode}
+      onToggleFocusMode={() => setIsTimelineFocusMode((prev) => !prev)}
       addTimeBox={addTimeBox}
       updateTimeBox={handleUpdateTimeBox}
       onTimerStart={startTimeBoxTimer}
       onTimerPause={pauseTimeBoxTimer}
       onTimerComplete={handleTimerComplete}
       removeTimeBox={handleRemoveTimeBox}
+      onDuplicateTimeBox={handleDuplicateTimeBox}
       showToast={showToast}
       showDropGuide={
         activeDragPreview?.type === 'BRAIN_DUMP' || activeDragPreview?.type === 'BIG_THREE'

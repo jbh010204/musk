@@ -1,5 +1,29 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.14.0',
+    date: '2026-03-07',
+    title: '실행 고도화 5종(T14~T18) 추가',
+    summary:
+      '빅3 자동채우기, 타임라인 집중모드, 상태/카테고리 필터, 타임박스 복제, 파일 기반 데이터 입출력을 한 번에 도입했습니다.',
+    focus: [
+      '기존 DnD/Undo/저장 구조를 유지한 상태에서 생산성 기능을 확장',
+      '각 기능마다 독립 E2E 시나리오를 추가해 회귀 위험을 낮춤',
+      'Task Board를 18개 체계로 확장해 세션 간 진행 상태 추적성을 강화',
+    ],
+    improvements: [
+      '브레인덤프에서 빅3 빈 슬롯을 한 번에 채우는 자동 채우기 버튼 추가',
+      '타임라인 집중모드(인사이트 숨김) 토글 및 localStorage 복원 추가',
+      '타임라인 상태/카테고리 필터 추가 및 필터 결과 빈 상태 안내 추가',
+      '완료 모달에서 일정 복제(다음 빈 슬롯 자동 배치) 기능 추가',
+      '데이터 백업 모달에 JSON 파일 다운로드/파일 불러오기 흐름 추가',
+    ],
+    validation: [
+      'lint/build 통과',
+      '신규 E2E 5종 통과(bigthree-autofill, focus-mode, timeline-filters, timebox-duplicate, data-transfer-file)',
+      'E2E 전체 통과',
+    ],
+  },
+  {
     version: 'v0.13.4',
     date: '2026-03-07',
     title: 'FSD 2단계(T13) 구조 정리 + 문서 동기화',

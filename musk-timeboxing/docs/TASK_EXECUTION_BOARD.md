@@ -1,4 +1,4 @@
-# Musk Planner Task Execution Board (13 Tasks)
+# Musk Planner Task Execution Board (18 Tasks)
 
 이 문서는 현재 합의된 작업(기존 5개 + 추가 8개)을 한 번에 처리하지 않고,
 작업 단위를 쪼개서 순차 실행하기 위한 운영 보드다.
@@ -46,6 +46,11 @@
   - `T11` 접근성(ARIA/라이브 리전) 보강
   - `T12` Undo UX(삭제/상태변경) 도입
   - `T13` FSD 2단계 경계 정리 + 문서 동기화
+  - `T14` 빅3 자동 채우기(BrainDump -> Big3)
+  - `T15` 타임라인 집중 모드
+  - `T16` 타임라인 필터(상태/카테고리)
+  - `T17` 타임박스 복제 액션
+  - `T18` 데이터 파일 입출력 강화
 
 ## 3. Prioritized Task List
 
@@ -341,6 +346,116 @@
 
 권장 커밋 메시지:
 - `refactor(arch): complete fsd phase-2 migration and docs sync`
+
+---
+
+### T14. 빅3 자동 채우기 (BrainDump -> Big3)
+목표: 브레인덤프 항목으로 빅3 빈 슬롯을 한 번에 채우기
+
+하위 태스크:
+1. `fillBigThreeFromBrainDump` 액션 추가
+2. 브레인덤프 섹션에 자동 채우기 버튼 노출
+3. 슬롯 가득/소스 없음 케이스 토스트 처리
+4. E2E 시나리오 추가
+
+완료 기준(DoD):
+- 버튼 1회 클릭으로 빅3 빈 슬롯이 최대 3개까지 채워짐
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- e2e/bigthree-autofill.spec.js`
+
+권장 커밋 메시지:
+- `feat(big3): add one-click autofill from brain dump`
+
+---
+
+### T15. 타임라인 집중 모드
+목표: 인사이트 카드를 숨기고 일정 그리드에만 집중할 수 있는 모드 제공
+
+하위 태스크:
+1. 집중 모드 토글 UI 추가
+2. 집중 모드 활성 시 인사이트 카드 비노출
+3. localStorage 기반 모드 복원
+4. E2E 시나리오 추가
+
+완료 기준(DoD):
+- 집중 모드에서 타임라인 본문만 표시되고 새로고침 후 유지됨
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- e2e/focus-mode.spec.js`
+
+권장 커밋 메시지:
+- `feat(timeline): add focus mode toggle and persistence`
+
+---
+
+### T16. 타임라인 필터 (상태/카테고리)
+목표: 많은 일정에서도 원하는 상태/카테고리만 빠르게 조회
+
+하위 태스크:
+1. 상태 필터(select) 추가
+2. 카테고리 필터(select) 추가
+3. 필터링 결과 렌더링 + 빈 결과 안내
+4. E2E 시나리오 추가
+
+완료 기준(DoD):
+- 상태/카테고리 조합으로 타임박스 노출이 즉시 반영됨
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- e2e/timeline-filters.spec.js`
+
+권장 커밋 메시지:
+- `feat(timeline): add status and category filters`
+
+---
+
+### T17. 타임박스 복제 액션
+목표: 모달에서 일정 복제를 실행해 다음 빈 슬롯에 빠르게 재배치
+
+하위 태스크:
+1. 완료 모달에 복제 버튼 추가
+2. 다음 빈 슬롯 탐색 로직(App) 연결
+3. 복제 실패(빈 슬롯 없음) 토스트 처리
+4. E2E 시나리오 추가
+
+완료 기준(DoD):
+- 일정 1건을 클릭 몇 번으로 복제 생성 가능
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- e2e/timebox-duplicate.spec.js`
+
+권장 커밋 메시지:
+- `feat(timeline): add quick duplicate action for timeboxes`
+
+---
+
+### T18. 데이터 파일 입출력 강화
+목표: JSON 복붙 외에 파일 다운로드/파일 불러오기를 지원
+
+하위 태스크:
+1. 내보내기 결과 파일 다운로드 버튼 추가
+2. JSON 파일 선택 후 import textarea 자동 채움
+3. 가져오기 플로우와 결합
+4. E2E 시나리오 추가
+
+완료 기준(DoD):
+- 파일 기반 백업/복원이 브라우저 UI에서 동작함
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- e2e/data-transfer-file.spec.js`
+
+권장 커밋 메시지:
+- `feat(data): add file download and upload for backup restore`
 
 ## 4. 보고 템플릿 (Task 완료 시)
 
