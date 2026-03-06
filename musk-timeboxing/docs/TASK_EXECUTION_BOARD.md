@@ -1,4 +1,4 @@
-# Musk Planner Task Execution Board (20 Tasks)
+# Musk Planner Task Execution Board (25 Tasks)
 
 이 문서는 현재 합의된 작업을 한 번에 처리하지 않고,
 작업 단위를 쪼개서 순차 실행하기 위한 운영 보드다.
@@ -53,6 +53,11 @@
   - `T18` 데이터 파일 입출력 강화
   - `T19` 주간 캘린더 뷰
   - `T20` 월간 캘린더 뷰
+  - `T21` 브레인 덤프 priority 스키마
+  - `T22` 브레인 덤프 priority 배터리 UI
+  - `T23` 브레인 덤프 priority 기반 자동 정렬
+  - `T24` 브레인 덤프 priority 기반 빅3 추천
+  - `T25` priority E2E/문서/패치노트 동기화
 
 ## 3. Prioritized Task List
 
@@ -308,6 +313,117 @@
 
 권장 커밋 메시지:
 - `feat(calendar): add monthly planner overview`
+
+---
+
+### T21. 브레인 덤프 priority 스키마
+목표: 브레인 덤프 아이템에 중요도(priority)를 저장하고 기존 데이터도 안전하게 마이그레이션
+
+하위 태스크:
+1. brainDump priority 유틸 정의
+2. storage load/save 시 priority 정규화
+3. 기존 저장 데이터 priority 기본값(0) 보정
+4. 훅의 복구/생성 경로 정규화
+
+완료 기준(DoD):
+- 모든 브레인 덤프 아이템이 `priority: 0~4`를 안정적으로 가짐
+- 기존 localStorage 데이터가 깨지지 않음
+
+테스트:
+- `npm run lint`
+- `npm run build`
+
+권장 커밋 메시지:
+- `feat(brain-dump): add persistent priority schema`
+
+---
+
+### T22. 브레인 덤프 priority 배터리 UI
+목표: 각 브레인 덤프 아이템에서 중요도를 즉시 인지하고 한 번 클릭으로 조정 가능하게 만들기
+
+하위 태스크:
+1. 배터리형 priority 컨트롤 구현
+2. priority 단계별 라벨/시각 톤 정리
+3. hover 액션과 분리해 항상 표시
+4. 접근성 라벨 추가
+
+완료 기준(DoD):
+- 배터리 컨트롤만 보고도 중요도 단계가 인지됨
+- 클릭 시 다음 단계로 순환
+
+테스트:
+- `npm run lint`
+- `npm run build`
+
+권장 커밋 메시지:
+- `feat(brain-dump): add battery-style priority control`
+
+---
+
+### T23. 브레인 덤프 priority 기반 자동 정렬
+목표: 중요도 높은 항목이 상단으로 올라오도록 자동 정렬
+
+하위 태스크:
+1. stable sort 규칙 정의(priority desc, 기존 순서 유지)
+2. priority 변경 시 재정렬
+3. load/restore 후에도 정렬 일관성 유지
+
+완료 기준(DoD):
+- 중요도 변경 시 리스트가 즉시 재정렬됨
+- 같은 priority 그룹은 기존 순서를 유지
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1 e2e/brain-dump-priority.spec.js`
+
+권장 커밋 메시지:
+- `feat(brain-dump): sort items by priority`
+
+---
+
+### T24. 브레인 덤프 priority 기반 빅3 추천
+목표: 빅3 추천 채우기가 중요도 상위 항목을 우선 선택하도록 변경
+
+하위 태스크:
+1. 기존 자동 채우기 로직을 priority 기준으로 전환
+2. 버튼 라벨/가이드 문구를 추천 의미로 변경
+3. 중복 sourceId 제외 규칙 유지
+
+완료 기준(DoD):
+- 빅3 추천채우기가 중요도 상위 항목부터 빈 슬롯을 채움
+- 기존 Big3 직접입력/수동추가 흐름과 충돌 없음
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1 e2e/bigthree-autofill.spec.js`
+
+권장 커밋 메시지:
+- `feat(big3): recommend top-priority brain dump items`
+
+---
+
+### T25. priority E2E/문서/패치노트 동기화
+목표: priority 기능을 세션 문서와 회귀 테스트에 반영
+
+하위 태스크:
+1. priority 정렬 E2E 추가
+2. README 사용 설명 추가
+3. 패치노트 업데이트
+4. Task Board 완료 상태 반영
+
+완료 기준(DoD):
+- 새 세션이 문서만 읽어도 priority 흐름을 이해 가능
+- 정렬/추천 로직 회귀가 자동 검출됨
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1`
+
+권장 커밋 메시지:
+- `docs(priority): sync tests notes and execution board`
 
 ---
 

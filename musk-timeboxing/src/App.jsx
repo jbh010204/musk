@@ -446,6 +446,7 @@ function App() {
     addBrainDumpItem,
     removeBrainDumpItem,
     restoreBrainDumpItem,
+    cycleBrainDumpItemPriority,
     sendToBigThree,
     fillBigThreeFromBrainDump,
     addBigThreeItem,
@@ -686,7 +687,7 @@ function App() {
     const insertedCount = fillBigThreeFromBrainDump()
 
     if (insertedCount > 0) {
-      showToast(`브레인 덤프 ${insertedCount}개를 빅3로 채웠습니다`)
+      showToast(`우선순위 상위 ${insertedCount}개를 빅3로 채웠습니다`)
       return
     }
 
@@ -1159,6 +1160,7 @@ function App() {
       bigThreeCount={data.bigThree.length}
       onAdd={addBrainDumpItem}
       onRemove={handleRemoveBrainDumpItem}
+      onCyclePriority={cycleBrainDumpItemPriority}
       onSendToBigThree={handleSendToBigThree}
       onFillBigThree={handleFillBigThreeFromBrainDump}
     />

@@ -1,3 +1,5 @@
+import { normalizeBrainDumpPriority, sortBrainDumpItems } from './brainDumpPriority'
+
 const createEmptyDay = (dateStr) => ({
   schemaVersion: 2,
   date: dateStr,
@@ -16,6 +18,21 @@ const createEmptyMeta = () => ({
   schemaVersion: SCHEMA_VERSION,
   categories: [],
 })
+
+const normalizeBrainDumpItem = (item) => {
+  const content = typeof item?.content === 'string' ? item.content.trim() : ''
+
+  if (!content) {
+    return null
+  }
+
+  return {
+    id: typeof item?.id === 'string' ? item.id : crypto.randomUUID(),
+    content,
+    isDone: Boolean(item?.isDone),
+    priority: normalizeBrainDumpPriority(item?.priority),
+  }
+}
 
 const normalizeTimeBox = (box) => ({
   id: box?.id ?? crypto.randomUUID(),
@@ -43,7 +60,9 @@ const migrateDayData = (dateStr, rawData) => {
   return {
     schemaVersion: SCHEMA_VERSION,
     date: dateStr,
-    brainDump: Array.isArray(safeData.brainDump) ? safeData.brainDump : [],
+    brainDump: Array.isArray(safeData.brainDump)
+      ? sortBrainDumpItems(safeData.brainDump.map(normalizeBrainDumpItem).filter(Boolean))
+      : [],
     bigThree: Array.isArray(safeData.bigThree) ? safeData.bigThree : [],
     timeBoxes: Array.isArray(safeData.timeBoxes) ? safeData.timeBoxes.map(normalizeTimeBox) : [],
   }

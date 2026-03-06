@@ -1,5 +1,30 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.16.0',
+    date: '2026-03-07',
+    title: '브레인 덤프 priority 배터리 + 빅3 추천 흐름(T21~T25) 추가',
+    summary:
+      '브레인 덤프 항목에 중요도(priority)를 배터리 형태로 표시하고, 중요도 기준 자동 정렬과 빅3 추천 채우기를 연결했습니다.',
+    focus: [
+      'priority를 저장 스키마에 포함해 새 데이터와 기존 localStorage 데이터를 같은 규칙으로 정규화',
+      '브레인 덤프 단계에서 우선순위를 빠르게 올리고 바로 정렬 결과를 보게 해 계획 압축 단계를 앞당김',
+      '기존 빅3 자동채우기를 유지하되 중요도 기반 추천 흐름으로 의미를 명확히 변경',
+    ],
+    improvements: [
+      '`brainDumpPriority` 유틸 추가: priority 정규화, 순환, stable sort 규칙 정의',
+      '브레인 덤프 아이템에 배터리형 priority 컨트롤과 단계 라벨 추가',
+      'priority 변경 시 브레인 덤프 리스트가 높은 순으로 자동 재정렬',
+      '`빅3 자동채우기`를 `빅3 추천채우기`로 변경하고 priority 상위 항목부터 채우도록 수정',
+      'priority 정렬/추천 시나리오 E2E 추가 및 README/Task Board 동기화',
+    ],
+    validation: [
+      'lint/build 통과',
+      '신규 E2E 통과(brain-dump-priority)',
+      '업데이트된 bigthree-autofill 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.15.0',
     date: '2026-03-07',
     title: '주간/월간 캘린더 뷰(T19~T20) 추가',

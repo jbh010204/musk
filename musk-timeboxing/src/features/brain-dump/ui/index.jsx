@@ -6,6 +6,7 @@ function BrainDump({
   bigThreeCount = 0,
   onAdd,
   onRemove,
+  onCyclePriority,
   onSendToBigThree,
   onFillBigThree = () => {},
 }) {
@@ -19,15 +20,23 @@ function BrainDump({
           type="button"
           onClick={onFillBigThree}
           className="rounded-xl px-2 py-1 text-xs text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-          aria-label="브레인 덤프에서 빅3 자동 채우기"
+          aria-label="브레인 덤프 우선순위 기준으로 빅3 추천 채우기"
           data-testid="brain-dump-fill-big3"
           disabled={bigThreeCount >= 3 || items.length === 0}
         >
-          빅3 자동채우기
+          빅3 추천채우기
         </button>
       </div>
+      <p className="-mt-3 text-xs text-slate-500 dark:text-slate-400">
+        배터리를 눌러 중요도를 올리면 자동 정렬되고 빅3 추천에 반영됩니다.
+      </p>
       <BrainDumpInput onAdd={onAdd} />
-      <BrainDumpList items={items} onRemove={onRemove} onSendToBigThree={onSendToBigThree} />
+      <BrainDumpList
+        items={items}
+        onRemove={onRemove}
+        onCyclePriority={onCyclePriority}
+        onSendToBigThree={onSendToBigThree}
+      />
     </section>
   )
 }

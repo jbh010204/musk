@@ -1,6 +1,6 @@
 import BrainDumpItem from './BrainDumpItem'
 
-function BrainDumpList({ items, onRemove, onSendToBigThree }) {
+function BrainDumpList({ items, onRemove, onCyclePriority, onSendToBigThree }) {
   if (items.length === 0) {
     return <p className="py-4 text-sm text-slate-500 dark:text-slate-400">브레인 덤프가 비어있습니다</p>
   }
@@ -12,6 +12,7 @@ function BrainDumpList({ items, onRemove, onSendToBigThree }) {
           key={item.id}
           item={item}
           onRemove={onRemove}
+          onCyclePriority={onCyclePriority}
           onSendToBigThree={onSendToBigThree}
         />
       ))}

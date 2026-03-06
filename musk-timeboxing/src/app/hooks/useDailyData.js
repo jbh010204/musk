@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import {
+  cycleBrainDumpPriority,
   getMostRecentStoredDate,
   hasOverlap,
   loadDay,
   loadLastActiveDate,
   loadLastFocus,
+  normalizeBrainDumpPriority,
   saveDay,
   saveLastActiveDate,
   saveLastFocus,
+  sortBrainDumpItems,
   TOTAL_SLOTS,
 } from '../../entities/planner'
 
@@ -35,6 +38,7 @@ const normalizeBrainDumpItem = (item) => {
     id: typeof item?.id === 'string' ? item.id : createId(),
     content,
     isDone: Boolean(item?.isDone),
+    priority: normalizeBrainDumpPriority(item?.priority),
   }
 }
 const normalizeCategory = (value) => {
@@ -240,7 +244,10 @@ export const useDailyData = () => {
 
     setData((prev) => ({
       ...prev,
-      brainDump: [...prev.brainDump, { id: createId(), content: trimmed, isDone: false }],
+      brainDump: sortBrainDumpItems([
+        ...prev.brainDump,
+        { id: createId(), content: trimmed, isDone: false, priority: 0 },
+      ]),
     }))
   }
 
@@ -272,11 +279,42 @@ export const useDailyData = () => {
 
       return {
         ...prev,
-        brainDump: next,
+        brainDump: sortBrainDumpItems(next),
       }
     })
 
     return restored
+  }
+
+  const cycleBrainDumpItemPriority = (id) => {
+    let nextPriority = null
+
+    setData((prev) => {
+      const hasTarget = prev.brainDump.some((item) => item.id === id)
+      if (!hasTarget) {
+        return prev
+      }
+
+      const nextBrainDump = prev.brainDump.map((item) => {
+        if (item.id !== id) {
+          return item
+        }
+
+        nextPriority = cycleBrainDumpPriority(item.priority)
+
+        return {
+          ...item,
+          priority: nextPriority,
+        }
+      })
+
+      return {
+        ...prev,
+        brainDump: sortBrainDumpItems(nextBrainDump),
+      }
+    })
+
+    return nextPriority
   }
 
   const sendToBigThree = (brainDumpId) => {
@@ -325,18 +363,20 @@ export const useDailyData = () => {
       )
       const candidates = prev.brainDump
         .filter((item) => !existingSourceIds.has(item.id))
+      const prioritizedCandidates = sortBrainDumpItems(candidates)
+      const selectedCandidates = prioritizedCandidates
         .slice(0, remainSlots)
 
-      if (candidates.length === 0) {
+      if (selectedCandidates.length === 0) {
         return prev
       }
 
-      insertedCount = candidates.length
+      insertedCount = selectedCandidates.length
       return {
         ...prev,
         bigThree: [
           ...prev.bigThree,
-          ...candidates.map((source) => ({
+          ...selectedCandidates.map((source) => ({
             id: createId(),
             content: source.content,
             sourceId: source.id,
@@ -606,6 +646,7 @@ export const useDailyData = () => {
     addBrainDumpItem,
     removeBrainDumpItem,
     restoreBrainDumpItem,
+    cycleBrainDumpItemPriority,
     sendToBigThree,
     fillBigThreeFromBrainDump,
     addBigThreeItem,

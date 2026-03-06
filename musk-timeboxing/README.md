@@ -77,6 +77,12 @@ npm run build
 - `주간`: 현재 주간의 일정 수, 완료율, 계획 시간, 일정 미리보기를 카드로 확인
 - `월간`: 월 전체를 캘린더 그리드로 훑고 날짜 클릭으로 일간 보기로 이동
 
+## 브레인 덤프 우선순위
+
+- 각 항목의 배터리를 눌러 중요도를 `미지정 -> 낮음 -> 보통 -> 높음 -> 최우선` 순으로 올릴 수 있습니다.
+- 브레인 덤프는 중요도 높은 순으로 자동 정렬됩니다.
+- `빅3 추천채우기`는 중요도 상위 항목부터 빈 슬롯을 채웁니다.
+
 ## 정적 배포
 
 `vite.config.js`의 `base: './'`가 설정되어 있어 상대 경로 정적 호스팅이 가능합니다.
@@ -106,7 +112,7 @@ npm run build
 - 도커 개발 워크플로: `docs/DOCKER_DEV_WORKFLOW.md`
 - 전달/리뷰 워크플로: `docs/DELIVERY_WORKFLOW.md`
 - 패치노트 운영 워크플로: `docs/PATCH_NOTES_WORKFLOW.md`
-- 태스크 실행 보드(20개): `docs/TASK_EXECUTION_BOARD.md`
+- 태스크 실행 보드(25개): `docs/TASK_EXECUTION_BOARD.md`
 - FSD 맵(1단계): `docs/FSD_PHASE1_MAP.md`
 - FSD 맵(2단계): `docs/FSD_PHASE2_MAP.md`
 - 타임박스 레이아웃 매트릭스: `docs/TIMEBOX_LAYOUT_MATRIX.md`

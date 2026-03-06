@@ -1,4 +1,5 @@
 export * from './storage'
 export * from './timeSlot'
 export * from './categoryVisual'
+export * from './brainDumpPriority'
 export * from './calendarViewData'
