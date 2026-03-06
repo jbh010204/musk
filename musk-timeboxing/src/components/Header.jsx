@@ -22,7 +22,7 @@ function Header({
   onToggleTheme = () => {},
 }) {
   return (
-    <header className="sticky top-0 z-30 bg-gray-900/85 px-6 py-4 backdrop-blur">
+    <header className="sticky top-0 z-30 bg-slate-50/95 px-6 py-4 text-slate-900 backdrop-blur dark:bg-gray-900/85 dark:text-gray-100">
       <div className="flex items-center justify-between">
         <button
           type="button"

@@ -22,16 +22,16 @@ body,
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  @apply bg-gray-900 text-gray-100 antialiased;
+  @apply bg-slate-50 text-slate-900 antialiased dark:bg-gray-900 dark:text-gray-100;
 }
 
 @layer components {
   .ui-panel {
-    @apply rounded-2xl bg-gray-800/75 shadow-sm;
+    @apply rounded-2xl bg-white shadow-sm dark:bg-gray-800/75 dark:shadow-none;
   }
 
   .ui-panel-subtle {
-    @apply rounded-2xl bg-gray-900/60 shadow-sm;
+    @apply rounded-2xl bg-slate-50 shadow-sm dark:bg-gray-900/60 dark:shadow-none;
   }
 
   .ui-btn {
@@ -71,7 +71,7 @@ body {
   }
 
   .ui-chip {
-    @apply inline-flex items-center gap-1 rounded-xl bg-gray-900/60 px-2 py-1 text-xs text-gray-300 shadow-sm;
+    @apply inline-flex items-center gap-1 rounded-xl bg-slate-100 px-2 py-1 text-xs text-slate-600 shadow-sm dark:bg-gray-900/60 dark:text-gray-300;
   }
 
   .ui-modal-shell {
@@ -79,12 +79,46 @@ body {
   }
 
   .ui-modal-card {
-    @apply w-full rounded-3xl bg-gray-900 p-6 shadow-2xl;
+    @apply w-full rounded-3xl bg-white p-6 text-slate-900 shadow-2xl dark:bg-gray-900 dark:text-gray-100;
   }
 }
 
 .theme-light {
   color-scheme: light;
+}
+
+.theme-light.bg-slate-50,
+.theme-light .bg-slate-50 {
+  background-color: #f8f9fa !important;
+}
+
+.theme-light.bg-white,
+.theme-light .bg-white {
+  background-color: #ffffff !important;
+}
+
+.theme-light.text-slate-900,
+.theme-light .text-slate-900 {
+  color: #1f1f1f !important;
+}
+
+.theme-light.text-slate-600,
+.theme-light.text-slate-500,
+.theme-light .text-slate-600,
+.theme-light .text-slate-500 {
+  color: #444746 !important;
+}
+
+.theme-light .bg-gray-900\/85 {
+  background-color: rgba(248, 249, 250, 0.94) !important;
+}
+
+.theme-light .bg-gray-800\/95 {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+}
+
+.theme-light .bg-gray-800\/75 {
+  background-color: rgba(255, 255, 255, 0.94) !important;
 }
 
 .theme-light .bg-gray-950 {

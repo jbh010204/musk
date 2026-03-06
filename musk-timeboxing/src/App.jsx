@@ -1037,8 +1037,8 @@ function App() {
       onDragCancel={handleDragCancel}
       onDragEnd={handleDragEnd}
     >
-      <div className={`${theme === THEME_DARK ? 'theme-dark dark' : 'theme-light'} h-screen bg-gray-900 text-gray-100`}>
-        <div className="flex h-full flex-col overflow-hidden bg-gray-900">
+      <div className={`${theme === THEME_DARK ? 'theme-dark dark' : 'theme-light'} h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-gray-100`}>
+        <div className="flex h-full flex-col overflow-hidden bg-slate-50 dark:bg-gray-900">
           <Header
             currentDate={currentDate}
             goNextDay={goNextDay}
@@ -1067,7 +1067,7 @@ function App() {
             {mobileTab === 'timeline' ? timelineSection : null}
           </div>
 
-          <nav className="fixed bottom-0 left-0 right-0 z-30 bg-gray-800/95 shadow-sm backdrop-blur md:hidden">
+          <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 shadow-sm backdrop-blur dark:bg-gray-800/95 md:hidden">
             <div className="grid grid-cols-3">
               <button
                 type="button"
@@ -1075,7 +1075,7 @@ function App() {
                 className={`px-3 py-3 text-sm ${
                   mobileTab === 'dump'
                     ? 'bg-indigo-600 text-gray-100'
-                    : 'text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
                 }`}
               >
                 덤프
@@ -1086,7 +1086,7 @@ function App() {
                 className={`px-3 py-3 text-sm ${
                   mobileTab === 'big3'
                     ? 'bg-indigo-600 text-gray-100'
-                    : 'text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
                 }`}
               >
                 빅3
@@ -1097,7 +1097,7 @@ function App() {
                 className={`px-3 py-3 text-sm ${
                   mobileTab === 'timeline'
                     ? 'bg-indigo-600 text-gray-100'
-                    : 'text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
                 }`}
               >
                 타임라인

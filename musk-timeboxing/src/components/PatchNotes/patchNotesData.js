@@ -1,5 +1,21 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.12.5',
+    date: '2026-03-07',
+    title: '라이트 모드 톤 계층 리팩토링',
+    summary: 'Playwright 시각 점검 결과를 기반으로 라이트 모드 색상 계층을 가이드 토큰에 맞게 정렬했습니다.',
+    focus: [
+      '라이트 모드에서 어두운 패널이 남는 문제를 제거하고 Surface-over-Background 구조를 강화',
+      '가이드 토큰(#F8F9FA/#FFFFFF/#1F1F1F/#444746)을 실제 렌더 결과와 일치시키는 데 집중',
+    ],
+    improvements: [
+      'ui-panel/ui-panel-subtle/modal/app/header/nav의 라이트 기본 톤을 레이어드 화이트 구조로 재정의',
+      'theme-light 토큰 오버라이드에 `bg-slate-50`, `bg-white`, `text-slate-*` 계층 추가',
+      'Playwright E2E에 라이트 모드 토큰 검증 테스트 추가',
+    ],
+    validation: ['Playwright 풀스크린 시각 점검 + lint/build/e2e(전체) 통과'],
+  },
+  {
     version: 'v0.12.4',
     date: '2026-03-07',
     title: '타임라인 재생 버튼 시각 안정화',
