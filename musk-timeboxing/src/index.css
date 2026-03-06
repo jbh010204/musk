@@ -78,9 +78,69 @@ body {
     @apply fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4;
   }
 
-  .ui-modal-card {
-    @apply w-full rounded-lg border border-gray-700 bg-gray-900 p-4 shadow-2xl;
-  }
+.ui-modal-card {
+  @apply w-full rounded-lg border border-gray-700 bg-gray-900 p-4 shadow-2xl;
+}
+}
+
+.theme-light {
+  color-scheme: light;
+}
+
+.theme-light .bg-gray-950 {
+  background-color: #f8fafc !important;
+}
+
+.theme-light .bg-gray-900 {
+  background-color: #f1f5f9 !important;
+}
+
+.theme-light .bg-gray-800 {
+  background-color: #e2e8f0 !important;
+}
+
+.theme-light .bg-gray-700 {
+  background-color: #cbd5e1 !important;
+}
+
+.theme-light .bg-gray-600 {
+  background-color: #94a3b8 !important;
+}
+
+.theme-light .border-gray-700 {
+  border-color: #cbd5e1 !important;
+}
+
+.theme-light .border-gray-600 {
+  border-color: #94a3b8 !important;
+}
+
+.theme-light .text-gray-100 {
+  color: #0f172a !important;
+}
+
+.theme-light .text-gray-200 {
+  color: #1e293b !important;
+}
+
+.theme-light .text-gray-300 {
+  color: #334155 !important;
+}
+
+.theme-light .text-gray-400 {
+  color: #475569 !important;
+}
+
+.theme-light .text-gray-500 {
+  color: #64748b !important;
+}
+
+.theme-light .hover\:bg-gray-700:hover {
+  background-color: #cbd5e1 !important;
+}
+
+.theme-light .hover\:bg-gray-600:hover {
+  background-color: #94a3b8 !important;
 }
 
 ::-webkit-scrollbar {

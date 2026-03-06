@@ -14,6 +14,10 @@ function TimeBoxCard({
   previewEndSlot,
   onResizePreview,
   onResizeEnd,
+  nowTimestamp = 0,
+  onTimerStart,
+  onTimerPause,
+  onTimerComplete,
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `time-box-${timeBox.id}`,
@@ -33,6 +37,17 @@ function TimeBoxCard({
   const categoryLabel = getCategoryLabel(categoryMeta, timeBox)
   const categoryColor = getCategoryColor(categoryMeta, timeBox)
   const visual = getTimeBoxVisual(categoryColor, timeBox.status)
+  const canUseTimer = timeBox.status !== 'COMPLETED' && timeBox.status !== 'SKIPPED'
+  const isRunning = Number.isFinite(timeBox.timerStartedAt)
+  const runningSeconds =
+    isRunning && nowTimestamp > 0
+      ? Math.max(0, Math.floor((nowTimestamp - Number(timeBox.timerStartedAt)) / 1000))
+      : 0
+  const elapsedSeconds =
+    (Number(timeBox.elapsedSeconds) || 0) + runningSeconds
+  const timerMinutes = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')
+  const timerSeconds = String(elapsedSeconds % 60).padStart(2, '0')
+  const timerLabel = `${timerMinutes}:${timerSeconds}`
 
   const actualDiff = useMemo(() => {
     if (timeBox.status !== 'COMPLETED' || timeBox.actualMinutes == null) {
@@ -90,6 +105,12 @@ function TimeBoxCard({
 
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup', onMouseUp)
+  }
+
+  const handleTimerAction = (event, handler) => {
+    event.preventDefault()
+    event.stopPropagation()
+    handler?.(timeBox.id)
   }
 
   return (
@@ -156,6 +177,36 @@ function TimeBoxCard({
         </span>
       )}
 
+      {canUseTimer ? (
+        <div className="absolute left-2 top-1.5 z-20 flex items-center gap-1">
+          <button
+            type="button"
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={(event) =>
+              handleTimerAction(event, isRunning ? onTimerPause : onTimerStart)
+            }
+            className="rounded border border-white/35 bg-black/20 px-1 py-0.5 text-[10px] leading-none text-white hover:bg-black/35 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            aria-label={isRunning ? '타이머 일시정지' : '타이머 시작'}
+          >
+            {isRunning ? '⏸' : '▶'}
+          </button>
+          {elapsedSeconds > 0 ? (
+            <>
+              <span className="rounded bg-black/20 px-1 py-0.5 text-[10px] text-white/90">{timerLabel}</span>
+              <button
+                type="button"
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => handleTimerAction(event, onTimerComplete)}
+                className="rounded border border-emerald-300/50 bg-emerald-500/20 px-1 py-0.5 text-[10px] leading-none text-emerald-100 hover:bg-emerald-500/35 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                aria-label="타이머 완료 처리"
+              >
+                ✓
+              </button>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+
       {isCompact ? (
         <div className="mt-0.5 flex items-center gap-1 pr-4">
           <span className="min-w-0 flex-1 truncate font-medium">{timeBox.content}</span>
@@ -192,6 +243,9 @@ function TimeBoxCard({
             </div>
           ) : null}
           <div className="truncate pr-11 font-medium">{timeBox.content}</div>
+          {canUseTimer && elapsedSeconds > 0 ? (
+            <div className="mt-1 truncate text-[11px] text-cyan-100">실행 {timerLabel}</div>
+          ) : null}
           {timeBox.status === 'COMPLETED' && actualDiff ? (
             <div className={`mt-1 truncate text-[11px] ${actualDiff.className}`}>{actualDiff.text}</div>
           ) : null}

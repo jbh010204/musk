@@ -1,4 +1,5 @@
 const createEmptyDay = (dateStr) => ({
+  schemaVersion: 2,
   date: dateStr,
   brainDump: [],
   bigThree: [],
@@ -8,15 +9,48 @@ const META_KEY = 'musk-planner-meta'
 const DAY_KEY_PREFIX = 'musk-planner-'
 const DAY_KEY_PATTERN = /^musk-planner-\d{4}-\d{2}-\d{2}$/
 const DATE_STR_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+const LAST_ACTIVE_DATE_KEY = 'musk-planner-last-date'
+const LAST_FOCUS_KEY = 'musk-planner-last-focus'
+const SCHEMA_VERSION = 2
 const createEmptyMeta = () => ({
+  schemaVersion: SCHEMA_VERSION,
   categories: [],
 })
 
+const normalizeTimeBox = (box) => ({
+  id: box?.id ?? crypto.randomUUID(),
+  content: typeof box?.content === 'string' ? box.content : '',
+  sourceId: box?.sourceId ?? null,
+  startSlot: Number.isInteger(box?.startSlot) ? box.startSlot : 0,
+  endSlot: Number.isInteger(box?.endSlot) ? box.endSlot : 1,
+  status:
+    box?.status === 'COMPLETED' || box?.status === 'SKIPPED' || box?.status === 'PLANNED'
+      ? box.status
+      : 'PLANNED',
+  actualMinutes: Number.isFinite(box?.actualMinutes) ? Number(box.actualMinutes) : null,
+  category: typeof box?.category === 'string' ? box.category : null,
+  categoryId: typeof box?.categoryId === 'string' ? box.categoryId : null,
+  skipReason: typeof box?.skipReason === 'string' ? box.skipReason : null,
+  carryOverFromDate: typeof box?.carryOverFromDate === 'string' ? box.carryOverFromDate : null,
+  carryOverFromBoxId: typeof box?.carryOverFromBoxId === 'string' ? box.carryOverFromBoxId : null,
+  timerStartedAt: Number.isFinite(box?.timerStartedAt) ? Number(box.timerStartedAt) : null,
+  elapsedSeconds: Number.isFinite(box?.elapsedSeconds) ? Math.max(0, Number(box.elapsedSeconds)) : 0,
+})
+
+const migrateDayData = (dateStr, rawData) => {
+  const safeData = rawData && typeof rawData === 'object' ? rawData : {}
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    date: dateStr,
+    brainDump: Array.isArray(safeData.brainDump) ? safeData.brainDump : [],
+    bigThree: Array.isArray(safeData.bigThree) ? safeData.bigThree : [],
+    timeBoxes: Array.isArray(safeData.timeBoxes) ? safeData.timeBoxes.map(normalizeTimeBox) : [],
+  }
+}
+
 const toPlainDayData = (dateStr, data) => ({
-  date: dateStr,
-  brainDump: Array.isArray(data?.brainDump) ? data.brainDump : [],
-  bigThree: Array.isArray(data?.bigThree) ? data.bigThree : [],
-  timeBoxes: Array.isArray(data?.timeBoxes) ? data.timeBoxes : [],
+  ...migrateDayData(dateStr, data),
 })
 
 export const getKey = (dateStr) => `${DAY_KEY_PREFIX}${dateStr}`
@@ -37,7 +71,7 @@ export const loadDay = (dateStr) => {
   try {
     const parsed = JSON.parse(raw)
 
-    return toPlainDayData(dateStr, parsed)
+    return migrateDayData(dateStr, parsed)
   } catch {
     return createEmptyDay(dateStr)
   }
@@ -68,6 +102,7 @@ export const loadMeta = () => {
     const parsed = JSON.parse(raw)
 
     return {
+      schemaVersion: SCHEMA_VERSION,
       categories: Array.isArray(parsed.categories) ? parsed.categories : [],
     }
   } catch {
@@ -81,10 +116,91 @@ export const saveMeta = (meta) => {
   }
 
   const payload = {
+    schemaVersion: SCHEMA_VERSION,
     categories: Array.isArray(meta?.categories) ? meta.categories : [],
   }
 
   window.localStorage.setItem(META_KEY, JSON.stringify(payload))
+}
+
+export const loadLastActiveDate = () => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const value = window.localStorage.getItem(LAST_ACTIVE_DATE_KEY)
+  return DATE_STR_PATTERN.test(String(value)) ? value : null
+}
+
+export const saveLastActiveDate = (dateStr) => {
+  if (typeof window === 'undefined' || !DATE_STR_PATTERN.test(String(dateStr))) {
+    return
+  }
+
+  window.localStorage.setItem(LAST_ACTIVE_DATE_KEY, dateStr)
+}
+
+export const getMostRecentStoredDate = () => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const dates = Object.keys(window.localStorage)
+    .filter((key) => isDayKey(key))
+    .map((key) => key.replace(DAY_KEY_PREFIX, ''))
+    .filter((dateStr) => DATE_STR_PATTERN.test(dateStr))
+    .sort()
+
+  return dates.length > 0 ? dates[dates.length - 1] : null
+}
+
+export const loadLastFocus = () => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const raw = window.localStorage.getItem(LAST_FOCUS_KEY)
+  if (!raw) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(raw)
+    if (!DATE_STR_PATTERN.test(String(parsed?.date))) {
+      return null
+    }
+
+    if (!Number.isInteger(parsed?.slot)) {
+      return null
+    }
+
+    return {
+      date: parsed.date,
+      slot: parsed.slot,
+      ts: Number.isFinite(parsed?.ts) ? Number(parsed.ts) : Date.now(),
+    }
+  } catch {
+    return null
+  }
+}
+
+export const saveLastFocus = ({ date, slot }) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  if (!DATE_STR_PATTERN.test(String(date)) || !Number.isInteger(slot)) {
+    return
+  }
+
+  window.localStorage.setItem(
+    LAST_FOCUS_KEY,
+    JSON.stringify({
+      date,
+      slot,
+      ts: Date.now(),
+    }),
+  )
 }
 
 const parseImportPayload = (input) => {
@@ -119,7 +235,7 @@ export const exportPlannerData = (dateStr = null) => {
   }
 
   return {
-    schemaVersion: 1,
+    schemaVersion: SCHEMA_VERSION,
     exportedAt: new Date().toISOString(),
     days,
     meta: loadMeta(),
@@ -132,7 +248,7 @@ export const clearPlannerData = () => {
   }
 
   Object.keys(window.localStorage).forEach((key) => {
-    if (isDayKey(key) || key === META_KEY) {
+    if (isDayKey(key) || key === META_KEY || key === LAST_ACTIVE_DATE_KEY || key === LAST_FOCUS_KEY) {
       window.localStorage.removeItem(key)
     }
   })

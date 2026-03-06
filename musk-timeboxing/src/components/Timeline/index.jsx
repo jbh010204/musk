@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getCategoryColor, getCategoryLabel } from '../../utils/categoryVisual'
 import { hasOverlap, slotToTime, TOTAL_SLOTS } from '../../utils/timeSlot'
 import CompletionModal from './CompletionModal'
 import DailyRecapCard from './DailyRecapCard'
 import TimeBoxCard from './TimeBoxCard'
 import TimeSlotGrid from './TimeSlotGrid'
+import WeeklyPlanningBoard from './WeeklyPlanningBoard'
 import WeeklyReportCard from './WeeklyReportCard'
 
 const DEFAULT_SLOT_HEIGHT = 32
@@ -15,7 +16,12 @@ function Timeline({
   data,
   categories,
   weeklyReport,
+  weeklyPlanningPreview = [],
+  onJumpToDate = () => {},
+  initialFocusSlot = null,
   suggestionMessage = null,
+  suggestionAction = null,
+  onApplySuggestionAction = () => {},
   onDismissSuggestion = () => {},
   dropPreviewSlot = null,
   movingTimeBoxPreview = null,
@@ -24,14 +30,19 @@ function Timeline({
   onTimelineScaleChange = () => {},
   addTimeBox,
   updateTimeBox,
+  onTimerStart = () => {},
+  onTimerPause = () => {},
+  onTimerComplete = () => {},
   removeTimeBox,
   showToast,
   showDropGuide = false,
 }) {
+  const sectionRef = useRef(null)
   const [pendingInput, setPendingInput] = useState(null)
   const [selectedBoxId, setSelectedBoxId] = useState(null)
   const [resizePreview, setResizePreview] = useState({})
   const [isComposing, setIsComposing] = useState(false)
+  const [timerNow, setTimerNow] = useState(0)
 
   const sortedBoxes = useMemo(
     () => [...data.timeBoxes].sort((a, b) => a.startSlot - b.startSlot),
@@ -45,6 +56,36 @@ function Timeline({
     () => data.timeBoxes.find((box) => box.id === selectedBoxId) || null,
     [data.timeBoxes, selectedBoxId],
   )
+
+  const hasRunningTimer = useMemo(
+    () => data.timeBoxes.some((box) => Number.isFinite(box.timerStartedAt)),
+    [data.timeBoxes],
+  )
+
+  useEffect(() => {
+    if (!Number.isInteger(initialFocusSlot) || !sectionRef.current) {
+      return
+    }
+
+    const slotButton = sectionRef.current.querySelector(
+      `[data-timeline-slot-index="${initialFocusSlot}"]`,
+    )
+    slotButton?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [initialFocusSlot])
+
+  useEffect(() => {
+    if (!hasRunningTimer) {
+      return undefined
+    }
+
+    const intervalId = window.setInterval(() => {
+      setTimerNow(Date.now())
+    }, 1000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [hasRunningTimer])
   const categoryLegend = useMemo(() => {
     const legendMap = new Map()
 
@@ -152,7 +193,7 @@ function Timeline({
   }
 
   return (
-    <section className="h-full p-4 pb-24 md:pb-16">
+    <section ref={sectionRef} className="h-full p-4 pb-24 md:pb-16">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400">⏱ 타임라인</h2>
         <div className="ui-panel inline-flex items-center p-1 text-xs">
@@ -195,7 +236,18 @@ function Timeline({
           data-testid="daily-suggestion-panel"
           className="ui-panel-subtle mb-3 flex items-start justify-between gap-2 border-sky-400/60 bg-sky-500/10 px-3 py-2 text-xs text-sky-100"
         >
-          <p>{suggestionMessage}</p>
+          <div className="space-y-2">
+            <p>{suggestionMessage}</p>
+            {suggestionAction ? (
+              <button
+                type="button"
+                onClick={onApplySuggestionAction}
+                className="rounded border border-sky-300/70 px-2 py-1 text-[11px] font-medium text-sky-100 transition-colors hover:bg-sky-500/20 focus:outline-none focus:ring-2 focus:ring-sky-300"
+              >
+                {suggestionAction.label}
+              </button>
+            ) : null}
+          </div>
           <button
             type="button"
             onClick={onDismissSuggestion}
@@ -205,6 +257,7 @@ function Timeline({
           </button>
         </div>
       ) : null}
+      <WeeklyPlanningBoard days={weeklyPlanningPreview} onJumpToDate={onJumpToDate} />
       <WeeklyReportCard report={weeklyReport} />
       <DailyRecapCard timeBoxes={sortedBoxes} categoryMap={categoryMap} />
 
@@ -279,6 +332,10 @@ function Timeline({
                 previewEndSlot={resizePreview[box.id]}
                 onResizePreview={handleResizePreview}
                 onResizeEnd={handleResizeEnd}
+                nowTimestamp={timerNow}
+                onTimerStart={onTimerStart}
+                onTimerPause={onTimerPause}
+                onTimerComplete={onTimerComplete}
                 categoryMeta={box.categoryId ? categoryMap.get(box.categoryId) : null}
                 onTimeBoxClick={(timeBox) => setSelectedBoxId(timeBox.id)}
               />

@@ -17,6 +17,9 @@ function Header({
     filledCount: 0,
     isPerfect: false,
   },
+  theme = 'dark',
+  onOpenReschedule = () => {},
+  onToggleTheme = () => {},
 }) {
   return (
     <header className="sticky top-0 z-30 border-b border-gray-700 bg-gray-800 p-4">
@@ -32,14 +35,32 @@ function Header({
 
         <h1 className="text-base font-semibold">{formatKoreanDate(currentDate)}</h1>
 
-        <button
-          type="button"
-          onClick={goNextDay}
-          className="ui-btn-ghost px-3 py-1 text-lg"
-          aria-label="다음 날짜"
-        >
-          →
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onOpenReschedule}
+            className="ui-btn-ghost px-2 py-1 text-xs"
+            aria-label="자동 재배치"
+          >
+            재배치
+          </button>
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            className="ui-btn-ghost px-2 py-1 text-xs"
+            aria-label="테마 전환"
+          >
+            {theme === 'dark' ? '라이트' : '다크'}
+          </button>
+          <button
+            type="button"
+            onClick={goNextDay}
+            className="ui-btn-ghost px-3 py-1 text-lg"
+            aria-label="다음 날짜"
+          >
+            →
+          </button>
+        </div>
       </div>
 
       <div className="ui-panel-subtle mt-3 flex items-center justify-between px-3 py-2">

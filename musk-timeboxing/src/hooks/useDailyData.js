@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react'
-import { loadDay, saveDay } from '../utils/storage'
+import {
+  getMostRecentStoredDate,
+  loadDay,
+  loadLastActiveDate,
+  loadLastFocus,
+  saveDay,
+  saveLastActiveDate,
+  saveLastFocus,
+} from '../utils/storage'
 import { hasOverlap, TOTAL_SLOTS } from '../utils/timeSlot'
 
 const formatDate = (date) => {
@@ -67,12 +75,33 @@ const findAvailableStartSlot = (timeBoxes, preferredStart, duration) => {
 
 export const useDailyData = () => {
   const today = formatDate(new Date())
-  const [currentDate, setCurrentDate] = useState(today)
-  const [data, setData] = useState(() => loadDay(today))
+  const initialDate = loadLastActiveDate() ?? getMostRecentStoredDate() ?? today
+  const [currentDate, setCurrentDate] = useState(initialDate)
+  const [data, setData] = useState(() => loadDay(initialDate))
+  const [lastFocus, setLastFocus] = useState(() => loadLastFocus())
 
   useEffect(() => {
     saveDay(currentDate, data)
   }, [currentDate, data])
+
+  useEffect(() => {
+    saveLastActiveDate(currentDate)
+  }, [currentDate])
+
+  const rememberFocus = (slot) => {
+    if (!Number.isInteger(slot)) {
+      return
+    }
+
+    const focus = {
+      date: currentDate,
+      slot,
+      ts: Date.now(),
+    }
+
+    setLastFocus(focus)
+    saveLastFocus(focus)
+  }
 
   const carryOverUnfinished = (fromDate, toDate) => {
     const source = fromDate === currentDate ? data : loadDay(fromDate)
@@ -257,14 +286,22 @@ export const useDailyData = () => {
           category: normalizeCategory(category),
           categoryId: normalizeCategoryId(categoryId),
           skipReason: null,
+          timerStartedAt: null,
+          elapsedSeconds: 0,
         },
       ],
     }))
+
+    rememberFocus(normalizedStart)
 
     return id
   }
 
   const updateTimeBox = (id, changes) => {
+    if (Number.isInteger(changes?.startSlot)) {
+      rememberFocus(changes.startSlot)
+    }
+
     setData((prev) => ({
       ...prev,
       timeBoxes: prev.timeBoxes.map((box) => {
@@ -291,6 +328,92 @@ export const useDailyData = () => {
             Object.prototype.hasOwnProperty.call(changes ?? {}, 'skipReason')
               ? normalizeSkipReason(changes?.skipReason)
               : box.skipReason ?? null,
+          timerStartedAt:
+            Object.prototype.hasOwnProperty.call(changes ?? {}, 'timerStartedAt')
+              ? changes?.timerStartedAt ?? null
+              : box.timerStartedAt ?? null,
+          elapsedSeconds:
+            Object.prototype.hasOwnProperty.call(changes ?? {}, 'elapsedSeconds')
+              ? Number(changes?.elapsedSeconds) || 0
+              : box.elapsedSeconds ?? 0,
+        }
+      }),
+    }))
+  }
+
+  const startTimeBoxTimer = (id) => {
+    const now = Date.now()
+
+    setData((prev) => ({
+      ...prev,
+      timeBoxes: prev.timeBoxes.map((box) => {
+        if (box.id === id) {
+          if (box.timerStartedAt) {
+            return box
+          }
+
+          return {
+            ...box,
+            status: box.status === 'SKIPPED' ? 'PLANNED' : box.status,
+            timerStartedAt: now,
+          }
+        }
+
+        if (!box.timerStartedAt) {
+          return box
+        }
+
+        return {
+          ...box,
+          timerStartedAt: null,
+          elapsedSeconds:
+            (Number(box.elapsedSeconds) || 0) + Math.max(0, Math.floor((now - box.timerStartedAt) / 1000)),
+        }
+      }),
+    }))
+  }
+
+  const pauseTimeBoxTimer = (id) => {
+    const now = Date.now()
+    setData((prev) => ({
+      ...prev,
+      timeBoxes: prev.timeBoxes.map((box) => {
+        if (box.id !== id || !box.timerStartedAt) {
+          return box
+        }
+
+        return {
+          ...box,
+          timerStartedAt: null,
+          elapsedSeconds:
+            (Number(box.elapsedSeconds) || 0) + Math.max(0, Math.floor((now - box.timerStartedAt) / 1000)),
+        }
+      }),
+    }))
+  }
+
+  const completeTimeBoxByTimer = (id) => {
+    const now = Date.now()
+    setData((prev) => ({
+      ...prev,
+      timeBoxes: prev.timeBoxes.map((box) => {
+        if (box.id !== id) {
+          return box
+        }
+
+        const totalSeconds =
+          (Number(box.elapsedSeconds) || 0) +
+          (box.timerStartedAt ? Math.max(0, Math.floor((now - box.timerStartedAt) / 1000)) : 0)
+
+        const actualMinutes = Math.max(1, Math.round(totalSeconds / 60))
+
+        return {
+          ...box,
+          status: 'COMPLETED',
+          actualMinutes,
+          skipReason: null,
+          elapsedSeconds: totalSeconds,
+          timerStartedAt: null,
         }
       }),
     }))
@@ -319,6 +442,7 @@ export const useDailyData = () => {
   return {
     currentDate,
     data,
+    lastFocus,
     goNextDay,
     goPrevDay,
     goToDate,
@@ -329,6 +453,9 @@ export const useDailyData = () => {
     removeBigThreeItem,
     addTimeBox,
     updateTimeBox,
+    startTimeBoxTimer,
+    pauseTimeBoxTimer,
+    completeTimeBoxByTimer,
     removeTimeBox,
     clearTimeBoxCategory,
     reloadCurrentDay,
