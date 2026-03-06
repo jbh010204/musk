@@ -1,5 +1,21 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.12.1',
+    date: '2026-03-07',
+    title: 'Front-end UX Guardian 규칙 도입',
+    summary: '세션 간 UI 일관성을 위해 에이전트 기반 Look & Feel 규칙을 문서 체계에 통합했습니다.',
+    focus: [
+      '디자인 원칙이 세션마다 흔들리지 않도록 에이전트 문서와 기존 가이드를 동기화',
+      'DnD/접근성 무결성을 보존하면서 시각적 미니멀 룰을 강제하는 기준 정립',
+    ],
+    improvements: [
+      '.agents/FRONTEND_UX_GUARDIAN 문서 신설 및 SESSION_PLAYBOOK에 UI 작업 전 참조 규칙 추가',
+      'AI_FRONTEND_GUIDE에 Interaction/Component 고정 규칙(브랜드 컬러, DnD 핸들러 보호) 확장',
+      'README AI 협업 문서 목록에 Front-end UX Guardian 경로 연결',
+    ],
+    validation: ['문서 경로 연결 검증 + lint/build/e2e(패치노트/전체 회귀) 통과'],
+  },
+  {
     version: 'v0.12.0',
     date: '2026-03-07',
     title: '패치노트 운영 규칙 문서화',

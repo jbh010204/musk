@@ -8,6 +8,7 @@
 2. `npm install` 확인 (처음 세션)
 3. 최근 변경 확인: `git log --oneline -n 10`
 4. 아래 고정 제약 확인
+5. UI 작업이면 `.agents/FRONTEND_UX_GUARDIAN.md` 먼저 확인
 
 ## 2) Fixed Product Constraints
 
@@ -103,3 +104,9 @@
 - `리뷰`: 발견 이슈(없으면 없음 명시) + 잔여 리스크
 - `검증`: `lint/build/e2e` 결과
 - `다음 작업 추천`: `1,2,3` 순서 제안
+
+## 9) Front-end UX Guardian Rule
+
+- UI 변경 요청(레이아웃/컬러/간격/타이포/컴포넌트)은
+  `.agents/FRONTEND_UX_GUARDIAN.md`를 우선 기준으로 삼는다.
+- 해당 규칙과 충돌하는 기존 스타일이 있으면, 기능 회귀가 없는 범위에서 점진 적용한다.
