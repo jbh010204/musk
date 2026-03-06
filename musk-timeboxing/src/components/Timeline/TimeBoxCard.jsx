@@ -161,7 +161,7 @@ function TimeBoxCard({
     >
       {isCompact ? (
         <span
-          className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full"
+          className={`absolute top-2 h-2.5 w-2.5 rounded-full ${canUseTimer ? 'right-8' : 'right-2'}`}
           style={{ backgroundColor: visual.statusBadgeBackground }}
           aria-label={visual.statusLabel}
         />
@@ -178,7 +178,7 @@ function TimeBoxCard({
       )}
 
       {canUseTimer ? (
-        <div className="absolute left-6 top-1/2 z-20 flex -translate-y-1/2 items-center gap-1">
+        <div className={`absolute right-2 z-20 flex items-center gap-1 ${isCompact ? 'top-1.5' : 'top-8'}`}>
           <button
             type="button"
             onMouseDown={(event) => event.stopPropagation()}
@@ -214,7 +214,7 @@ function TimeBoxCard({
       ) : null}
 
       {isCompact ? (
-        <div className={`mt-0.5 flex items-center gap-1.5 pr-4 ${canUseTimer ? 'pl-16' : ''}`}>
+        <div className={`mt-0.5 flex items-center gap-1.5 ${canUseTimer ? 'pr-16' : 'pr-4'}`}>
           <span className="min-w-0 flex-1 truncate font-medium">{timeBox.content}</span>
           {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
             <span className="max-w-[50%] shrink-0 truncate rounded border border-amber-300/40 bg-amber-500/15 px-1 py-0.5 text-[10px] text-amber-100">
@@ -235,7 +235,7 @@ function TimeBoxCard({
       ) : null}
 
       {!isCompact ? (
-        <div className={canUseTimer ? 'pl-16' : ''}>
+        <div className={canUseTimer ? 'pr-20' : ''}>
           {categoryLabel ? (
             <div
               className="mb-1 inline-flex max-w-[80%] rounded border px-1.5 py-0.5 text-[10px] text-white"

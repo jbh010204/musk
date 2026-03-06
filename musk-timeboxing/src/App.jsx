@@ -1054,11 +1054,11 @@ function App() {
           />
 
           <div className="hidden min-h-0 flex-1 gap-6 overflow-hidden px-6 pb-6 md:flex">
-            <aside className="ui-panel w-80 flex-shrink-0 overflow-y-auto">
+            <aside className="ui-panel-subtle w-80 flex-shrink-0 overflow-y-auto">
               {dumpSection}
               {bigThreeSection}
             </aside>
-            <main className="ui-panel flex-1 overflow-y-auto">{timelineSection}</main>
+            <main className="ui-panel-subtle flex-1 overflow-y-auto">{timelineSection}</main>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto pb-16 md:hidden">
