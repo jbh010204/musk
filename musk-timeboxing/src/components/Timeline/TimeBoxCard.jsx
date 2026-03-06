@@ -118,7 +118,7 @@ function TimeBoxCard({
       ref={setNodeRef}
       type="button"
       data-timebox-dragging={isDragging ? 'true' : 'false'}
-      className={`absolute left-0 right-0 overflow-hidden rounded px-2 py-1 text-left text-xs text-white shadow pointer-events-auto transition-[transform,top,height,opacity] duration-100 ease-out will-change-transform ${
+      className={`timebox-card absolute left-0 right-0 overflow-hidden rounded px-2 py-1 text-left text-xs text-white shadow pointer-events-auto transition-[transform,top,height,opacity] duration-100 ease-out will-change-transform ${
         isDragging ? 'z-40 opacity-80 ring-2 ring-cyan-300/70' : ''
       }`}
       style={{
@@ -208,16 +208,14 @@ function TimeBoxCard({
       ) : null}
 
       {isCompact ? (
-        <div className="mt-0.5 flex items-center gap-1 pr-4">
-          <span className="min-w-0 flex-1 truncate font-medium">{timeBox.content}</span>
+        <div className={`mt-0.5 flex items-center gap-1.5 pr-4 ${canUseTimer ? 'pl-11' : ''}`}>
           {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
-            <span className="max-w-[52%] truncate rounded border border-amber-300/40 bg-amber-500/15 px-1 py-0.5 text-[10px] text-amber-100">
+            <span className="max-w-[50%] shrink-0 truncate rounded border border-amber-300/40 bg-amber-500/15 px-1 py-0.5 text-[10px] text-amber-100">
               사유: {timeBox.skipReason}
             </span>
-          ) : null}
-          {!(timeBox.status === 'SKIPPED' && timeBox.skipReason) && categoryLabel ? (
+          ) : categoryLabel ? (
             <span
-              className="max-w-[40%] shrink truncate rounded border px-1 py-0.5 text-[10px] text-white/95"
+              className="max-w-[40%] shrink-0 truncate rounded border px-1 py-0.5 text-[10px] text-white/95"
               style={{
                 backgroundColor: visual.categoryBadgeBackground,
                 borderColor: visual.categoryBadgeBorder,
@@ -226,6 +224,7 @@ function TimeBoxCard({
               #{categoryLabel}
             </span>
           ) : null}
+          <span className="min-w-0 flex-1 truncate font-medium">{timeBox.content}</span>
         </div>
       ) : null}
 

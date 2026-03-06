@@ -66,7 +66,7 @@ function Header({
       <div className="ui-panel-subtle mt-3 flex items-center justify-between px-3 py-2">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-400">Big3 완료</p>
-          <p className="text-sm font-semibold text-white">
+          <p className="text-sm font-semibold text-gray-100">
             {bigThreeProgress.completedCount}/3
             <span className="ml-2 text-xs font-normal text-gray-400">
               입력 {bigThreeProgress.filledCount}/3

@@ -1051,7 +1051,9 @@ function App() {
                 type="button"
                 onClick={() => setMobileTab('dump')}
                 className={`px-3 py-3 text-sm ${
-                  mobileTab === 'dump' ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700'
+                  mobileTab === 'dump'
+                    ? 'bg-gray-700 text-gray-100'
+                    : 'text-gray-300 hover:bg-gray-700'
                 }`}
               >
                 덤프
@@ -1060,7 +1062,9 @@ function App() {
                 type="button"
                 onClick={() => setMobileTab('big3')}
                 className={`px-3 py-3 text-sm ${
-                  mobileTab === 'big3' ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700'
+                  mobileTab === 'big3'
+                    ? 'bg-gray-700 text-gray-100'
+                    : 'text-gray-300 hover:bg-gray-700'
                 }`}
               >
                 빅3
@@ -1070,7 +1074,7 @@ function App() {
                 onClick={() => setMobileTab('timeline')}
                 className={`px-3 py-3 text-sm ${
                   mobileTab === 'timeline'
-                    ? 'bg-gray-700 text-white'
+                    ? 'bg-gray-700 text-gray-100'
                     : 'text-gray-300 hover:bg-gray-700'
                 }`}
               >

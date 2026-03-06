@@ -85,20 +85,20 @@ function DailyRecapCard({ timeBoxes, categoryMap }) {
       {isExpanded && recap.total > 0 ? (
         <div className="mt-2 grid gap-2 text-sm md:grid-cols-2">
           <p className="text-gray-200">
-            총 일정 <span className="font-semibold text-white">{recap.total}</span>개
+            총 일정 <span className="font-semibold text-gray-100">{recap.total}</span>개
           </p>
           <p className="text-gray-200">
-            완료율 <span className="font-semibold text-white">{recap.completionRate}%</span>
+            완료율 <span className="font-semibold text-gray-100">{recap.completionRate}%</span>
           </p>
           <p className="text-gray-200">
             완료 {recap.completed} · 예정 {recap.planned} · 건너뜀 {recap.skipped}
           </p>
           <p className="text-gray-200">
-            집중 카테고리 <span className="font-semibold text-white">#{recap.focusCategory}</span>
+            집중 카테고리 <span className="font-semibold text-gray-100">#{recap.focusCategory}</span>
           </p>
           <p className="text-gray-200">
             주요 스킵 사유{' '}
-            <span className="font-semibold text-white">{recap.topSkipReason ?? '없음'}</span>
+            <span className="font-semibold text-gray-100">{recap.topSkipReason ?? '없음'}</span>
           </p>
           <p className="text-gray-300 md:col-span-2">
             완료 일정 기준 계획 {recap.completedPlannedMinutes}분 → 실제 {recap.completedActualMinutes}분 (

@@ -29,8 +29,8 @@ function WeeklyReportCard({ report }) {
       {isExpanded && report.total > 0 ? (
         <div className="mt-2 space-y-2 text-sm">
           <p className="text-gray-200">
-            총 일정 <span className="font-semibold text-white">{report.total}개</span> · 완료율{' '}
-            <span className="font-semibold text-white">{report.completionRate}%</span>
+            총 일정 <span className="font-semibold text-gray-100">{report.total}개</span> · 완료율{' '}
+            <span className="font-semibold text-gray-100">{report.completionRate}%</span>
           </p>
           <p className="text-gray-300">
             완료 일정 기준 계획 {report.completedPlannedMinutes}분 → 실제 {report.completedActualMinutes}분 (
