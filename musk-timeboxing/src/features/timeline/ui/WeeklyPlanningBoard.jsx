@@ -1,4 +1,4 @@
-import { slotToTime } from '../../../utils/timeSlot'
+import { slotToTime } from '../../../entities/planner'
 
 function WeeklyPlanningBoard({ days = [], onJumpToDate = () => {} }) {
   return (

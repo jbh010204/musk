@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, Card } from '../../../shared/ui'
-import { exportPlannerData, importPlannerData } from '../../../utils/storage'
+import { exportPlannerData, importPlannerData } from '../../../entities/planner'
 
 function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
   const [exportText, setExportText] = useState('')

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Card, IconButton } from '../../../shared/ui'
-import { getCategoryLabel } from '../../../utils/categoryVisual'
-import { slotDurationMinutes } from '../../../utils/timeSlot'
+import { getCategoryLabel, slotDurationMinutes } from '../../../entities/planner'
 
 function DailyRecapCard({ timeBoxes, categoryMap }) {
   const [isExpanded, setIsExpanded] = useState(true)

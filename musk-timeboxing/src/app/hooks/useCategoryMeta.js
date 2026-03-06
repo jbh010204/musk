@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { loadMeta, saveMeta } from '../utils/storage'
+import { loadMeta, saveMeta } from '../../entities/planner'
 
 const normalizeName = (value) => String(value || '').trim()
 const normalizeColor = (value) => {

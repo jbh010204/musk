@@ -29,7 +29,7 @@
 
 ## 2. 실행 상태 보드
 
-- Current Task: `T13`
+- Current Task: `None`
 - Next Candidate: `None`
 - Blocker: `None`
 - Completed:
@@ -45,6 +45,7 @@
   - `T10` UI 레이아웃 회귀 E2E 추가
   - `T11` 접근성(ARIA/라이브 리전) 보강
   - `T12` Undo UX(삭제/상태변경) 도입
+  - `T13` FSD 2단계 경계 정리 + 문서 동기화
 
 ## 3. Prioritized Task List
 

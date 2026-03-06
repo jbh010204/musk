@@ -14,11 +14,8 @@ import FloatingActionDock from './features/floating'
 import Header from './features/header'
 import PatchNotesModal from './features/patch-notes'
 import Timeline, { RescheduleAssistantModal } from './features/timeline'
-import { useCategoryMeta } from './hooks/useCategoryMeta'
-import { useDailyData } from './hooks/useDailyData'
-import { useToast } from './hooks/useToast'
-import { loadDay, saveDay } from './utils/storage'
-import { hasOverlap, slotDurationMinutes, TOTAL_SLOTS } from './utils/timeSlot'
+import { useCategoryMeta, useDailyData, useToast } from './app/hooks'
+import { hasOverlap, loadDay, saveDay, slotDurationMinutes, TOTAL_SLOTS } from './entities/planner'
 
 const DEFAULT_BOX_SLOTS = 1
 const BASE_SLOT_HEIGHT = 32

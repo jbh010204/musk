@@ -1,5 +1,24 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.13.4',
+    date: '2026-03-07',
+    title: 'FSD 2단계(T13) 구조 정리 + 문서 동기화',
+    summary:
+      '`hooks/utils` 잔여 레이어를 `app/entities` 경계로 이동하고 배럴 import 규칙으로 정리해 새 세션 진입 비용을 낮췄습니다.',
+    focus: [
+      'App/Feature가 도메인 유틸에 접근할 때 단일 배럴(`entities/planner`)을 사용하도록 경로 일관화',
+      '구조 변경이 동작 변경으로 이어지지 않도록 무동작 리팩토링 원칙과 회귀 테스트를 함께 적용',
+      '세션 가이드/README/맵 문서를 코드 구조와 동일한 상태로 업데이트',
+    ],
+    improvements: [
+      '`src/hooks/*` -> `src/app/hooks/*`, `src/utils/*` -> `src/entities/planner/lib/*` 이동',
+      '`src/app/hooks/index.js`, `src/entities/planner/index.js` 배럴 엔트리 추가',
+      'App/Timeline/DataTransfer 등 import 경로를 새 경계 기준으로 정리',
+      '`docs/FSD_PHASE2_MAP.md` 추가 + README/SESSION_PLAYBOOK/TASK_BOARD 동기화',
+    ],
+    validation: ['lint/build 통과', 'E2E 전체 통과(33 passed)'],
+  },
+  {
     version: 'v0.13.3',
     date: '2026-03-07',
     title: 'Undo UX(T12) 도입 + 파괴 액션 복구 흐름 추가',

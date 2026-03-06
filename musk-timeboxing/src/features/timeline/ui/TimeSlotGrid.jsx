@@ -1,5 +1,5 @@
 import { useDroppable } from '@dnd-kit/core'
-import { TOTAL_SLOTS, slotToTime } from '../../../utils/timeSlot'
+import { TOTAL_SLOTS, slotToTime } from '../../../entities/planner'
 
 function TimeSlotRow({ slotIndex, onSlotClick, showDropGuide, rowHeight, showQuarterDividers }) {
   const { setNodeRef, isOver } = useDroppable({

@@ -101,4 +101,6 @@ npm run build
 - 전달/리뷰 워크플로: `docs/DELIVERY_WORKFLOW.md`
 - 패치노트 운영 워크플로: `docs/PATCH_NOTES_WORKFLOW.md`
 - 태스크 실행 보드(13개): `docs/TASK_EXECUTION_BOARD.md`
+- FSD 맵(1단계): `docs/FSD_PHASE1_MAP.md`
+- FSD 맵(2단계): `docs/FSD_PHASE2_MAP.md`
 - 타임박스 레이아웃 매트릭스: `docs/TIMEBOX_LAYOUT_MATRIX.md`

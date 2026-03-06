@@ -9,7 +9,8 @@
 3. 최근 변경 확인: `git log --oneline -n 10`
 4. 아래 고정 제약 확인
 5. UI 작업이면 `.agents/FRONTEND_UX_GUARDIAN.md` 먼저 확인
-6. 태스크 실행은 `docs/TASK_EXECUTION_BOARD.md`의 Current Task부터 시작
+6. 구조 작업/경로 수정 전 `docs/FSD_PHASE2_MAP.md` 확인
+7. 태스크 실행은 `docs/TASK_EXECUTION_BOARD.md`의 Current Task부터 시작
 
 ## 2) Fixed Product Constraints
 
@@ -20,6 +21,13 @@
 - State: `useState` / `useReducer` only
 - Theme: dark/light toggle (둘 다 깨지지 않게 유지)
 - Deployment: static build only
+
+## 2-1) Current Source Boundaries
+
+- App state hooks: `src/app/hooks/*`
+- Planner entities(lib): `src/entities/planner/lib/*` (배럴: `src/entities/planner/index.js`)
+- UI features: `src/features/*/ui`
+- Shared primitives: `src/shared/ui/*`
 
 ## 3) Current UX Decisions (must keep)
 

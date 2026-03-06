@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 import {
   getMostRecentStoredDate,
+  hasOverlap,
   loadDay,
   loadLastActiveDate,
   loadLastFocus,
   saveDay,
   saveLastActiveDate,
   saveLastFocus,
-} from '../utils/storage'
-import { hasOverlap, TOTAL_SLOTS } from '../utils/timeSlot'
+  TOTAL_SLOTS,
+} from '../../entities/planner'
 
 const formatDate = (date) => {
   const year = date.getFullYear()

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getCategoryColor, getCategoryLabel } from '../../../utils/categoryVisual'
-import { hasOverlap, slotToTime, TOTAL_SLOTS } from '../../../utils/timeSlot'
+import { getCategoryColor, getCategoryLabel, hasOverlap, slotToTime, TOTAL_SLOTS } from '../../../entities/planner'
 import CompletionModal from './CompletionModal'
 import DailyRecapCard from './DailyRecapCard'
 import TimeBoxCard from './TimeBoxCard'

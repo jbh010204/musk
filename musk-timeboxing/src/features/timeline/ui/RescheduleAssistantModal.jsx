@@ -1,4 +1,4 @@
-import { slotToTime } from '../../../utils/timeSlot'
+import { slotToTime } from '../../../entities/planner'
 import { Button, Card } from '../../../shared/ui'
 
 function RescheduleAssistantModal({ plan, onClose, onApply }) {

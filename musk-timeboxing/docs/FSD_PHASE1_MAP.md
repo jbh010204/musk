@@ -1,6 +1,7 @@
 # FSD Phase 1 Mapping
 
 이 문서는 T1(구조 개편 1단계)에서 수행한 무동작 파일 이동 매핑이다.
+T13(2단계) 결과는 `docs/FSD_PHASE2_MAP.md`를 따른다.
 
 ## 목적
 
