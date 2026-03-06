@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Badge, Button, Card } from '../../../shared/ui'
 import { PATCH_NOTES } from './patchNotesData'
 
 function PatchNotesModal({ onClose }) {
@@ -18,9 +19,9 @@ function PatchNotesModal({ onClose }) {
       <div className="ui-modal-card max-w-2xl" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">패치노트</h3>
-          <button type="button" onClick={onClose} className="ui-btn-ghost">
+          <Button onClick={onClose}>
             닫기
-          </button>
+          </Button>
         </div>
 
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -29,7 +30,7 @@ function PatchNotesModal({ onClose }) {
 
         <div className="mt-4 max-h-[70vh] space-y-4 overflow-y-auto pr-1">
           {PATCH_NOTES.map((note) => (
-            <section key={note.version} className="ui-panel-subtle p-4">
+            <Card key={note.version} as="section" tone="subtle" className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{note.title}</h4>
@@ -38,19 +39,18 @@ function PatchNotesModal({ onClose }) {
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2 self-start">
-                  <span className="rounded-lg bg-slate-200/80 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-800/65 dark:text-slate-200">
+                  <Badge className="rounded-lg">
                     {note.version}
-                  </span>
-                  <button
-                    type="button"
+                  </Badge>
+                  <Button
                     onClick={() => toggleExpanded(note.version)}
-                    className="ui-btn-ghost w-16 px-2 py-1 text-center text-[11px]"
+                    className="w-16 px-2 py-1 text-center text-[11px]"
                     data-testid={`patch-note-toggle-${note.version}`}
                     aria-expanded={Boolean(expandedVersions[note.version])}
                     aria-controls={`patch-note-detail-${note.version}`}
                   >
                     {expandedVersions[note.version] ? '접기' : '상세보기'}
-                  </button>
+                  </Button>
                 </div>
               </div>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{note.date}</p>
@@ -95,7 +95,7 @@ function PatchNotesModal({ onClose }) {
                   </div>
                 </div>
               ) : null}
-            </section>
+            </Card>
           ))}
         </div>
       </div>

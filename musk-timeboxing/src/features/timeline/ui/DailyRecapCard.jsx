@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Card, IconButton } from '../../../shared/ui'
 import { getCategoryLabel } from '../../../utils/categoryVisual'
 import { slotDurationMinutes } from '../../../utils/timeSlot'
 
@@ -64,20 +65,19 @@ function DailyRecapCard({ timeBoxes, categoryMap }) {
   }, [categoryMap, timeBoxes])
 
   return (
-    <div className="ui-panel mb-6 p-6">
+    <Card className="mb-6 p-6">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           오늘 리캡
         </h3>
-        <button
-          type="button"
+        <IconButton
           onClick={() => setIsExpanded((prev) => !prev)}
-          className="ui-btn-ghost ml-auto h-7 w-7 p-0 text-base text-slate-400"
+          className="ml-auto"
           aria-label={isExpanded ? '오늘 리캡 접기' : '오늘 리캡 펼치기'}
           data-testid="daily-recap-toggle"
         >
           {isExpanded ? '⌃' : '⌄'}
-        </button>
+        </IconButton>
       </div>
 
       {!isExpanded ? (
@@ -112,7 +112,7 @@ function DailyRecapCard({ timeBoxes, categoryMap }) {
           </p>
         </div>
       ) : null}
-    </div>
+    </Card>
   )
 }
 

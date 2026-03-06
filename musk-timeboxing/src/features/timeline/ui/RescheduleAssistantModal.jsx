@@ -1,4 +1,5 @@
 import { slotToTime } from '../../../utils/timeSlot'
+import { Button, Card } from '../../../shared/ui'
 
 function RescheduleAssistantModal({ plan, onClose, onApply }) {
   const planned = Array.isArray(plan?.planned) ? plan.planned : []
@@ -9,16 +10,16 @@ function RescheduleAssistantModal({ plan, onClose, onApply }) {
       <div className="ui-modal-card max-w-2xl" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">자동 재배치 어시스턴트</h3>
-          <button type="button" onClick={onClose} className="ui-btn-ghost">
+          <Button onClick={onClose}>
             닫기
-          </button>
+          </Button>
         </div>
 
         <p className="mt-2 text-sm text-gray-300">
           {plan?.fromDate} → {plan?.targetDate} 기준 추천 배치
         </p>
 
-        <div className="ui-panel-subtle mt-4 p-3">
+        <Card tone="subtle" className="mt-4 p-3">
           <p className="text-xs uppercase tracking-wide text-gray-400">
             배치 가능 {planned.length}건 · 배치 실패 {skipped.length}건
           </p>
@@ -40,29 +41,28 @@ function RescheduleAssistantModal({ plan, onClose, onApply }) {
           ) : (
             <p className="mt-2 text-sm text-gray-400">재배치 가능한 일정이 없습니다.</p>
           )}
-        </div>
+        </Card>
 
         {skipped.length > 0 ? (
-          <div className="ui-panel-subtle mt-3 p-3">
+          <Card tone="subtle" className="mt-3 p-3">
             <p className="text-xs uppercase tracking-wide text-gray-400">배치 실패</p>
             <p className="mt-1 text-sm text-gray-300">
               빈 슬롯 부족으로 {skipped.length}건은 자동 배치하지 못했습니다.
             </p>
-          </div>
+          </Card>
         ) : null}
 
         <div className="mt-5 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="ui-btn-secondary">
+          <Button variant="secondary" onClick={onClose}>
             취소
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="primary"
             onClick={() => onApply(plan)}
-            className="ui-btn-primary"
             disabled={planned.length === 0}
           >
             다음 날에 배치 적용
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDraggable } from '@dnd-kit/core'
+import { Button } from '../../../shared/ui'
 
 const REMOVE_ANIMATION_MS = 220
 
@@ -56,24 +57,22 @@ function BrainDumpItem({ item, onRemove, onSendToBigThree }) {
         </button>
 
         <div className="flex translate-x-1 items-center gap-1.5 opacity-0 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-x-0 group-focus-within:opacity-100">
-          <button
-            type="button"
+          <Button
             onClick={() => onSendToBigThree(item.id)}
             disabled={isRemoving}
-            className="ui-btn-ghost px-2 py-1 text-xs text-slate-500 dark:text-slate-400"
+            className="px-2 py-1 text-xs text-slate-500 dark:text-slate-400"
             aria-label="빅3로 보내기"
           >
             빅3
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={handleRemove}
             disabled={isRemoving}
-            className="ui-btn-ghost px-1.5 py-1 text-xs text-slate-500 dark:text-slate-400"
+            className="px-1.5 py-1 text-xs text-slate-500 dark:text-slate-400"
             aria-label="삭제"
           >
             ✕
-          </button>
+          </Button>
         </div>
       </div>
     </div>

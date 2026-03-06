@@ -1,3 +1,5 @@
+import { Badge, Button, Card } from '../../../shared/ui'
+
 const formatKoreanDate = (dateStr) => {
   const date = new Date(`${dateStr}T00:00:00`)
   const [year, month, day] = dateStr.split('-').map(Number)
@@ -24,47 +26,43 @@ function Header({
   return (
     <header className="sticky top-0 z-30 bg-slate-50/95 px-6 py-4 text-slate-900 backdrop-blur dark:bg-gray-900/85 dark:text-gray-100">
       <div className="flex items-center justify-between">
-        <button
-          type="button"
+        <Button
           onClick={goPrevDay}
-          className="ui-btn-ghost px-3 py-1 text-lg"
+          className="px-3 py-1 text-lg"
           aria-label="이전 날짜"
         >
           ←
-        </button>
+        </Button>
 
         <h1 className="text-lg font-semibold">{formatKoreanDate(currentDate)}</h1>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
+          <Button
             onClick={onOpenReschedule}
-            className="ui-btn-ghost px-3 py-1.5 text-xs"
+            className="px-3 py-1.5 text-xs"
             aria-label="자동 재배치"
           >
             재배치
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={onToggleTheme}
-            className="ui-btn-ghost px-3 py-1.5 text-xs"
+            className="px-3 py-1.5 text-xs"
             aria-label="테마 전환"
             aria-pressed={theme === 'light'}
           >
             {theme === 'dark' ? '라이트' : '다크'}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={goNextDay}
-            className="ui-btn-ghost px-3 py-1 text-lg"
+            className="px-3 py-1 text-lg"
             aria-label="다음 날짜"
           >
             →
-          </button>
+          </Button>
         </div>
       </div>
 
-      <div className="ui-panel mt-4 flex items-center justify-between p-6">
+      <Card className="mt-4 flex items-center justify-between p-6">
         <div>
           <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">BIG3 완료</p>
           <p className="text-2xl font-bold text-gray-100">
@@ -91,12 +89,12 @@ function Header({
             ))}
           </div>
           {bigThreeProgress.isPerfect ? (
-            <span className="rounded-xl bg-green-500/15 px-2 py-1 text-xs font-semibold text-green-300 shadow-sm">
+            <Badge tone="success">
               오늘 성공
-            </span>
+            </Badge>
           ) : null}
         </div>
-      </div>
+      </Card>
 
       <div className="mt-4 grid grid-cols-7 gap-3">
         {weekStrip.map((day) => {

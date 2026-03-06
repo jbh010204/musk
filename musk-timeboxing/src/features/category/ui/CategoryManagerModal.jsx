@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Button, Card } from '../../../shared/ui'
 
 const PRESET_COLORS = [
   '#4f46e5',
@@ -16,7 +17,7 @@ function CategoryRow({ category, onUpdate, onDelete }) {
   const [color, setColor] = useState(category.color)
 
   return (
-    <li className="ui-panel p-3">
+    <Card as="li" className="p-3">
       <div className="flex items-center gap-2">
         <span className="h-4 w-4 rounded-full border border-gray-500" style={{ backgroundColor: color }} />
         <input
@@ -36,26 +37,26 @@ function CategoryRow({ category, onUpdate, onDelete }) {
       </div>
 
       <div className="mt-2 flex justify-end gap-2">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           onClick={() => onUpdate(category.id, name, color)}
-          className="ui-btn-secondary px-3 py-1 text-xs"
+          className="px-3 py-1 text-xs"
         >
           저장
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="danger"
           onClick={() => {
             if (window.confirm(`카테고리 '${category.name}'을(를) 삭제할까요?`)) {
               onDelete(category.id)
             }
           }}
-          className="ui-btn-danger px-3 py-1 text-xs"
+          className="px-3 py-1 text-xs"
         >
           삭제
-        </button>
+        </Button>
       </div>
-    </li>
+    </Card>
   )
 }
 
@@ -78,16 +79,15 @@ function CategoryManagerModal({ categories, onClose, onAddCategory, onUpdateCate
       >
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">카테고리 관리</h3>
-          <button
-            type="button"
+          <Button
             onClick={onClose}
-            className="ui-btn-ghost"
+            variant="ghost"
           >
             닫기
-          </button>
+          </Button>
         </div>
 
-        <div className="ui-panel-subtle mt-4 p-3">
+        <Card tone="subtle" className="mt-4 p-3">
           <p className="mb-2 text-xs uppercase tracking-wide text-gray-400">새 카테고리</p>
           <div className="flex flex-wrap items-center gap-2">
             <input
@@ -104,13 +104,12 @@ function CategoryManagerModal({ categories, onClose, onAddCategory, onUpdateCate
               className="h-10 w-12 cursor-pointer rounded border border-gray-600 bg-transparent p-1"
               aria-label="새 카테고리 색상"
             />
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={handleAdd}
-              className="ui-btn-primary"
             >
               추가
-            </button>
+            </Button>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {PRESET_COLORS.map((preset) => (
@@ -124,7 +123,7 @@ function CategoryManagerModal({ categories, onClose, onAddCategory, onUpdateCate
               />
             ))}
           </div>
-        </div>
+        </Card>
 
         <div className="mt-4">
           {categories.length === 0 ? (

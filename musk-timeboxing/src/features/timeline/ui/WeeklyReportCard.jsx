@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Badge, Card, IconButton } from '../../../shared/ui'
 
 function WeeklyReportCard({ report }) {
   const [isExpanded, setIsExpanded] = useState(true)
@@ -6,20 +7,19 @@ function WeeklyReportCard({ report }) {
   const diffTone = report.diff > 0 ? 'text-orange-300' : report.diff < 0 ? 'text-green-300' : 'text-gray-300'
 
   return (
-    <div className="ui-panel mb-6 p-6">
+    <Card className="mb-6 p-6">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           주간 리포트
         </h3>
-        <button
-          type="button"
+        <IconButton
           onClick={() => setIsExpanded((prev) => !prev)}
-          className="ui-btn-ghost ml-auto h-7 w-7 p-0 text-base text-slate-400"
+          className="ml-auto"
           aria-label={isExpanded ? '주간 리포트 접기' : '주간 리포트 펼치기'}
           data-testid="weekly-report-toggle"
         >
           {isExpanded ? '⌃' : '⌄'}
-        </button>
+        </IconButton>
       </div>
 
       {!isExpanded ? (
@@ -49,13 +49,10 @@ function WeeklyReportCard({ report }) {
             {report.byDay.map((day) => {
               const dayRatio = day.total > 0 ? Math.round((day.completed / day.total) * 100) : 0
               return (
-                <span
-                  key={day.dateStr}
-                  className="inline-flex items-center gap-1 rounded-xl bg-gray-900/50 px-2.5 py-1.5 text-xs text-gray-300 shadow-sm"
-                >
+                <Badge key={day.dateStr} tone="subtle" className="inline-flex items-center gap-1">
                   {day.dayLabel} {day.completed}/{day.total}
                   <span className="text-slate-500 dark:text-slate-400">({dayRatio}%)</span>
-                </span>
+                </Badge>
               )
             })}
           </div>
@@ -95,7 +92,7 @@ function WeeklyReportCard({ report }) {
           </div>
         </div>
       ) : null}
-    </div>
+    </Card>
   )
 }
 

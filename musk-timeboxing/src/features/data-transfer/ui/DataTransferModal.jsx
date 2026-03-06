@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Button, Card } from '../../../shared/ui'
 import { exportPlannerData, importPlannerData } from '../../../utils/storage'
 
 function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
@@ -63,39 +64,34 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
       >
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">데이터 백업 / 복원</h3>
-          <button
-            type="button"
+          <Button
             onClick={onClose}
-            className="ui-btn-ghost"
           >
             닫기
-          </button>
+          </Button>
         </div>
 
-        <div className="ui-panel-subtle mt-4 p-3">
+        <Card tone="subtle" className="mt-4 p-3">
           <p className="mb-2 text-xs uppercase tracking-wide text-gray-400">내보내기 (Export)</p>
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
+            <Button
+              variant="sky"
               onClick={handleExportAll}
-              className="ui-btn-sky"
             >
               전체 내보내기
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="sky"
               onClick={handleExportToday}
-              className="ui-btn-sky"
             >
               오늘 내보내기
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="secondary"
               onClick={handleCopyExport}
-              className="ui-btn-secondary"
             >
               복사
-            </button>
+            </Button>
           </div>
 
           <textarea
@@ -104,9 +100,9 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
             placeholder="내보내기 버튼을 누르면 JSON이 표시됩니다"
             className="ui-textarea-code mt-3 h-44"
           />
-        </div>
+        </Card>
 
-        <div className="ui-panel-subtle mt-4 p-3">
+        <Card tone="subtle" className="mt-4 p-3">
           <p className="mb-2 text-xs uppercase tracking-wide text-gray-400">가져오기 (Import)</p>
 
           <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-gray-300">
@@ -130,15 +126,14 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
           />
 
           <div className="mt-3 flex justify-end">
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={handleImport}
-              className="ui-btn-primary"
             >
               가져오기 실행
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   )
