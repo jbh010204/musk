@@ -46,6 +46,8 @@ function PatchNotesModal({ onClose }) {
                     onClick={() => toggleExpanded(note.version)}
                     className="ui-btn-ghost w-16 px-2 py-1 text-center text-[11px]"
                     data-testid={`patch-note-toggle-${note.version}`}
+                    aria-expanded={Boolean(expandedVersions[note.version])}
+                    aria-controls={`patch-note-detail-${note.version}`}
                   >
                     {expandedVersions[note.version] ? '접기' : '상세보기'}
                   </button>
@@ -55,6 +57,7 @@ function PatchNotesModal({ onClose }) {
 
               {expandedVersions[note.version] ? (
                 <div
+                  id={`patch-note-detail-${note.version}`}
                   className="mt-3 grid gap-3 text-sm md:grid-cols-3"
                   data-testid={`patch-note-detail-${note.version}`}
                 >

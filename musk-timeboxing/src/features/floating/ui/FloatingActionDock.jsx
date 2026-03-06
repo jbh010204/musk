@@ -55,8 +55,9 @@ function FloatingActionDock({ onOpenPatchNotes, onOpenCategory, onOpenData }) {
 
       <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 md:bottom-[calc(1.5rem+env(safe-area-inset-bottom))] md:right-6">
         <div className="flex flex-col items-end gap-2.5">
-          {open
-            ? ACTIONS.map((action) => (
+          {open ? (
+            <div id="quick-menu-actions" className="flex flex-col items-end gap-2.5">
+              {ACTIONS.map((action) => (
                 <button
                   key={action.id}
                   type="button"
@@ -75,12 +76,16 @@ function FloatingActionDock({ onOpenPatchNotes, onOpenCategory, onOpenData }) {
                   </span>
                   <span className="text-slate-500 dark:text-slate-400">↗</span>
                 </button>
-              ))
-            : null}
+              ))}
+            </div>
+          ) : null}
 
           <button
             type="button"
             aria-label="빠른 메뉴"
+            aria-haspopup="menu"
+            aria-controls="quick-menu-actions"
+            aria-expanded={open}
             onClick={() => setOpen((prev) => !prev)}
             className={`h-14 w-14 rounded-full text-2xl font-semibold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
               open ? 'bg-indigo-500 ring-2 ring-indigo-300/60' : 'bg-indigo-600 hover:bg-indigo-500'

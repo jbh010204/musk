@@ -20,10 +20,16 @@ export const useToast = () => {
         }
 
         return (
-          <div className="pointer-events-none fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 flex-col gap-2">
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="pointer-events-none fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 flex-col gap-2"
+          >
             {toasts.map((toast) => (
               <div
                 key={toast.id}
+                role="alert"
                 className="rounded bg-gray-700 px-4 py-2 text-sm text-white shadow-lg"
               >
                 {toast.message}

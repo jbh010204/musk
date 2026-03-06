@@ -49,6 +49,7 @@ function Header({
             onClick={onToggleTheme}
             className="ui-btn-ghost px-3 py-1.5 text-xs"
             aria-label="테마 전환"
+            aria-pressed={theme === 'light'}
           >
             {theme === 'dark' ? '라이트' : '다크'}
           </button>
@@ -112,6 +113,7 @@ function Header({
                   : 'bg-white/45 text-slate-600 hover:bg-white/80 dark:bg-slate-800/15 dark:text-slate-400 dark:hover:bg-slate-800/35'
               }`}
               aria-label={`${day.dateStr} 이동`}
+              aria-current={day.isCurrent ? 'date' : undefined}
             >
               {day.isCurrent ? (
                 <span
