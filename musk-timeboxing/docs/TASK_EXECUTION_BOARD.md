@@ -29,9 +29,18 @@
 
 ## 2. 실행 상태 보드
 
-- Current Task: `T1`
-- Next Candidate: `T2`
+- Current Task: `T7`
+- Next Candidate: `T8`
 - Blocker: `None`
+- Completed:
+  - `T1` FSD 1단계 구조 전환
+  - `T2` 다크 모드 브레인덤프 면 분리
+  - `T3` 주간 스트립 active 그라데이션 강조
+  - `T4` 패치노트 테마 충돌/상세 밀림 수정
+  - `T5` 30분 타임박스 태그/재생버튼 정렬
+  - `T6` semantic 테마 토큰 통합(1차)
+  - `T10` UI 레이아웃 회귀 E2E 추가
+  - `T11` 접근성(ARIA/라이브 리전) 보강
 
 ## 3. Prioritized Task List
 
@@ -336,4 +345,3 @@
 2. 리뷰: 발견 이슈/리스크(없으면 없음 명시)
 3. 검증: 실행 명령 + 통과 여부
 4. 다음 작업 추천: `다음 Task ID` + 착수 이유
-
