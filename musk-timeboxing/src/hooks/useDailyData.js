@@ -24,6 +24,18 @@ const shiftDate = (dateStr, offset) => {
 }
 
 const createId = () => crypto.randomUUID()
+const normalizeBrainDumpItem = (item) => {
+  const content = typeof item?.content === 'string' ? item.content.trim() : ''
+  if (!content) {
+    return null
+  }
+
+  return {
+    id: typeof item?.id === 'string' ? item.id : createId(),
+    content,
+    isDone: Boolean(item?.isDone),
+  }
+}
 const normalizeCategory = (value) => {
   if (typeof value !== 'string') {
     return null
@@ -50,6 +62,43 @@ const normalizeSkipReason = (value) => {
 }
 
 const clampSlot = (value) => Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(value) || 0))
+const normalizeStatus = (value) =>
+  value === 'PLANNED' || value === 'COMPLETED' || value === 'SKIPPED' ? value : 'PLANNED'
+const normalizeActualMinutes = (value) => (Number.isFinite(value) ? Number(value) : null)
+const normalizeElapsedSeconds = (value) => (Number.isFinite(value) ? Math.max(0, Number(value)) : 0)
+
+const normalizeRestoredTimeBox = (box) => {
+  const content = typeof box?.content === 'string' ? box.content.trim() : ''
+  if (!content) {
+    return null
+  }
+
+  const startSlot = clampSlot(box?.startSlot)
+  const endSlot = Math.max(startSlot + 1, Math.min(TOTAL_SLOTS, Number(box?.endSlot) || startSlot + 1))
+
+  return {
+    id: typeof box?.id === 'string' ? box.id : createId(),
+    content,
+    sourceId: box?.sourceId ?? null,
+    startSlot,
+    endSlot,
+    status: normalizeStatus(box?.status),
+    actualMinutes: normalizeActualMinutes(box?.actualMinutes),
+    category: normalizeCategory(box?.category),
+    categoryId: normalizeCategoryId(box?.categoryId),
+    skipReason: normalizeSkipReason(box?.skipReason),
+    carryOverFromDate:
+      typeof box?.carryOverFromDate === 'string' && box.carryOverFromDate.trim().length > 0
+        ? box.carryOverFromDate
+        : null,
+    carryOverFromBoxId:
+      typeof box?.carryOverFromBoxId === 'string' && box.carryOverFromBoxId.trim().length > 0
+        ? box.carryOverFromBoxId
+        : null,
+    timerStartedAt: Number.isFinite(box?.timerStartedAt) ? Number(box.timerStartedAt) : null,
+    elapsedSeconds: normalizeElapsedSeconds(box?.elapsedSeconds),
+  }
+}
 
 const findAvailableStartSlot = (timeBoxes, preferredStart, duration) => {
   const normalizedDuration = Math.max(1, Math.min(TOTAL_SLOTS, Number(duration) || 1))
@@ -199,6 +248,34 @@ export const useDailyData = () => {
       ...prev,
       brainDump: prev.brainDump.filter((item) => item.id !== id),
     }))
+  }
+
+  const restoreBrainDumpItem = (item, index = null) => {
+    const normalized = normalizeBrainDumpItem(item)
+    if (!normalized) {
+      return false
+    }
+
+    let restored = false
+    setData((prev) => {
+      if (prev.brainDump.some((existing) => existing.id === normalized.id)) {
+        return prev
+      }
+
+      const next = [...prev.brainDump]
+      const insertAt = Number.isInteger(index)
+        ? Math.max(0, Math.min(next.length, Number(index)))
+        : next.length
+      next.splice(insertAt, 0, normalized)
+      restored = true
+
+      return {
+        ...prev,
+        brainDump: next,
+      }
+    })
+
+    return restored
   }
 
   const sendToBigThree = (brainDumpId) => {
@@ -435,6 +512,46 @@ export const useDailyData = () => {
     }))
   }
 
+  const restoreTimeBox = (timeBox) => {
+    const normalized = normalizeRestoredTimeBox(timeBox)
+    if (!normalized) {
+      return false
+    }
+
+    let restored = false
+    setData((prev) => {
+      const existingIndex = prev.timeBoxes.findIndex((box) => box.id === normalized.id)
+      const conflictExists = hasOverlap(prev.timeBoxes, normalized, normalized.id)
+
+      if (conflictExists && existingIndex < 0) {
+        return prev
+      }
+
+      if (existingIndex >= 0) {
+        const next = [...prev.timeBoxes]
+        next[existingIndex] = normalized
+        restored = true
+
+        return {
+          ...prev,
+          timeBoxes: next,
+        }
+      }
+
+      restored = true
+      return {
+        ...prev,
+        timeBoxes: [...prev.timeBoxes, normalized],
+      }
+    })
+
+    if (restored) {
+      rememberFocus(normalized.startSlot)
+    }
+
+    return restored
+  }
+
   const reloadCurrentDay = () => {
     setData(loadDay(currentDate))
   }
@@ -448,6 +565,7 @@ export const useDailyData = () => {
     goToDate,
     addBrainDumpItem,
     removeBrainDumpItem,
+    restoreBrainDumpItem,
     sendToBigThree,
     addBigThreeItem,
     removeBigThreeItem,
@@ -457,6 +575,7 @@ export const useDailyData = () => {
     pauseTimeBoxTimer,
     completeTimeBoxByTimer,
     removeTimeBox,
+    restoreTimeBox,
     clearTimeBoxCategory,
     reloadCurrentDay,
   }

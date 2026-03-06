@@ -29,8 +29,8 @@
 
 ## 2. 실행 상태 보드
 
-- Current Task: `T12`
-- Next Candidate: `T13`
+- Current Task: `T13`
+- Next Candidate: `None`
 - Blocker: `None`
 - Completed:
   - `T1` FSD 1단계 구조 전환
@@ -44,6 +44,7 @@
   - `T9` PatchNotes 컴포넌트 분해(Item/Header/Detail)
   - `T10` UI 레이아웃 회귀 E2E 추가
   - `T11` 접근성(ARIA/라이브 리전) 보강
+  - `T12` Undo UX(삭제/상태변경) 도입
 
 ## 3. Prioritized Task List
 

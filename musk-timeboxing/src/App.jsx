@@ -28,6 +28,7 @@ const THEME_KEY = 'musk-planner-theme'
 const THEME_DARK = 'dark'
 const THEME_LIGHT = 'light'
 const INSIGHTS_LOADING_MS = 220
+const UNDO_TOAST_MS = 5000
 
 const parseDate = (dateStr) => new Date(`${dateStr}T00:00:00`)
 const formatDate = (date) => {
@@ -438,6 +439,7 @@ function App() {
     goToDate: goToDateRaw,
     addBrainDumpItem,
     removeBrainDumpItem,
+    restoreBrainDumpItem,
     sendToBigThree,
     addBigThreeItem,
     removeBigThreeItem,
@@ -447,6 +449,7 @@ function App() {
     pauseTimeBoxTimer,
     completeTimeBoxByTimer,
     removeTimeBox,
+    restoreTimeBox,
     clearTimeBoxCategory,
     reloadCurrentDay,
   } = useDailyData()
@@ -622,6 +625,23 @@ function App() {
     if (!success) {
       showToast('빅 3이 이미 가득 찼습니다')
     }
+  }
+
+  const handleRemoveBrainDumpItem = (id) => {
+    const removedIndex = data.brainDump.findIndex((item) => item.id === id)
+    const removedItem = removedIndex >= 0 ? data.brainDump[removedIndex] : null
+
+    if (!removedItem) {
+      return
+    }
+
+    removeBrainDumpItem(id)
+    showToast('브레인 덤프를 삭제했습니다', UNDO_TOAST_MS, {
+      actionLabel: '되돌리기',
+      onAction: () => {
+        restoreBrainDumpItem(removedItem, removedIndex)
+      },
+    })
   }
 
   const applySkipSuggestionAction = () => {
@@ -980,11 +1000,85 @@ function App() {
     reloadCurrentDay()
   }
 
+  const handleUpdateTimeBox = (id, changes) => {
+    const previous = data.timeBoxes.find((box) => box.id === id)
+    if (!previous) {
+      return
+    }
+
+    const hasStatusField = Object.prototype.hasOwnProperty.call(changes ?? {}, 'status')
+    const nextStatus = hasStatusField ? changes.status : null
+    const isUndoTargetStatus = nextStatus === 'COMPLETED' || nextStatus === 'SKIPPED'
+    const statusChanged = isUndoTargetStatus && previous.status !== nextStatus
+    const actualChanged =
+      nextStatus === 'COMPLETED' &&
+      Object.prototype.hasOwnProperty.call(changes ?? {}, 'actualMinutes') &&
+      Number(previous.actualMinutes ?? 0) !== Number(changes.actualMinutes ?? 0)
+    const skipReasonChanged =
+      nextStatus === 'SKIPPED' &&
+      Object.prototype.hasOwnProperty.call(changes ?? {}, 'skipReason') &&
+      (previous.skipReason ?? null) !== (changes.skipReason ?? null)
+    const shouldOfferUndo = statusChanged || actualChanged || skipReasonChanged
+
+    updateTimeBox(id, changes)
+
+    if (!shouldOfferUndo) {
+      return
+    }
+
+    const statusLabel = nextStatus === 'COMPLETED' ? '완료' : '건너뜀'
+    showToast(`일정을 ${statusLabel} 처리했습니다`, UNDO_TOAST_MS, {
+      actionLabel: '되돌리기',
+      onAction: () => {
+        const restored = restoreTimeBox(previous)
+        if (!restored) {
+          showToast('원래 시간대가 이미 사용 중이라 되돌릴 수 없습니다')
+        }
+      },
+    })
+  }
+
+  const handleTimerComplete = (id) => {
+    const previous = data.timeBoxes.find((box) => box.id === id)
+    if (!previous) {
+      return
+    }
+
+    completeTimeBoxByTimer(id)
+    showToast('타이머 완료로 일정을 완료 처리했습니다', UNDO_TOAST_MS, {
+      actionLabel: '되돌리기',
+      onAction: () => {
+        const restored = restoreTimeBox(previous)
+        if (!restored) {
+          showToast('원래 시간대가 이미 사용 중이라 되돌릴 수 없습니다')
+        }
+      },
+    })
+  }
+
+  const handleRemoveTimeBox = (id) => {
+    const removed = data.timeBoxes.find((box) => box.id === id)
+    if (!removed) {
+      return
+    }
+
+    removeTimeBox(id)
+    showToast('일정을 삭제했습니다', UNDO_TOAST_MS, {
+      actionLabel: '되돌리기',
+      onAction: () => {
+        const restored = restoreTimeBox(removed)
+        if (!restored) {
+          showToast('원래 시간대가 이미 사용 중이라 되돌릴 수 없습니다')
+        }
+      },
+    })
+  }
+
   const dumpSection = (
     <BrainDump
       items={data.brainDump}
       onAdd={addBrainDumpItem}
-      onRemove={removeBrainDumpItem}
+      onRemove={handleRemoveBrainDumpItem}
       onSendToBigThree={handleSendToBigThree}
     />
   )
@@ -1016,11 +1110,11 @@ function App() {
       timelineScale={timelineScale}
       onTimelineScaleChange={setTimelineScale}
       addTimeBox={addTimeBox}
-      updateTimeBox={updateTimeBox}
+      updateTimeBox={handleUpdateTimeBox}
       onTimerStart={startTimeBoxTimer}
       onTimerPause={pauseTimeBoxTimer}
-      onTimerComplete={completeTimeBoxByTimer}
-      removeTimeBox={removeTimeBox}
+      onTimerComplete={handleTimerComplete}
+      removeTimeBox={handleRemoveTimeBox}
       showToast={showToast}
       showDropGuide={
         activeDragPreview?.type === 'BRAIN_DUMP' || activeDragPreview?.type === 'BIG_THREE'

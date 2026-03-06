@@ -9,11 +9,16 @@ test('floating action menu opens patch notes modal', async ({ page }) => {
   await page.getByRole('button', { name: '패치노트' }).click()
 
   await expect(page.getByText('패치노트').first()).toBeVisible()
-  await expect(page.getByText('v0.13.2').first()).toBeVisible()
+  await expect(page.locator('[data-testid^="patch-note-toggle-"]').first()).toBeVisible()
   await expect(page.getByText('v0.6.0').first()).toBeVisible()
 
-  const latestToggle = page.getByTestId('patch-note-toggle-v0.13.2')
-  const latestDetail = page.getByTestId('patch-note-detail-v0.13.2')
+  const latestToggle = page.locator('[data-testid^="patch-note-toggle-"]').first()
+  const latestToggleId = await latestToggle.getAttribute('data-testid')
+  if (!latestToggleId) {
+    throw new Error('latest patch-note toggle id is missing')
+  }
+
+  const latestDetail = page.getByTestId(latestToggleId.replace('toggle', 'detail'))
   await expect(latestDetail).toBeVisible()
 
   await latestToggle.click()

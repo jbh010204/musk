@@ -1,5 +1,28 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.13.3',
+    date: '2026-03-07',
+    title: 'Undo UX(T12) 도입 + 파괴 액션 복구 흐름 추가',
+    summary:
+      '브레인덤프 삭제, 일정 삭제, 완료/건너뜀 상태변경에 되돌리기(Undo) 토스트를 연결해 실수 복구 흐름을 추가했습니다.',
+    focus: [
+      '데이터 스냅샷 기반 복구 API를 훅 레벨에 추가해 localStorage 저장 일관성을 유지',
+      '기존 타임라인/모달 로직은 유지하고 App 레벨 래퍼로 Undo 정책만 주입',
+      '패치노트 테스트를 최신 버전 하드코딩 의존 없이 동작하도록 보강',
+    ],
+    improvements: [
+      '`useToast`에 액션 버튼(`되돌리기`) 지원 및 타이머 정리 로직 추가',
+      '`useDailyData`에 `restoreBrainDumpItem`, `restoreTimeBox` 복구 액션 추가',
+      '브레인덤프 삭제/일정 삭제/완료·건너뜀·타이머완료 상태변경에 Undo 토스트 연결',
+      '신규 E2E `undo-ux.spec.js` 추가 + 패치노트 관련 E2E를 동적 최신 버전 선택 방식으로 전환',
+    ],
+    validation: [
+      'lint/build 통과',
+      'E2E 영향 검증 통과(undo-ux, patch-notes, ui-layout-regression)',
+      'E2E 전체 통과(33 passed)',
+    ],
+  },
+  {
     version: 'v0.13.2',
     date: '2026-03-07',
     title: 'PatchNotes 컴포넌트 분해(T9) 완료',

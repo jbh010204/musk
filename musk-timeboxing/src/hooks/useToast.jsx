@@ -1,16 +1,45 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export const useToast = () => {
   const [toasts, setToasts] = useState([])
+  const timeoutMapRef = useRef(new Map())
 
-  const showToast = useCallback((message, duration = 2000) => {
-    const id = crypto.randomUUID()
-    setToasts((prev) => [...prev, { id, message }])
+  const removeToast = useCallback((id) => {
+    const timeoutId = timeoutMapRef.current.get(id)
+    if (timeoutId) {
+      window.clearTimeout(timeoutId)
+      timeoutMapRef.current.delete(id)
+    }
 
-    window.setTimeout(() => {
-      setToasts((prev) => prev.filter((toast) => toast.id !== id))
-    }, duration)
+    setToasts((prev) => prev.filter((toast) => toast.id !== id))
   }, [])
+
+  const showToast = useCallback((message, duration = 2000, options = null) => {
+    const id = crypto.randomUUID()
+    const actionLabel =
+      typeof options?.actionLabel === 'string' && options.actionLabel.trim().length > 0
+        ? options.actionLabel.trim()
+        : null
+    const onAction = typeof options?.onAction === 'function' ? options.onAction : null
+    setToasts((prev) => [...prev, { id, message, actionLabel, onAction }])
+
+    const timeoutId = window.setTimeout(() => {
+      removeToast(id)
+    }, duration)
+    timeoutMapRef.current.set(id, timeoutId)
+
+    return id
+  }, [removeToast])
+
+  useEffect(
+    () => () => {
+      timeoutMapRef.current.forEach((timeoutId) => {
+        window.clearTimeout(timeoutId)
+      })
+      timeoutMapRef.current.clear()
+    },
+    [],
+  )
 
   const ToastContainer = useMemo(
     () =>
@@ -30,15 +59,27 @@ export const useToast = () => {
               <div
                 key={toast.id}
                 role="alert"
-                className="rounded bg-gray-700 px-4 py-2 text-sm text-white shadow-lg"
+                className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-gray-700 px-4 py-2 text-sm text-white shadow-lg"
               >
-                {toast.message}
+                <span>{toast.message}</span>
+                {toast.actionLabel ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toast.onAction?.()
+                      removeToast(toast.id)
+                    }}
+                    className="rounded-lg bg-white/10 px-2 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  >
+                    {toast.actionLabel}
+                  </button>
+                ) : null}
               </div>
             ))}
           </div>
         )
       },
-    [toasts],
+    [removeToast, toasts],
   )
 
   return { showToast, ToastContainer }
