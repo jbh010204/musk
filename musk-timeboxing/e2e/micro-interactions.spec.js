@@ -20,6 +20,7 @@ test('brain dump item slides out on remove', async ({ page }) => {
 
   const card = page.locator('div[data-removing]:has(button[title="SLIDE-삭제-테스트"])').first()
   await expect(card).toHaveAttribute('data-removing', 'false')
+  await card.hover()
   await card.getByRole('button', { name: '삭제', exact: true }).click()
   await expect(card).toHaveAttribute('data-removing', 'true')
   await expect(card).toHaveCount(0)

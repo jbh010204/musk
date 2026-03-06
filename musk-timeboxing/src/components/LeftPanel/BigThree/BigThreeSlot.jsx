@@ -62,9 +62,13 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
         <button
           type="button"
           onClick={() => setIsEditing(true)}
-          className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-500 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800"
+          aria-label="빅3 빈 슬롯"
+          className="w-full rounded-2xl border border-dashed border-slate-300/90 px-3 py-3 text-left text-sm text-slate-400 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-white/20 dark:text-slate-500 dark:hover:bg-slate-800"
         >
-          — 비어있음 —
+          <span className="inline-flex items-center gap-2">
+            <span className="text-lg leading-none text-slate-400/80 dark:text-slate-500/80">＋</span>
+            <span className="sr-only">빅3 슬롯 입력</span>
+          </span>
         </button>
       ) : null}
 

@@ -8,7 +8,7 @@ test('export and import planner data restores timebox and category', async ({ pa
   await page.locator('button[aria-label="빠른 메뉴"]:visible').first().click()
   await page.locator('button[aria-label="카테고리 관리"]:visible').first().click()
   await page.getByPlaceholder('예: Deep Work').fill('백업카테고리')
-  await page.getByRole('button', { name: '추가' }).click()
+  await page.getByRole('button', { name: '추가', exact: true }).click()
   await page.getByRole('button', { name: '닫기' }).click()
 
   await page.locator('button[aria-label="09:00 슬롯"]:visible').first().click()

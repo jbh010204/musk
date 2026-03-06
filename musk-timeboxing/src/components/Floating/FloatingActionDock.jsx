@@ -48,7 +48,7 @@ function FloatingActionDock({ onOpenPatchNotes, onOpenCategory, onOpenData }) {
         <button
           type="button"
           aria-label="빠른 메뉴 닫기"
-          className="fixed inset-0 z-30 cursor-default bg-black/20 backdrop-blur-[1px]"
+          className="fixed inset-0 z-30 cursor-default bg-black/20 backdrop-blur-md"
           onClick={() => setOpen(false)}
         />
       ) : null}
@@ -62,7 +62,7 @@ function FloatingActionDock({ onOpenPatchNotes, onOpenCategory, onOpenData }) {
                   type="button"
                   aria-label={action.label}
                   onClick={() => handleAction(action.id)}
-                  className="ui-panel inline-flex min-w-[190px] items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-gray-100 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:hover:bg-slate-800"
+                  className="ui-glass-menu inline-flex min-w-[190px] items-center justify-between gap-2 px-4 py-3 text-sm font-medium transition-all hover:bg-white/65 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:hover:bg-slate-800/70"
                 >
                   <span className="inline-flex items-center gap-2">
                     <span
@@ -73,7 +73,7 @@ function FloatingActionDock({ onOpenPatchNotes, onOpenCategory, onOpenData }) {
                     </span>
                     {action.label}
                   </span>
-                  <span className="text-gray-400">↗</span>
+                  <span className="text-slate-500 dark:text-slate-400">↗</span>
                 </button>
               ))
             : null}

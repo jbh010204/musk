@@ -5,7 +5,7 @@ test('big three stays isolated by date when navigating days', async ({ page }) =
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
 
-  await page.locator('button:has-text("— 비어있음 —"):visible').first().click()
+  await page.getByRole('button', { name: '빅3 빈 슬롯' }).first().click()
   await page.getByPlaceholder('빅3 입력 후 엔터').fill('빅3-날짜독립')
   await page.getByPlaceholder('빅3 입력 후 엔터').press('Enter')
   await expect(page.locator('button[title="빅3-날짜독립"]:visible').first()).toBeVisible()

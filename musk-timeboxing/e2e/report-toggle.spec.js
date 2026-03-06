@@ -12,11 +12,11 @@ test('weekly and daily report cards can collapse and expand', async ({ page }) =
   await expect(weeklyCard).toBeVisible()
   await expect(dailyCard).toBeVisible()
 
-  await weeklyCard.getByRole('button', { name: '접기' }).first().click()
+  await weeklyCard.getByTestId('weekly-report-toggle').first().click()
   await expect(weeklyCard).toContainText('요약이 접혀 있습니다.')
-  await weeklyCard.getByRole('button', { name: '펼치기' }).first().click()
+  await weeklyCard.getByTestId('weekly-report-toggle').first().click()
 
-  await dailyCard.getByRole('button', { name: '접기' }).first().click()
+  await dailyCard.getByTestId('daily-recap-toggle').first().click()
   await expect(dailyCard).toContainText('요약이 접혀 있습니다.')
-  await dailyCard.getByRole('button', { name: '펼치기' }).first().click()
+  await dailyCard.getByTestId('daily-recap-toggle').first().click()
 })

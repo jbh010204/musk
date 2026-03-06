@@ -240,14 +240,14 @@ function Timeline({
         <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           ⏱ 타임라인
         </h2>
-        <div className="ui-panel-subtle inline-flex items-center p-1.5 text-xs">
+        <div className="ui-panel-subtle inline-flex items-center p-1 text-[11px]">
           <button
             type="button"
             data-testid="timeline-scale-30"
             onClick={() => onTimelineScaleChange('30')}
-            className={`rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+            className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
               timelineScale === '30'
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
                 : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
             }`}
           >
@@ -257,9 +257,9 @@ function Timeline({
             type="button"
             data-testid="timeline-scale-15"
             onClick={() => onTimelineScaleChange('15')}
-            className={`rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+            className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
               timelineScale === '15'
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
                 : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
             }`}
           >

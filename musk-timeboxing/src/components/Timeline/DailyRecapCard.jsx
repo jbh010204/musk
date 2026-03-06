@@ -72,9 +72,11 @@ function DailyRecapCard({ timeBoxes, categoryMap }) {
         <button
           type="button"
           onClick={() => setIsExpanded((prev) => !prev)}
-          className="ui-btn-ghost text-[11px]"
+          className="ui-btn-ghost ml-auto h-7 w-7 p-0 text-base text-slate-400"
+          aria-label={isExpanded ? '오늘 리캡 접기' : '오늘 리캡 펼치기'}
+          data-testid="daily-recap-toggle"
         >
-          {isExpanded ? '접기' : '펼치기'}
+          {isExpanded ? '⌃' : '⌄'}
         </button>
       </div>
 

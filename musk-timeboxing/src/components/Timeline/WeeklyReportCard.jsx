@@ -14,9 +14,11 @@ function WeeklyReportCard({ report }) {
         <button
           type="button"
           onClick={() => setIsExpanded((prev) => !prev)}
-          className="ui-btn-ghost text-[11px]"
+          className="ui-btn-ghost ml-auto h-7 w-7 p-0 text-base text-slate-400"
+          aria-label={isExpanded ? '주간 리포트 접기' : '주간 리포트 펼치기'}
+          data-testid="weekly-report-toggle"
         >
-          {isExpanded ? '접기' : '펼치기'}
+          {isExpanded ? '⌃' : '⌄'}
         </button>
       </div>
 

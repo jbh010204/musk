@@ -77,7 +77,7 @@ test('big three item can be dropped into timeline slot', async ({ page }) => {
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
 
-  await page.locator('button:has-text("— 비어있음 —"):visible').first().click()
+  await page.getByRole('button', { name: '빅3 빈 슬롯' }).first().click()
   await page.getByPlaceholder('빅3 입력 후 엔터').fill('BIG3-드롭-테스트')
   await page.getByPlaceholder('빅3 입력 후 엔터').press('Enter')
 

@@ -38,7 +38,7 @@ function BrainDumpItem({ item, onRemove, onSendToBigThree }) {
   return (
     <div
       data-removing={isRemoving ? 'true' : 'false'}
-      className={`ui-panel-subtle p-4 transition-all duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800 ${
+      className={`group ui-panel-subtle p-4 transition-all duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800 ${
         isDragging ? 'opacity-50' : ''
       } ${isRemoving ? 'pointer-events-none translate-x-6 opacity-0' : 'translate-x-0 opacity-100'}`}
     >
@@ -55,12 +55,13 @@ function BrainDumpItem({ item, onRemove, onSendToBigThree }) {
           {item.content}
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex translate-x-1 items-center gap-1.5 opacity-0 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-x-0 group-focus-within:opacity-100">
           <button
             type="button"
             onClick={() => onSendToBigThree(item.id)}
             disabled={isRemoving}
-            className="ui-btn-secondary px-2 py-1 text-xs"
+            className="ui-btn-ghost px-2 py-1 text-xs text-slate-500 dark:text-slate-400"
+            aria-label="빅3로 보내기"
           >
             빅3
           </button>
@@ -68,7 +69,7 @@ function BrainDumpItem({ item, onRemove, onSendToBigThree }) {
             type="button"
             onClick={handleRemove}
             disabled={isRemoving}
-            className="ui-btn-secondary px-2 py-1 text-xs"
+            className="ui-btn-ghost px-1.5 py-1 text-xs text-slate-500 dark:text-slate-400"
             aria-label="삭제"
           >
             ✕

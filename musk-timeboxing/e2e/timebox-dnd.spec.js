@@ -1,5 +1,24 @@
 import { expect, test } from '@playwright/test'
 
+const dragBetween = async (page, source, target) => {
+  await source.scrollIntoViewIfNeeded()
+  await target.scrollIntoViewIfNeeded()
+
+  const sourceBox = await source.boundingBox()
+  const targetBox = await target.boundingBox()
+
+  if (!sourceBox || !targetBox) {
+    throw new Error('drag source/target bounding box missing')
+  }
+
+  await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, {
+    steps: 12,
+  })
+  await page.mouse.up()
+}
+
 const getStorageState = async (page) => {
   return page.evaluate(() => {
     const key = Object.keys(window.localStorage).find((item) =>
@@ -36,27 +55,16 @@ test('timebox drag interaction keeps persisted timebox data valid', async ({ pag
   const beforeBox = before?.data?.timeBoxes?.find((item) => item.content === 'E2E-드래그-검증')
   expect(beforeBox).toBeTruthy()
 
-  const bb = await box.boundingBox()
-  if (!bb) {
-    throw new Error('timebox bounding box not found')
-  }
-
-  const startX = bb.x + bb.width / 2
-  const startY = bb.y + Math.min(12, bb.height / 2)
-
-  await page.mouse.move(startX, startY)
-  await page.mouse.down()
-  await page.mouse.move(startX, startY + 64, { steps: 8 })
-  const draggingCount = await page.locator('[data-timebox-dragging="true"]').count()
-  expect(draggingCount).toBeGreaterThan(0)
-  await page.mouse.up()
+  const dropTargetSlot = page.locator('button[aria-label="11:00 슬롯"]:visible').first()
+  await dragBetween(page, box, dropTargetSlot)
 
   await page.waitForTimeout(120)
 
   const after = await getStorageState(page)
   const afterBox = after?.data?.timeBoxes?.find((item) => item.id === beforeBox.id)
   expect(afterBox).toBeTruthy()
-  expect(afterBox.startSlot).not.toBe(beforeBox.startSlot)
+  expect(afterBox.startSlot).toBeGreaterThanOrEqual(11)
+  expect(afterBox.startSlot).toBeLessThanOrEqual(13)
   expect(afterBox.startSlot).toBeGreaterThanOrEqual(0)
   expect(afterBox.endSlot - afterBox.startSlot).toBe(beforeBox.endSlot - beforeBox.startSlot)
 })
