@@ -16,6 +16,13 @@
 - `chore`: 빌드/도구/환경 변경
 - 브레이킹 변경은 footer에 `BREAKING CHANGE:` 명시
 
+패치노트 반영 규칙:
+
+- 중요 변경은 커밋 단위로 패치노트 반영을 기본으로 한다.
+- 위치: `src/components/PatchNotes/patchNotesData.js`
+- 작성 필수 필드: `version`, `date`, `title`, `summary`, `focus`, `improvements`, `validation`
+- 최신 버전 항목은 배열 최상단에 유지한다.
+
 ## 2) React State Rules
 
 - Effect 남용 금지: 계산/동기화가 아닌 로직은 이벤트 핸들러로 이동
@@ -52,6 +59,15 @@
 
 - 정적 배포만 허용
 - `vite.config.js`의 `base: './'` 유지
+
+## 7) Patch Note Trigger Rules
+
+아래 항목은 패치노트 업데이트를 트리거한다.
+
+- UI/UX 레이아웃, 디자인 토큰, 인터랙션 정책 변경
+- 타임라인/드래그앤드롭/모달/저장 흐름 수정
+- E2E 기준 시나리오 추가 또는 기대값 변경
+- 사용자에게 전달하는 운영 가이드/워크플로의 규칙 변경
 
 ## Reference Links
 

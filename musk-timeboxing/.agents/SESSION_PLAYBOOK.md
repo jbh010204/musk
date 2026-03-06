@@ -16,7 +16,7 @@
 - DnD: dnd-kit
 - Storage: localStorage only (`musk-planner-YYYY-MM-DD`)
 - State: `useState` / `useReducer` only
-- Theme: dark mode only
+- Theme: dark/light toggle (둘 다 깨지지 않게 유지)
 - Deployment: static build only
 
 ## 3) Current UX Decisions (must keep)
@@ -41,8 +41,25 @@
 4. 리뷰
    - 부작용/회귀 여부 확인
    - 겹침 검사/저장 로직/IME 입력 영향 확인
-5. 커밋 + 푸시
-6. 카테고리/DnD 수정 시 `npm run test:e2e` 실행
+5. 중요 변경이면 패치노트 업데이트
+   - 파일: `src/components/PatchNotes/patchNotesData.js`
+   - 규칙: 최신 버전 항목을 맨 위에 추가하고 `focus/improvements/validation`을 채운다.
+6. 커밋 + 푸시
+7. 카테고리/DnD/모달/타임라인 수정 시 `npm run test:e2e` 실행
+
+## 4-1) Patch Note Policy (required)
+
+아래 중 하나라도 해당하면 패치노트 업데이트를 반드시 수행한다.
+
+- 사용자 체감 기능 변경 (`feat`, 주요 `fix`)
+- 데이터 스키마/저장 방식 변경
+- UI 구조/가이드/디자인 시스템 변경
+- 테스트 전략/회귀 기준 변경
+
+패치노트 업데이트를 생략할 수 있는 경우:
+
+- 오탈자/주석/문서 문구만 바뀌고 동작 영향이 없는 변경
+- 내부 리팩토링이지만 사용자 동작/테스트/품질 기준에 영향이 없는 변경
 
 ## 5) Git Rules
 
@@ -58,6 +75,7 @@
 - lint/build 통과
 - 로컬 저장(localStorage) 유지 확인
 - 날짜 이동 시 데이터 독립성 유지 확인
+- 중요 변경이면 패치노트 항목 추가 완료
 - 커밋/푸시 완료
 
 ## 7) Handoff Template
@@ -68,6 +86,7 @@
 2. 검증 결과(lint/build)
 3. 남은 리스크/후속 작업
 4. 마지막 커밋 해시
+5. 패치노트 버전(또는 생략 사유)
 
 ## 8) User Delivery Workflow (must follow)
 

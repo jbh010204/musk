@@ -1,5 +1,24 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.12.0',
+    date: '2026-03-07',
+    title: '패치노트 운영 규칙 문서화',
+    summary: '중요 변경마다 패치노트가 누락되지 않도록 세션 공통 규칙을 고정했습니다.',
+    focus: [
+      '새 세션이 들어와도 동일한 품질 기준으로 기록이 이어지도록 운영 절차를 표준화',
+      '문서와 에이전트 지침이 서로 모순되지 않도록 단일 워크플로 경로를 추가',
+    ],
+    improvements: [
+      '.agents/SESSION_PLAYBOOK에 중요 변경 시 패치노트 반영을 필수 단계로 추가',
+      'docs에 PATCH_NOTES_WORKFLOW 문서 신설 및 DELIVERY/CONVENTIONS에 트리거 규칙 연결',
+      'README AI 협업 문서 목록에 패치노트 워크플로 링크 추가',
+    ],
+    validation: [
+      '문서 경로 연결 및 패치노트 모달 최신 버전(v0.12.0) 표시 확인',
+      'lint/build/e2e 회귀 기준으로 문서 변경 절차를 유지',
+    ],
+  },
+  {
     version: 'v0.11.0',
     date: '2026-03-07',
     title: '패치노트 상세보기 구조 도입',
