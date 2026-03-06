@@ -12,6 +12,7 @@ import FloatingActionDock from './components/Floating/FloatingActionDock'
 import Header from './components/Header'
 import BigThree from './components/LeftPanel/BigThree'
 import BrainDump from './components/LeftPanel/BrainDump'
+import PatchNotesModal from './components/PatchNotes/PatchNotesModal'
 import Timeline from './components/Timeline'
 import RescheduleAssistantModal from './components/Timeline/RescheduleAssistantModal'
 import { useCategoryMeta } from './hooks/useCategoryMeta'
@@ -464,6 +465,7 @@ function App() {
   const [timelineScale, setTimelineScale] = useState('30')
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false)
   const [isDataModalOpen, setIsDataModalOpen] = useState(false)
+  const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false)
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false)
   const [activeDragPreview, setActiveDragPreview] = useState(null)
   const [dropPreviewSlot, setDropPreviewSlot] = useState(null)
@@ -1086,9 +1088,11 @@ function App() {
 
         <ToastContainer />
         <FloatingActionDock
+          onOpenPatchNotes={() => setIsPatchNotesOpen(true)}
           onOpenCategory={() => setIsCategoryManagerOpen(true)}
           onOpenData={() => setIsDataModalOpen(true)}
         />
+        {isPatchNotesOpen ? <PatchNotesModal onClose={() => setIsPatchNotesOpen(false)} /> : null}
         {isDataModalOpen ? (
           <DataTransferModal
             currentDate={currentDate}
