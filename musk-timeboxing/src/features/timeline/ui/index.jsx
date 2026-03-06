@@ -2,14 +2,21 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { getCategoryColor, getCategoryLabel, hasOverlap, slotToTime, TOTAL_SLOTS } from '../../../entities/planner'
 import CompletionModal from './CompletionModal'
 import DailyRecapCard from './DailyRecapCard'
+import MonthlyCalendarView from './MonthlyCalendarView'
 import TimeBoxCard from './TimeBoxCard'
 import TimeSlotGrid from './TimeSlotGrid'
+import WeeklyCalendarView from './WeeklyCalendarView'
 import WeeklyPlanningBoard from './WeeklyPlanningBoard'
 import WeeklyReportCard from './WeeklyReportCard'
 
 const DEFAULT_SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
 const DURATION_PRESETS = [1, 2, 3, 4]
+const VIEW_MODE_OPTIONS = [
+  { value: 'DAY', label: '일간' },
+  { value: 'WEEK', label: '주간' },
+  { value: 'MONTH', label: '월간' },
+]
 const STATUS_FILTER_OPTIONS = [
   { value: 'ALL', label: '전체 상태' },
   { value: 'PLANNED', label: '예정' },
@@ -62,6 +69,8 @@ function Timeline({
   categories,
   weeklyReport,
   weeklyPlanningPreview = [],
+  weekCalendar = { rangeLabel: '', days: [] },
+  monthCalendar = { monthLabel: '', cells: [] },
   isInsightsLoading = false,
   onJumpToDate = () => {},
   initialFocusSlot = null,
@@ -92,8 +101,10 @@ function Timeline({
   const [resizePreview, setResizePreview] = useState({})
   const [isComposing, setIsComposing] = useState(false)
   const [timerNow, setTimerNow] = useState(0)
+  const [viewMode, setViewMode] = useState('DAY')
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [categoryFilter, setCategoryFilter] = useState('ALL')
+  const isDayView = viewMode === 'DAY'
 
   const sortedBoxes = useMemo(
     () => [...data.timeBoxes].sort((a, b) => a.startSlot - b.startSlot),
@@ -107,7 +118,6 @@ function Timeline({
     () => data.timeBoxes.find((box) => box.id === selectedBoxId) || null,
     [data.timeBoxes, selectedBoxId],
   )
-
   const hasRunningTimer = useMemo(
     () => data.timeBoxes.some((box) => Number.isFinite(box.timerStartedAt)),
     [data.timeBoxes],
@@ -165,10 +175,15 @@ function Timeline({
   }, [categoryMap, sortedBoxes])
 
   const categoryFilterOptions = useMemo(() => {
-    const options = [{ value: 'ALL', label: '전체 카테고리' }, { value: 'UNCATEGORIZED', label: '미분류' }]
+    const options = [
+      { value: 'ALL', label: '전체 카테고리' },
+      { value: 'UNCATEGORIZED', label: '미분류' },
+    ]
+
     categoryLegend.forEach((item) => {
       options.push({ value: item.key, label: item.label })
     })
+
     return options
   }, [categoryLegend])
 
@@ -234,6 +249,7 @@ function Timeline({
       startSlot: pendingInput.slotIndex,
       durationSlots: pendingInput.durationSlots,
     })
+
     if (created) {
       setPendingInput(null)
     }
@@ -276,6 +292,11 @@ function Timeline({
     })
   }
 
+  const handleOpenCalendarDate = (dateStr) => {
+    onJumpToDate(dateStr)
+    setViewMode('DAY')
+  }
+
   return (
     <section ref={sectionRef} className="h-full p-6 pb-24 md:pb-16">
       <div className="mb-6 flex items-center justify-between gap-3">
@@ -283,79 +304,116 @@ function Timeline({
           ⏱ 타임라인
         </h2>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            data-testid="timeline-focus-toggle"
-            onClick={onToggleFocusMode}
-            className={`rounded-xl px-2.5 py-1.5 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-              focusMode
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-200 text-slate-700 hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600'
-            }`}
-          >
-            집중 모드
-          </button>
           <div className="ui-panel-subtle inline-flex items-center p-1 text-[11px]">
-            <button
-              type="button"
-              data-testid="timeline-scale-30"
-              onClick={() => onTimelineScaleChange('30')}
-              className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                timelineScale === '30'
-                  ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
-                  : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
-              }`}
-            >
-              30분
-            </button>
-            <button
-              type="button"
-              data-testid="timeline-scale-15"
-              onClick={() => onTimelineScaleChange('15')}
-              className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                timelineScale === '15'
-                  ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
-                  : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
-              }`}
-            >
-              15분 보기
-            </button>
+            {VIEW_MODE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                data-testid={`timeline-view-${option.value.toLowerCase()}`}
+                aria-pressed={viewMode === option.value}
+                onClick={() => setViewMode(option.value)}
+                className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  viewMode === option.value
+                    ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
+                    : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
+
+          {isDayView ? (
+            <>
+              <button
+                type="button"
+                data-testid="timeline-focus-toggle"
+                onClick={onToggleFocusMode}
+                className={`rounded-xl px-2.5 py-1.5 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  focusMode
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-slate-200 text-slate-700 hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600'
+                }`}
+              >
+                집중 모드
+              </button>
+
+              <div className="ui-panel-subtle inline-flex items-center p-1 text-[11px]">
+                <button
+                  type="button"
+                  data-testid="timeline-scale-30"
+                  onClick={() => onTimelineScaleChange('30')}
+                  className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    timelineScale === '30'
+                      ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
+                      : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  30분
+                </button>
+                <button
+                  type="button"
+                  data-testid="timeline-scale-15"
+                  onClick={() => onTimelineScaleChange('15')}
+                  className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    timelineScale === '15'
+                      ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
+                      : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  15분 보기
+                </button>
+              </div>
+            </>
+          ) : null}
         </div>
       </div>
-      <div className="mb-6 grid gap-3 md:grid-cols-2">
-        <label className="ui-panel-subtle flex items-center gap-2 p-3 text-xs text-slate-500 dark:text-slate-300">
-          상태 필터
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="ui-select !p-2 text-xs"
-            data-testid="timeline-status-filter"
-          >
-            {STATUS_FILTER_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ui-panel-subtle flex items-center gap-2 p-3 text-xs text-slate-500 dark:text-slate-300">
-          카테고리 필터
-          <select
-            value={categoryFilter}
-            onChange={(event) => setCategoryFilter(event.target.value)}
-            className="ui-select !p-2 text-xs"
-            data-testid="timeline-category-filter"
-          >
-            {categoryFilterOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      {showDropGuide ? (
+
+      {!isDayView ? (
+        <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
+          {viewMode === 'WEEK'
+            ? `${weekCalendar.rangeLabel} 구간의 주간 계획을 한 번에 확인합니다.`
+            : `${monthCalendar.monthLabel} 전체 일정을 캘린더 그리드로 확인합니다.`}
+        </div>
+      ) : null}
+
+      {isDayView ? (
+        <div className="mb-6 grid gap-3 md:grid-cols-2">
+          <label className="ui-panel-subtle flex items-center gap-2 p-3 text-xs text-slate-500 dark:text-slate-300">
+            상태 필터
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="ui-select !p-2 text-xs"
+              data-testid="timeline-status-filter"
+            >
+              {STATUS_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="ui-panel-subtle flex items-center gap-2 p-3 text-xs text-slate-500 dark:text-slate-300">
+            카테고리 필터
+            <select
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+              className="ui-select !p-2 text-xs"
+              data-testid="timeline-category-filter"
+            >
+              {categoryFilterOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      ) : null}
+
+      {isDayView && showDropGuide ? (
         <div
           data-testid="timeline-drop-guide"
           className="ui-panel-subtle mb-6 bg-indigo-500/10 px-4 py-3 text-sm text-indigo-100"
@@ -363,7 +421,8 @@ function Timeline({
           브레인 덤프/빅3 항목을 원하는 시간 슬롯에 드롭하면 일정이 추가됩니다.
         </div>
       ) : null}
-      {suggestionMessage ? (
+
+      {isDayView && suggestionMessage ? (
         <div
           data-testid="daily-suggestion-panel"
           className="ui-panel-subtle mb-6 flex items-start justify-between gap-3 bg-sky-500/10 px-4 py-3 text-sm text-sky-100"
@@ -389,9 +448,10 @@ function Timeline({
           </button>
         </div>
       ) : null}
-      {!focusMode && isInsightsLoading ? (
+
+      {isDayView && !focusMode && isInsightsLoading ? (
         <TimelineInsightsSkeleton />
-      ) : !focusMode ? (
+      ) : isDayView && !focusMode ? (
         <div className="ui-fade-in-up">
           <WeeklyPlanningBoard days={weeklyPlanningPreview} onJumpToDate={onJumpToDate} />
           <WeeklyReportCard report={weeklyReport} />
@@ -411,160 +471,187 @@ function Timeline({
             </div>
           ) : null}
         </div>
-      ) : (
+      ) : isDayView ? (
         <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
           집중 모드가 활성화되어 인사이트 카드를 숨겼습니다.
         </div>
-      )}
+      ) : null}
 
-      <div className="overflow-x-auto">
-        {sortedBoxes.length > 0 && filteredBoxes.length === 0 ? (
-          <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-            현재 필터 조건에 맞는 일정이 없습니다.
-          </p>
-        ) : null}
-        <div className="relative min-w-[520px]">
-          <TimeSlotGrid
-            onSlotClick={handleSlotClick}
-            showDropGuide={showDropGuide}
-            rowHeight={slotHeight}
-            showQuarterDividers={timelineScale === '15'}
-          />
-          {showDropGuide && Number.isInteger(dropPreviewSlot) ? (
-            <div
-              data-testid="timeline-drop-preview"
-              className="pointer-events-none absolute left-16 right-2 z-10"
-              style={{ top: dropPreviewSlot * slotHeight }}
-            >
-              <div className="relative border-t-2 border-indigo-400/90">
-                <span className="absolute -left-14 -top-3 rounded bg-indigo-600/80 px-1.5 py-0.5 text-[10px] text-white">
-                  {slotToTime(dropPreviewSlot)}
-                </span>
-              </div>
-            </div>
-          ) : null}
-          {movingTimeBoxPreview &&
-          Number.isInteger(movingTimeBoxPreview.startSlot) &&
-          Number.isInteger(movingTimeBoxPreview.endSlot) ? (
-            <div
-              data-testid="timeline-move-preview"
-              className="pointer-events-none absolute left-16 right-2 z-20"
-              style={{
-                top: movingTimeBoxPreview.startSlot * slotHeight,
-                height:
-                  Math.max(1, movingTimeBoxPreview.endSlot - movingTimeBoxPreview.startSlot) *
-                  slotHeight,
-              }}
-            >
-              <div
-                className={`h-full rounded border-2 border-dashed px-2 py-1 text-[11px] ${
-                  movingTimeBoxPreview.hasConflict
-                    ? 'border-red-300 bg-red-500/20 text-red-100'
-                    : 'border-cyan-300 bg-cyan-500/20 text-cyan-100'
-                }`}
-              >
-                이동 예정 {slotToTime(movingTimeBoxPreview.startSlot)} ~{' '}
-                {slotToTime(movingTimeBoxPreview.endSlot)}
-                {movingTimeBoxPreview.hasConflict ? ' (겹침)' : ''}
-              </div>
-            </div>
-          ) : null}
+      {!isDayView && viewMode === 'WEEK' ? (
+        <WeeklyCalendarView
+          rangeLabel={weekCalendar.rangeLabel}
+          days={weekCalendar.days}
+          onOpenDate={handleOpenCalendarDate}
+        />
+      ) : null}
 
-          <div className="pointer-events-none absolute inset-y-0 left-16 right-2">
-            {filteredBoxes.map((box) => (
-              <TimeBoxCard
-                key={box.id}
-                timeBox={box}
-                slotHeight={slotHeight}
-                previewEndSlot={resizePreview[box.id]}
-                onResizePreview={handleResizePreview}
-                onResizeEnd={handleResizeEnd}
-                nowTimestamp={timerNow}
-                onTimerStart={onTimerStart}
-                onTimerPause={onTimerPause}
-                onTimerComplete={onTimerComplete}
-                categoryMeta={box.categoryId ? categoryMap.get(box.categoryId) : null}
-                onTimeBoxClick={(timeBox) => setSelectedBoxId(timeBox.id)}
-              />
-            ))}
+      {!isDayView && viewMode === 'MONTH' ? (
+        <MonthlyCalendarView
+          monthLabel={monthCalendar.monthLabel}
+          cells={monthCalendar.cells}
+          onOpenDate={handleOpenCalendarDate}
+        />
+      ) : null}
 
-            {pendingInput ? (
-              <div
-                className="ui-panel-subtle pointer-events-auto absolute left-0 right-0 z-20 flex items-center gap-2 px-3 py-2"
-                style={{
-                  top: pendingInput.slotIndex * slotHeight,
-                }}
-              >
-                <input
-                  type="text"
-                  autoFocus
-                  value={pendingInput.content}
-                  onCompositionStart={() => setIsComposing(true)}
-                  onCompositionEnd={() => setIsComposing(false)}
-                  onChange={(event) =>
-                    setPendingInput((prev) => (prev ? { ...prev, content: event.target.value } : prev))
-                  }
-                  onKeyDown={(event) => {
-                    const nativeComposing = event.nativeEvent?.isComposing || event.keyCode === 229
-
-                    if (isComposing || nativeComposing) {
-                      return
-                    }
-
-                    if (event.key === 'Enter') {
-                      if (event.repeat) {
-                        return
-                      }
-
-                      event.preventDefault()
-                      handlePendingSubmit()
-                    }
-
-                    if (event.key === 'Escape') {
-                      setPendingInput(null)
-                    }
-                  }}
-                  onBlur={(event) => {
-                    const related = event.relatedTarget
-                    if (related && related.dataset.durationPreset) {
-                      return
-                    }
-                    setPendingInput(null)
-                  }}
-                  className="min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
-                  placeholder="일정을 입력하고 엔터 (기본 30분)"
-                />
-                <div className="flex items-center gap-1">
-                  {DURATION_PRESETS.map((presetSlots) => {
-                    const isActive = pendingInput.durationSlots === presetSlots
-                    return (
-                      <button
-                        key={presetSlots}
-                        type="button"
-                        data-duration-preset="true"
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() =>
-                          setPendingInput((prev) =>
-                            prev ? { ...prev, durationSlots: presetSlots } : prev,
-                          )
-                        }
-                        className={`rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                          isActive
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-700 text-gray-200 hover:bg-slate-50 dark:hover:bg-slate-800'
-                        }`}
-                        aria-label={`${presetSlots * 30}분 프리셋`}
-                      >
-                        {presetSlots * 30}분
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
+      {isDayView ? (
+        <div data-testid="timeline-day-view">
+          <div className="overflow-x-auto">
+            {sortedBoxes.length > 0 && filteredBoxes.length === 0 ? (
+              <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+                현재 필터 조건에 맞는 일정이 없습니다.
+              </p>
             ) : null}
+
+            <div className="relative min-w-[520px]">
+              <TimeSlotGrid
+                onSlotClick={handleSlotClick}
+                showDropGuide={showDropGuide}
+                rowHeight={slotHeight}
+                showQuarterDividers={timelineScale === '15'}
+              />
+
+              {showDropGuide && Number.isInteger(dropPreviewSlot) ? (
+                <div
+                  data-testid="timeline-drop-preview"
+                  className="pointer-events-none absolute left-16 right-2 z-10"
+                  style={{ top: dropPreviewSlot * slotHeight }}
+                >
+                  <div className="relative border-t-2 border-indigo-400/90">
+                    <span className="absolute -left-14 -top-3 rounded bg-indigo-600/80 px-1.5 py-0.5 text-[10px] text-white">
+                      {slotToTime(dropPreviewSlot)}
+                    </span>
+                  </div>
+                </div>
+              ) : null}
+
+              {movingTimeBoxPreview &&
+              Number.isInteger(movingTimeBoxPreview.startSlot) &&
+              Number.isInteger(movingTimeBoxPreview.endSlot) ? (
+                <div
+                  data-testid="timeline-move-preview"
+                  className="pointer-events-none absolute left-16 right-2 z-20"
+                  style={{
+                    top: movingTimeBoxPreview.startSlot * slotHeight,
+                    height:
+                      Math.max(1, movingTimeBoxPreview.endSlot - movingTimeBoxPreview.startSlot) *
+                      slotHeight,
+                  }}
+                >
+                  <div
+                    className={`h-full rounded border-2 border-dashed px-2 py-1 text-[11px] ${
+                      movingTimeBoxPreview.hasConflict
+                        ? 'border-red-300 bg-red-500/20 text-red-100'
+                        : 'border-cyan-300 bg-cyan-500/20 text-cyan-100'
+                    }`}
+                  >
+                    이동 예정 {slotToTime(movingTimeBoxPreview.startSlot)} ~{' '}
+                    {slotToTime(movingTimeBoxPreview.endSlot)}
+                    {movingTimeBoxPreview.hasConflict ? ' (겹침)' : ''}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="pointer-events-none absolute inset-y-0 left-16 right-2">
+                {filteredBoxes.map((box) => (
+                  <TimeBoxCard
+                    key={box.id}
+                    timeBox={box}
+                    slotHeight={slotHeight}
+                    previewEndSlot={resizePreview[box.id]}
+                    onResizePreview={handleResizePreview}
+                    onResizeEnd={handleResizeEnd}
+                    nowTimestamp={timerNow}
+                    onTimerStart={onTimerStart}
+                    onTimerPause={onTimerPause}
+                    onTimerComplete={onTimerComplete}
+                    categoryMeta={box.categoryId ? categoryMap.get(box.categoryId) : null}
+                    onTimeBoxClick={(timeBox) => setSelectedBoxId(timeBox.id)}
+                  />
+                ))}
+
+                {pendingInput ? (
+                  <div
+                    className="ui-panel-subtle pointer-events-auto absolute left-0 right-0 z-20 flex items-center gap-2 px-3 py-2"
+                    style={{
+                      top: pendingInput.slotIndex * slotHeight,
+                    }}
+                  >
+                    <input
+                      type="text"
+                      autoFocus
+                      value={pendingInput.content}
+                      onCompositionStart={() => setIsComposing(true)}
+                      onCompositionEnd={() => setIsComposing(false)}
+                      onChange={(event) =>
+                        setPendingInput((prev) =>
+                          prev ? { ...prev, content: event.target.value } : prev,
+                        )
+                      }
+                      onKeyDown={(event) => {
+                        const nativeComposing = event.nativeEvent?.isComposing || event.keyCode === 229
+
+                        if (isComposing || nativeComposing) {
+                          return
+                        }
+
+                        if (event.key === 'Enter') {
+                          if (event.repeat) {
+                            return
+                          }
+
+                          event.preventDefault()
+                          handlePendingSubmit()
+                        }
+
+                        if (event.key === 'Escape') {
+                          setPendingInput(null)
+                        }
+                      }}
+                      onBlur={(event) => {
+                        const related = event.relatedTarget
+                        if (related && related.dataset.durationPreset) {
+                          return
+                        }
+                        setPendingInput(null)
+                      }}
+                      className="min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+                      placeholder="일정을 입력하고 엔터 (기본 30분)"
+                    />
+
+                    <div className="flex items-center gap-1">
+                      {DURATION_PRESETS.map((presetSlots) => {
+                        const isActive = pendingInput.durationSlots === presetSlots
+
+                        return (
+                          <button
+                            key={presetSlots}
+                            type="button"
+                            data-duration-preset="true"
+                            aria-label={`${presetSlots * 30}분 프리셋`}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() =>
+                              setPendingInput((prev) =>
+                                prev ? { ...prev, durationSlots: presetSlots } : prev,
+                              )
+                            }
+                            className={`rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                              isActive
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-gray-700 text-gray-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            {presetSlots * 30}분
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {selectedBox ? (
         <CompletionModal

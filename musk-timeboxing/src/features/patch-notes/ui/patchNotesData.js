@@ -1,5 +1,29 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.15.0',
+    date: '2026-03-07',
+    title: '주간/월간 캘린더 뷰(T19~T20) 추가',
+    summary:
+      '일간 타임라인 편집 흐름은 유지한 채, 주간과 월간 계획을 한 화면에서 읽을 수 있는 읽기 전용 캘린더 뷰를 추가했습니다.',
+    focus: [
+      '기존 localStorage 날짜별 구조를 그대로 활용해 별도 스키마 변경 없이 캘린더 요약을 계산',
+      '일간/주간/월간을 타임라인 내부 뷰 모드로 통합해 탐색 비용을 낮춤',
+      '셀 클릭 시 즉시 해당 날짜의 일간 타임라인으로 돌아가도록 연결해 탐색과 편집을 분리',
+    ],
+    improvements: [
+      '`calendarViewData` 유틸 추가: 주간/월간 스냅샷(rangeLabel, completionRate, previewItems) 계산',
+      '주간 캘린더 카드 추가: 7일 일정 수/완료율/계획 시간/미리보기 표시',
+      '월간 캘린더 그리드 추가: 42셀 구조로 현재 월/비활성 월 셀 구분 및 현재 날짜 강조',
+      '타임라인 헤더에 `일간/주간/월간` 뷰 토글 추가',
+      '신규 E2E `weekly-calendar-view`, `monthly-calendar-view` 추가',
+    ],
+    validation: [
+      'lint/build 통과',
+      '캘린더 전용 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.14.0',
     date: '2026-03-07',
     title: '실행 고도화 5종(T14~T18) 추가',

@@ -1,6 +1,6 @@
-# Musk Planner Task Execution Board (18 Tasks)
+# Musk Planner Task Execution Board (20 Tasks)
 
-이 문서는 현재 합의된 작업(기존 5개 + 추가 8개)을 한 번에 처리하지 않고,
+이 문서는 현재 합의된 작업을 한 번에 처리하지 않고,
 작업 단위를 쪼개서 순차 실행하기 위한 운영 보드다.
 
 ## 0. 운영 원칙
@@ -51,6 +51,8 @@
   - `T16` 타임라인 필터(상태/카테고리)
   - `T17` 타임박스 복제 액션
   - `T18` 데이터 파일 입출력 강화
+  - `T19` 주간 캘린더 뷰
+  - `T20` 월간 캘린더 뷰
 
 ## 3. Prioritized Task List
 
@@ -257,6 +259,55 @@
 
 권장 커밋 메시지:
 - `refactor(patch-notes): split modal into stable subcomponents`
+
+---
+
+### T19. 주간 캘린더 뷰
+목표: 현재 주간 계획을 날짜 카드 형태로 한 화면에 확인하고, 날짜 클릭 시 일간 보기로 점프
+
+하위 태스크:
+1. 주간 요약 스냅샷 유틸 추가
+2. 주간 캘린더 카드 UI 구현
+3. 타임라인 뷰 모드 토글(일간/주간) 연결
+4. 셀 클릭 시 해당 날짜로 이동하는 흐름 연결
+5. E2E 시나리오 추가
+
+완료 기준(DoD):
+- 주간 단위 일정 수/완료율/계획 시간/미리보기 확인 가능
+- 클릭 시 해당 날짜 일간 타임라인으로 복귀
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1 e2e/weekly-calendar-view.spec.js`
+
+권장 커밋 메시지:
+- `feat(calendar): add weekly planner overview`
+
+---
+
+### T20. 월간 캘린더 뷰
+목표: 월간 계획을 5~6주 그리드로 요약해서 보고, 날짜 클릭 시 일간 보기로 점프
+
+하위 태스크:
+1. 월간 요약 스냅샷 유틸 추가
+2. 월간 캘린더 그리드 UI 구현
+3. 타임라인 뷰 모드 토글(일간/월간) 연결
+4. 현재 날짜/현재 월 외 날짜 표현 구분
+5. E2E 시나리오 추가
+
+완료 기준(DoD):
+- 월 전체 계획을 한 화면에서 스캔 가능
+- 현재 날짜 강조와 비활성 월 셀 구분이 명확함
+- 클릭 시 해당 날짜 일간 타임라인으로 복귀
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1 e2e/monthly-calendar-view.spec.js`
+
+권장 커밋 메시지:
+- `feat(calendar): add monthly planner overview`
 
 ---
 

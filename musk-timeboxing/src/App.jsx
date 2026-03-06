@@ -15,7 +15,15 @@ import Header from './features/header'
 import PatchNotesModal from './features/patch-notes'
 import Timeline, { RescheduleAssistantModal } from './features/timeline'
 import { useCategoryMeta, useDailyData, useToast } from './app/hooks'
-import { hasOverlap, loadDay, saveDay, slotDurationMinutes, TOTAL_SLOTS } from './entities/planner'
+import {
+  buildMonthCalendarSnapshot,
+  buildWeekCalendarSnapshot,
+  hasOverlap,
+  loadDay,
+  saveDay,
+  slotDurationMinutes,
+  TOTAL_SLOTS,
+} from './entities/planner'
 
 const DEFAULT_BOX_SLOTS = 1
 const BASE_SLOT_HEIGHT = 32
@@ -606,6 +614,22 @@ function App() {
       }),
     [currentDate, data],
   )
+  const weekCalendar = useMemo(
+    () =>
+      buildWeekCalendarSnapshot({
+        currentDate,
+        currentDayData: data,
+      }),
+    [currentDate, data],
+  )
+  const monthCalendar = useMemo(
+    () =>
+      buildMonthCalendarSnapshot({
+        currentDate,
+        currentDayData: data,
+      }),
+    [currentDate, data],
+  )
   const bigThreeProgress = useMemo(() => {
     const statuses = [0, 1, 2].map((index) => {
       const item = data.bigThree[index]
@@ -1151,9 +1175,12 @@ function App() {
   const timelineSection = (
     <Timeline
       data={data}
+      currentDate={currentDate}
       categories={categories}
       weeklyReport={weeklyReport}
       weeklyPlanningPreview={weeklyPlanningPreview}
+      weekCalendar={weekCalendar}
+      monthCalendar={monthCalendar}
       isInsightsLoading={isTimelineInsightsLoading}
       onJumpToDate={goToDate}
       initialFocusSlot={lastFocus?.date === currentDate ? lastFocus.slot : null}
