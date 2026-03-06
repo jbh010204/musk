@@ -1,5 +1,26 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.12.9',
+    date: '2026-03-07',
+    title: '테마 토큰 통합 + 접근성 보강 + UI 회귀 테스트 확장',
+    summary: '라이트/다크 일관성을 높이기 위해 semantic 토큰을 도입하고, ARIA 개선 및 레이아웃 회귀 테스트를 추가했습니다.',
+    focus: [
+      '공통 UI 클래스가 theme class와 충돌하지 않도록 색/서피스/보더를 semantic token 중심으로 정리',
+      '토스트, 주간 스트립, 패치노트 토글, 플로팅 메뉴에 접근성 상태값(aria-live/expanded/current 등) 보강',
+      '최근 조정한 UI(주간 gradient, 패치노트 토글 안정성, 30분 카드 정렬)를 E2E로 고정',
+    ],
+    improvements: [
+      '`ui-panel`, `ui-panel-subtle`, `ui-btn-secondary`, `ui-btn-ghost`, `ui-input`, `ui-select`, `ui-modal-card`, `ui-glass-menu`를 semantic variable 기반으로 전환',
+      '토스트 컨테이너 라이브 리전 적용 및 플로팅 메뉴/패치노트 토글 ARIA 상태 정보 추가',
+      '새 E2E(`ui-layout-regression.spec.js`)로 핵심 레이아웃 회귀 자동 검출 추가',
+    ],
+    validation: [
+      'lint/build 통과',
+      'E2E 전체 통과(27 passed)',
+      'E2E 추가 검증: ui-layout-regression, timer-mode, timeline-scale, patch-notes, weekly-strip 통과',
+    ],
+  },
+  {
     version: 'v0.12.8',
     date: '2026-03-07',
     title: '다크 분리/주간 강조/패치노트 안정화/30분 카드 정렬',
