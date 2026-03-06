@@ -106,25 +106,33 @@ function Header({
               key={day.dateStr}
               type="button"
               onClick={() => goToDate(day.dateStr)}
-              className={`rounded-2xl px-1 py-2 text-center transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+              className={`relative overflow-hidden rounded-2xl px-1 py-2 text-center transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                 day.isCurrent
-                  ? 'bg-indigo-600/28 text-gray-100 ring-1 ring-indigo-400/70 shadow-sm'
-                  : 'bg-white/55 text-slate-600 hover:bg-white/80 dark:bg-slate-800/25 dark:text-slate-400 dark:hover:bg-slate-800/40'
+                  ? 'bg-gradient-to-br from-indigo-600/35 via-indigo-600/25 to-cyan-500/20 text-gray-100 ring-1 ring-indigo-300/75 shadow-[0_8px_20px_rgba(79,70,229,0.18)]'
+                  : 'bg-white/45 text-slate-600 hover:bg-white/80 dark:bg-slate-800/15 dark:text-slate-400 dark:hover:bg-slate-800/35'
               }`}
               aria-label={`${day.dateStr} 이동`}
             >
-              <div
-                className={`text-[10px] ${
-                  day.isCurrent ? 'text-indigo-100/90' : 'text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                {day.dayLabel}
-              </div>
-              <div className={`text-sm font-semibold ${day.isCurrent ? 'text-gray-100' : 'text-slate-700 dark:text-gray-100'}`}>
-                {day.dayNumber}
-              </div>
-              <div className="mt-1.5 h-1 w-full rounded bg-gray-700/70">
-                <div className="h-1 rounded bg-green-500" style={{ width: `${ratio}%` }} />
+              {day.isCurrent ? (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-1 top-0 h-px bg-gradient-to-r from-transparent via-indigo-100/95 to-transparent"
+                />
+              ) : null}
+              <div className="relative z-10">
+                <div
+                  className={`text-[10px] ${
+                    day.isCurrent ? 'text-indigo-100/90' : 'text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  {day.dayLabel}
+                </div>
+                <div className={`text-sm font-semibold ${day.isCurrent ? 'text-gray-100' : 'text-slate-700 dark:text-gray-100'}`}>
+                  {day.dayNumber}
+                </div>
+                <div className={`mt-1.5 h-1 w-full rounded ${day.isCurrent ? 'bg-indigo-300/35' : 'bg-gray-700/70'}`}>
+                  <div className="h-1 rounded bg-green-500" style={{ width: `${ratio}%` }} />
+                </div>
               </div>
             </button>
           )
