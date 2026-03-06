@@ -50,8 +50,8 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
   return (
     <div
       ref={setDroppableNodeRef}
-      className={`rounded border p-3 ${
-        slot ? 'border-gray-600 bg-gray-800' : 'border-dashed border-gray-600 bg-gray-800/70'
+      className={`p-3 ${
+        slot ? 'ui-panel' : 'ui-panel border-dashed'
       } ${isOver && !slot ? 'border-indigo-400 bg-gray-700/60' : ''} ${
         isDragging ? 'opacity-50' : ''
       }`}
@@ -62,7 +62,7 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
         <button
           type="button"
           onClick={() => setIsEditing(true)}
-          className="w-full rounded px-2 py-1 text-left text-sm text-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded px-2 py-1 text-left text-sm text-gray-400 transition-colors hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           — 비어있음 —
         </button>
@@ -100,7 +100,7 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
             setIsEditing(false)
             setDraft('')
           }}
-          className="w-full rounded bg-gray-700 p-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="ui-input text-sm"
           placeholder="빅3 입력 후 엔터"
         />
       ) : null}
@@ -120,7 +120,7 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
           <button
             type="button"
             onClick={() => onRemove(slot.id)}
-            className="rounded bg-gray-700 px-2 py-1 text-xs hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="ui-btn-secondary px-2 py-1 text-xs"
             aria-label="빅3 삭제"
           >
             ✕

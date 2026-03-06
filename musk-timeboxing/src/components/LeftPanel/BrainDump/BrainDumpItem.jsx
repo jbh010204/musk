@@ -12,7 +12,7 @@ function BrainDumpItem({ item, onRemove, onSendToBigThree }) {
 
   return (
     <div
-      className={`rounded p-2 hover:bg-gray-700 ${isDragging ? 'opacity-50' : ''}`}
+      className={`ui-panel-subtle p-2 transition-colors hover:bg-gray-700/70 ${isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-center justify-between gap-2">
         <button
@@ -30,14 +30,14 @@ function BrainDumpItem({ item, onRemove, onSendToBigThree }) {
           <button
             type="button"
             onClick={() => onSendToBigThree(item.id)}
-            className="rounded bg-gray-600 px-2 py-1 text-xs hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="ui-btn-secondary px-2 py-1 text-xs"
           >
             빅3
           </button>
           <button
             type="button"
             onClick={() => onRemove(item.id)}
-            className="rounded bg-gray-700 px-2 py-1 text-xs hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="ui-btn-secondary px-2 py-1 text-xs"
             aria-label="삭제"
           >
             ✕

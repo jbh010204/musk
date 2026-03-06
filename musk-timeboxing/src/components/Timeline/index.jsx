@@ -7,7 +7,7 @@ import TimeBoxCard from './TimeBoxCard'
 import TimeSlotGrid from './TimeSlotGrid'
 import WeeklyReportCard from './WeeklyReportCard'
 
-const SLOT_HEIGHT = 32
+const DEFAULT_SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
 const DURATION_PRESETS = [1, 2, 3, 4]
 
@@ -18,6 +18,10 @@ function Timeline({
   suggestionMessage = null,
   onDismissSuggestion = () => {},
   dropPreviewSlot = null,
+  movingTimeBoxPreview = null,
+  slotHeight = DEFAULT_SLOT_HEIGHT,
+  timelineScale = '30',
+  onTimelineScaleChange = () => {},
   addTimeBox,
   updateTimeBox,
   removeTimeBox,
@@ -148,12 +152,40 @@ function Timeline({
   }
 
   return (
-    <section className="h-full p-4">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-400">⏱ 타임라인</h2>
+    <section className="h-full p-4 pb-24 md:pb-16">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400">⏱ 타임라인</h2>
+        <div className="ui-panel inline-flex items-center p-1 text-xs">
+          <button
+            type="button"
+            data-testid="timeline-scale-30"
+            onClick={() => onTimelineScaleChange('30')}
+            className={`rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+              timelineScale === '30'
+                ? 'bg-indigo-600 text-white'
+                : 'text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            30분
+          </button>
+          <button
+            type="button"
+            data-testid="timeline-scale-15"
+            onClick={() => onTimelineScaleChange('15')}
+            className={`rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+              timelineScale === '15'
+                ? 'bg-indigo-600 text-white'
+                : 'text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            15분 보기
+          </button>
+        </div>
+      </div>
       {showDropGuide ? (
         <div
           data-testid="timeline-drop-guide"
-          className="mb-3 rounded border border-indigo-400/70 bg-indigo-500/10 px-3 py-2 text-xs text-indigo-100"
+          className="ui-panel-subtle mb-3 border-indigo-400/70 bg-indigo-500/10 px-3 py-2 text-xs text-indigo-100"
         >
           브레인 덤프/빅3 항목을 원하는 시간 슬롯에 드롭하면 일정이 추가됩니다.
         </div>
@@ -161,13 +193,13 @@ function Timeline({
       {suggestionMessage ? (
         <div
           data-testid="daily-suggestion-panel"
-          className="mb-3 flex items-start justify-between gap-2 rounded border border-sky-400/60 bg-sky-500/10 px-3 py-2 text-xs text-sky-100"
+          className="ui-panel-subtle mb-3 flex items-start justify-between gap-2 border-sky-400/60 bg-sky-500/10 px-3 py-2 text-xs text-sky-100"
         >
           <p>{suggestionMessage}</p>
           <button
             type="button"
             onClick={onDismissSuggestion}
-            className="rounded border border-sky-300/60 px-2 py-0.5 text-[11px] text-sky-100 hover:bg-sky-500/20 focus:outline-none focus:ring-2 focus:ring-sky-300"
+            className="rounded border border-sky-300/60 px-2 py-0.5 text-[11px] text-sky-100 transition-colors hover:bg-sky-500/20 focus:outline-none focus:ring-2 focus:ring-sky-300"
           >
             닫기
           </button>
@@ -192,17 +224,48 @@ function Timeline({
 
       <div className="overflow-x-auto">
         <div className="relative min-w-[520px]">
-          <TimeSlotGrid onSlotClick={handleSlotClick} showDropGuide={showDropGuide} />
+          <TimeSlotGrid
+            onSlotClick={handleSlotClick}
+            showDropGuide={showDropGuide}
+            rowHeight={slotHeight}
+            showQuarterDividers={timelineScale === '15'}
+          />
           {showDropGuide && Number.isInteger(dropPreviewSlot) ? (
             <div
               data-testid="timeline-drop-preview"
               className="pointer-events-none absolute left-16 right-2 z-10"
-              style={{ top: dropPreviewSlot * SLOT_HEIGHT }}
+              style={{ top: dropPreviewSlot * slotHeight }}
             >
               <div className="relative border-t-2 border-indigo-400/90">
                 <span className="absolute -left-14 -top-3 rounded bg-indigo-600/80 px-1.5 py-0.5 text-[10px] text-white">
                   {slotToTime(dropPreviewSlot)}
                 </span>
+              </div>
+            </div>
+          ) : null}
+          {movingTimeBoxPreview &&
+          Number.isInteger(movingTimeBoxPreview.startSlot) &&
+          Number.isInteger(movingTimeBoxPreview.endSlot) ? (
+            <div
+              data-testid="timeline-move-preview"
+              className="pointer-events-none absolute left-16 right-2 z-20"
+              style={{
+                top: movingTimeBoxPreview.startSlot * slotHeight,
+                height:
+                  Math.max(1, movingTimeBoxPreview.endSlot - movingTimeBoxPreview.startSlot) *
+                  slotHeight,
+              }}
+            >
+              <div
+                className={`h-full rounded border-2 border-dashed px-2 py-1 text-[11px] ${
+                  movingTimeBoxPreview.hasConflict
+                    ? 'border-red-300 bg-red-500/20 text-red-100'
+                    : 'border-cyan-300 bg-cyan-500/20 text-cyan-100'
+                }`}
+              >
+                이동 예정 {slotToTime(movingTimeBoxPreview.startSlot)} ~{' '}
+                {slotToTime(movingTimeBoxPreview.endSlot)}
+                {movingTimeBoxPreview.hasConflict ? ' (겹침)' : ''}
               </div>
             </div>
           ) : null}
@@ -212,7 +275,7 @@ function Timeline({
               <TimeBoxCard
                 key={box.id}
                 timeBox={box}
-                slotHeight={SLOT_HEIGHT}
+                slotHeight={slotHeight}
                 previewEndSlot={resizePreview[box.id]}
                 onResizePreview={handleResizePreview}
                 onResizeEnd={handleResizeEnd}
@@ -225,7 +288,7 @@ function Timeline({
               <div
                 className="pointer-events-auto absolute left-0 right-0 z-20 flex items-center gap-2 rounded border border-indigo-500 bg-gray-800 px-2 py-1"
                 style={{
-                  top: pendingInput.slotIndex * SLOT_HEIGHT,
+                  top: pendingInput.slotIndex * slotHeight,
                 }}
               >
                 <input

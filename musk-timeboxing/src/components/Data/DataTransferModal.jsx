@@ -56,9 +56,9 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+    <div className="ui-modal-shell" onClick={onClose}>
       <div
-        className="w-full max-w-2xl rounded-lg border border-gray-700 bg-gray-900 p-4"
+        className="ui-modal-card max-w-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -66,33 +66,33 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded bg-gray-800 px-2 py-1 text-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="ui-btn-ghost"
           >
             닫기
           </button>
         </div>
 
-        <div className="mt-4 rounded border border-gray-700 bg-gray-800/50 p-3">
+        <div className="ui-panel-subtle mt-4 p-3">
           <p className="mb-2 text-xs uppercase tracking-wide text-gray-400">내보내기 (Export)</p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={handleExportAll}
-              className="rounded bg-sky-700 px-3 py-2 text-sm hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="ui-btn-sky"
             >
               전체 내보내기
             </button>
             <button
               type="button"
               onClick={handleExportToday}
-              className="rounded bg-sky-700 px-3 py-2 text-sm hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="ui-btn-sky"
             >
               오늘 내보내기
             </button>
             <button
               type="button"
               onClick={handleCopyExport}
-              className="rounded bg-gray-700 px-3 py-2 text-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="ui-btn-secondary"
             >
               복사
             </button>
@@ -102,11 +102,11 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
             readOnly
             value={exportText}
             placeholder="내보내기 버튼을 누르면 JSON이 표시됩니다"
-            className="mt-3 h-44 w-full rounded bg-gray-950 p-2 font-mono text-xs text-gray-200 focus:outline-none"
+            className="ui-textarea-code mt-3 h-44"
           />
         </div>
 
-        <div className="mt-4 rounded border border-gray-700 bg-gray-800/50 p-3">
+        <div className="ui-panel-subtle mt-4 p-3">
           <p className="mb-2 text-xs uppercase tracking-wide text-gray-400">가져오기 (Import)</p>
 
           <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-gray-300">
@@ -126,14 +126,14 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
             value={importText}
             onChange={(event) => setImportText(event.target.value)}
             placeholder="JSON을 붙여넣고 가져오기를 실행하세요"
-            className="h-44 w-full rounded bg-gray-950 p-2 font-mono text-xs text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="ui-textarea-code h-44"
           />
 
           <div className="mt-3 flex justify-end">
             <button
               type="button"
               onClick={handleImport}
-              className="rounded bg-indigo-600 px-3 py-2 text-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="ui-btn-primary"
             >
               가져오기 실행
             </button>

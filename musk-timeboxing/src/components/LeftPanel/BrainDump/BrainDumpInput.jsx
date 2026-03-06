@@ -39,7 +39,7 @@ function BrainDumpInput({ onAdd }) {
       onCompositionEnd={() => setIsComposing(false)}
       onKeyDown={handleKeyDown}
       placeholder="할 일을 입력하고 엔터..."
-      className="w-full rounded bg-gray-700 p-2 text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      className="ui-input"
     />
   )
 }

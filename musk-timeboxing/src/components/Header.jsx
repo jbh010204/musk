@@ -24,7 +24,7 @@ function Header({
         <button
           type="button"
           onClick={goPrevDay}
-          className="rounded px-3 py-1 text-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="ui-btn-ghost px-3 py-1 text-lg"
           aria-label="이전 날짜"
         >
           ←
@@ -35,14 +35,14 @@ function Header({
         <button
           type="button"
           onClick={goNextDay}
-          className="rounded px-3 py-1 text-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="ui-btn-ghost px-3 py-1 text-lg"
           aria-label="다음 날짜"
         >
           →
         </button>
       </div>
 
-      <div className="mt-3 flex items-center justify-between rounded border border-gray-700 bg-gray-900/60 px-3 py-2">
+      <div className="ui-panel-subtle mt-3 flex items-center justify-between px-3 py-2">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-400">Big3 완료</p>
           <p className="text-sm font-semibold text-white">

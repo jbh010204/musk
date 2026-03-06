@@ -20,7 +20,8 @@ import { loadDay } from './utils/storage'
 import { hasOverlap, slotDurationMinutes, TOTAL_SLOTS } from './utils/timeSlot'
 
 const DEFAULT_BOX_SLOTS = 1
-const SLOT_HEIGHT = 32
+const BASE_SLOT_HEIGHT = 32
+const DETAIL_SLOT_HEIGHT = 64
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
 
 const parseDate = (dateStr) => new Date(`${dateStr}T00:00:00`)
@@ -95,6 +96,7 @@ const buildWeeklyReport = ({ currentDate, currentDayData }) => {
   let completedPlannedMinutes = 0
   let completedActualMinutes = 0
   const skipReasonCounter = new Map()
+  const previousSkipReasonCounter = new Map()
 
   const byDay = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(startDate)
@@ -143,6 +145,51 @@ const buildWeeklyReport = ({ currentDate, currentDayData }) => {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([reason, count]) => ({ reason, count }))
+  Array.from({ length: 7 }).forEach((_, index) => {
+    const date = new Date(startDate)
+    date.setDate(startDate.getDate() - 7 + index)
+    const dayData = loadDay(formatDate(date))
+    const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
+
+    timeBoxes.forEach((box) => {
+      if (box.status !== 'SKIPPED') {
+        return
+      }
+
+      const reason =
+        typeof box.skipReason === 'string' && box.skipReason.trim().length > 0
+          ? box.skipReason.trim()
+          : '기타'
+      previousSkipReasonCounter.set(reason, (previousSkipReasonCounter.get(reason) || 0) + 1)
+    })
+  })
+
+  const skipReasonTrend = [...new Set([...skipReasonCounter.keys(), ...previousSkipReasonCounter.keys()])]
+    .map((reason) => {
+      const current = skipReasonCounter.get(reason) || 0
+      const previous = previousSkipReasonCounter.get(reason) || 0
+      return {
+        reason,
+        current,
+        previous,
+        delta: current - previous,
+      }
+    })
+    .filter((item) => item.current > 0 || item.previous > 0)
+    .sort((a, b) => {
+      const byDelta = Math.abs(b.delta) - Math.abs(a.delta)
+      if (byDelta !== 0) {
+        return byDelta
+      }
+
+      const byCurrent = b.current - a.current
+      if (byCurrent !== 0) {
+        return byCurrent
+      }
+
+      return a.reason.localeCompare(b.reason, 'ko')
+    })
+    .slice(0, 3)
 
   return {
     total,
@@ -154,10 +201,30 @@ const buildWeeklyReport = ({ currentDate, currentDayData }) => {
     diff,
     byDay,
     topSkipReasons,
+    skipReasonTrend,
   }
 }
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
+
+const resolveMovedRangeFromDelta = (activeData, deltaY, slotHeight) => {
+  const activeStart = Number(activeData?.startSlot) || 0
+  const activeEnd = Number(activeData?.endSlot) || activeStart + 1
+  const duration = Math.max(1, activeEnd - activeStart)
+  const normalizedSlotHeight = Math.max(1, Number(slotHeight) || BASE_SLOT_HEIGHT)
+  const slotDelta = Math.round((Number(deltaY) || 0) / normalizedSlotHeight)
+
+  let startSlot = activeStart + slotDelta
+  startSlot = clamp(startSlot, 0, TOTAL_SLOTS - duration)
+  const endSlot = startSlot + duration
+
+  return {
+    startSlot,
+    endSlot,
+    duration,
+    slotDelta,
+  }
+}
 
 const getVisibleTimelineGridAtPoint = (clientX, clientY) => {
   if (typeof document === 'undefined') {
@@ -168,7 +235,7 @@ const getVisibleTimelineGridAtPoint = (clientX, clientY) => {
   return (
     grids.find((grid) => {
       const rect = grid.getBoundingClientRect()
-      if (rect.width < 40 || rect.height < SLOT_HEIGHT) {
+      if (rect.width < 40 || rect.height < BASE_SLOT_HEIGHT) {
         return false
       }
 
@@ -182,7 +249,10 @@ const getVisibleTimelineGridAtPoint = (clientX, clientY) => {
 const resolveSlotFromGridPoint = (grid, clientY) => {
   const gridRect = grid.getBoundingClientRect()
   const firstSlot = grid.querySelector('[data-timeline-slot-index="0"]')
-  const rowHeight = Math.max(1, Number(firstSlot?.getBoundingClientRect?.().height) || SLOT_HEIGHT)
+  const rowHeight = Math.max(
+    1,
+    Number(firstSlot?.getBoundingClientRect?.().height) || BASE_SLOT_HEIGHT,
+  )
   const slotOffset = Math.floor((clientY - gridRect.top) / rowHeight)
   return clamp(slotOffset, 0, TOTAL_SLOTS - 1)
 }
@@ -288,15 +358,18 @@ function App() {
 
   const { showToast, ToastContainer } = useToast()
   const [mobileTab, setMobileTab] = useState('timeline')
+  const [timelineScale, setTimelineScale] = useState('30')
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false)
   const [isDataModalOpen, setIsDataModalOpen] = useState(false)
   const [activeDragPreview, setActiveDragPreview] = useState(null)
   const [dropPreviewSlot, setDropPreviewSlot] = useState(null)
+  const [movingTimeBoxPreview, setMovingTimeBoxPreview] = useState(null)
   const [dailySuggestion, setDailySuggestion] = useState(null)
   const lastPointerRef = useRef(null)
   const dropPreviewSlotRef = useRef(null)
   const activeDragTypeRef = useRef(null)
   const pointerTrackingRef = useRef(false)
+  const timelineSlotHeight = timelineScale === '15' ? DETAIL_SLOT_HEIGHT : BASE_SLOT_HEIGHT
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
   const updateDropPreviewSlot = (slot) => {
@@ -445,14 +518,15 @@ function App() {
 
     if (!payload) {
       setActiveDragPreview(null)
+      setMovingTimeBoxPreview(null)
       updateDropPreviewSlot(null)
       return
     }
 
-    startPointerTracking()
     activeDragTypeRef.current = payload.type ?? null
 
     if (payload.type === 'BRAIN_DUMP' || payload.type === 'BIG_THREE') {
+      startPointerTracking()
       setActiveDragPreview({
         type: payload.type,
         content: payload.content,
@@ -461,12 +535,24 @@ function App() {
       return
     }
 
+    if (payload.type === 'TIME_BOX') {
+      setMovingTimeBoxPreview({
+        id: payload.id,
+        startSlot: Number(payload.startSlot) || 0,
+        endSlot: Number(payload.endSlot) || (Number(payload.startSlot) || 0) + 1,
+        hasConflict: false,
+      })
+      return
+    }
+
     setActiveDragPreview(null)
+    setMovingTimeBoxPreview(null)
     updateDropPreviewSlot(null)
   }
 
   const handleDragCancel = () => {
     setActiveDragPreview(null)
+    setMovingTimeBoxPreview(null)
     lastPointerRef.current = null
     activeDragTypeRef.current = null
     updateDropPreviewSlot(null)
@@ -474,6 +560,23 @@ function App() {
   }
 
   const handleDragMove = ({ over, activatorEvent, active, delta }) => {
+    if (activeDragTypeRef.current === 'TIME_BOX') {
+      const activeData = active?.data?.current
+      if (!activeData) {
+        setMovingTimeBoxPreview(null)
+        return
+      }
+
+      const movedRange = resolveMovedRangeFromDelta(activeData, delta?.y, timelineSlotHeight)
+      const hasConflict = hasOverlap(data.timeBoxes, movedRange, activeData.id)
+      setMovingTimeBoxPreview({
+        id: activeData.id,
+        ...movedRange,
+        hasConflict,
+      })
+      return
+    }
+
     if (activeDragTypeRef.current !== 'BRAIN_DUMP' && activeDragTypeRef.current !== 'BIG_THREE') {
       return
     }
@@ -501,6 +604,7 @@ function App() {
   const handleDragEnd = ({ active, over, delta }) => {
     setActiveDragPreview(null)
     const finalize = () => {
+      setMovingTimeBoxPreview(null)
       lastPointerRef.current = null
       activeDragTypeRef.current = null
       updateDropPreviewSlot(null)
@@ -515,24 +619,16 @@ function App() {
     }
 
     if (activeData.type === 'TIME_BOX') {
+      const movedRange = resolveMovedRangeFromDelta(activeData, delta?.y, timelineSlotHeight)
       const activeStart = Number(activeData.startSlot) || 0
       const activeEnd = Number(activeData.endSlot) || activeStart + 1
-      const duration = Math.max(1, activeEnd - activeStart)
-      const slotDelta = Math.round((delta?.y ?? 0) / SLOT_HEIGHT)
 
-      if (slotDelta === 0) {
+      if (movedRange.slotDelta === 0) {
         finalize()
         return
       }
 
-      let startSlot = activeStart + slotDelta
-      startSlot = Math.max(0, Math.min(startSlot, TOTAL_SLOTS - duration))
-      let endSlot = startSlot + duration
-
-      if (endSlot > TOTAL_SLOTS) {
-        endSlot = TOTAL_SLOTS
-        startSlot = Math.max(0, endSlot - duration)
-      }
+      const { startSlot, endSlot } = movedRange
 
       if (startSlot === activeStart && endSlot === activeEnd) {
         finalize()
@@ -656,6 +752,10 @@ function App() {
       suggestionMessage={dailySuggestion?.forDate === currentDate ? dailySuggestion.message : null}
       onDismissSuggestion={() => setDailySuggestion(null)}
       dropPreviewSlot={dropPreviewSlot}
+      movingTimeBoxPreview={movingTimeBoxPreview}
+      slotHeight={timelineSlotHeight}
+      timelineScale={timelineScale}
+      onTimelineScaleChange={setTimelineScale}
       addTimeBox={addTimeBox}
       updateTimeBox={updateTimeBox}
       removeTimeBox={removeTimeBox}

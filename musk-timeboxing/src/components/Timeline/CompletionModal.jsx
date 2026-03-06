@@ -103,9 +103,9 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+    <div className="ui-modal-shell" onClick={onClose}>
       <div
-        className="w-full max-w-md rounded-lg border border-gray-700 bg-gray-800 p-4"
+        className="ui-modal-card max-w-md"
         onClick={(event) => event.stopPropagation()}
       >
         <h3 className="text-lg font-semibold">완료 처리</h3>
@@ -118,7 +118,7 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
             type="text"
             value={content}
             onChange={(event) => setContent(event.target.value)}
-            className="w-full rounded bg-gray-700 p-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="ui-input"
           />
         </div>
         <p className="mt-2 text-sm text-gray-400">계획: {plannedMinutes}분</p>
@@ -131,7 +131,7 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
             id="timebox-category"
             value={categoryId}
             onChange={(event) => setCategoryId(event.target.value)}
-            className="w-full rounded bg-gray-700 p-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="ui-select"
           >
             <option value="">미분류</option>
             {categories.map((category) => (
@@ -160,8 +160,10 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
           <button
             type="button"
             onClick={() => setStatus('COMPLETED')}
-            className={`rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-              status === 'COMPLETED' ? 'bg-green-700' : 'bg-gray-700 hover:bg-gray-600'
+            className={`ui-btn ${
+              status === 'COMPLETED'
+                ? 'bg-green-700 text-white hover:bg-green-600'
+                : 'bg-gray-700 text-gray-100 hover:bg-gray-600'
             }`}
           >
             완료 ✓
@@ -169,8 +171,10 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
           <button
             type="button"
             onClick={() => setStatus('SKIPPED')}
-            className={`rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-              status === 'SKIPPED' ? 'bg-amber-700' : 'bg-gray-700 hover:bg-gray-600'
+            className={`ui-btn ${
+              status === 'SKIPPED'
+                ? 'bg-amber-700 text-white hover:bg-amber-600'
+                : 'bg-gray-700 text-gray-100 hover:bg-gray-600'
             }`}
           >
             건너뜀 ✗
@@ -188,7 +192,7 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
               min="1"
               value={actualMinutes}
               onChange={(event) => setActualMinutes(event.target.value)}
-              className="w-full rounded bg-gray-700 p-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="ui-input"
             />
             {diffSummary ? <p className={`text-sm ${diffSummary.className}`}>{diffSummary.text}</p> : null}
           </div>
@@ -203,7 +207,7 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
               id="skip-reason"
               value={skipReason}
               onChange={(event) => setSkipReason(event.target.value)}
-              className="w-full rounded bg-gray-700 p-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="ui-select"
             >
               <option value="">사유 선택 (선택)</option>
               {SKIP_REASON_OPTIONS.map((option) => (
@@ -219,21 +223,21 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete }) {
           <button
             type="button"
             onClick={handleDelete}
-            className="rounded bg-red-700 px-3 py-2 text-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="ui-btn-danger"
           >
             삭제
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded bg-gray-700 px-3 py-2 text-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="ui-btn-secondary"
           >
             취소
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="rounded bg-indigo-600 px-3 py-2 text-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="ui-btn-primary"
           >
             저장
           </button>

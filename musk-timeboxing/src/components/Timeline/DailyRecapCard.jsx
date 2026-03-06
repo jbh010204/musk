@@ -64,13 +64,13 @@ function DailyRecapCard({ timeBoxes, categoryMap }) {
   }, [categoryMap, timeBoxes])
 
   return (
-    <div className="mb-4 rounded-lg border border-gray-700 bg-gray-800/70 p-3">
+    <div className="ui-panel mb-4 p-3">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">오늘 리캡</h3>
         <button
           type="button"
           onClick={() => setIsExpanded((prev) => !prev)}
-          className="rounded border border-gray-600 px-2 py-0.5 text-[11px] text-gray-300 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="ui-btn-ghost text-[11px]"
         >
           {isExpanded ? '접기' : '펼치기'}
         </button>

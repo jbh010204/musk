@@ -27,6 +27,8 @@ function TimeBoxCard({
 
   const currentEndSlot = previewEndSlot ?? timeBox.endSlot
   const plannedMinutes = slotDurationMinutes(timeBox.startSlot, currentEndSlot)
+  const boxHeight = (currentEndSlot - timeBox.startSlot) * slotHeight
+  const isCompact = boxHeight <= 44
   const snappedDragY = transform ? Math.round(transform.y / slotHeight) * slotHeight : 0
   const categoryLabel = getCategoryLabel(categoryMeta, timeBox)
   const categoryColor = getCategoryColor(categoryMeta, timeBox)
@@ -94,24 +96,25 @@ function TimeBoxCard({
     <button
       ref={setNodeRef}
       type="button"
-      className={`absolute left-0 right-0 overflow-hidden rounded px-2 py-1 text-left text-xs text-white shadow pointer-events-auto ${
-        isDragging ? 'z-40 opacity-80' : ''
+      data-timebox-dragging={isDragging ? 'true' : 'false'}
+      className={`absolute left-0 right-0 overflow-hidden rounded px-2 py-1 text-left text-xs text-white shadow pointer-events-auto transition-[transform,top,height,opacity] duration-100 ease-out will-change-transform ${
+        isDragging ? 'z-40 opacity-80 ring-2 ring-cyan-300/70' : ''
       }`}
       style={{
         top: timeBox.startSlot * slotHeight,
-        height: (currentEndSlot - timeBox.startSlot) * slotHeight,
+        height: boxHeight,
         transform: transform ? CSS.Translate.toString({ x: 0, y: snappedDragY }) : undefined,
         background: visual.cardBackground,
         borderLeft: `8px solid ${visual.categoryStripe}`,
       }}
-      onPointerDown={(event) => {
+      onMouseDown={(event) => {
         pointerRef.current = {
           startX: event.clientX,
           startY: event.clientY,
           moved: false,
         }
       }}
-      onPointerMove={(event) => {
+      onMouseMove={(event) => {
         if (pointerRef.current.moved) {
           return
         }
@@ -135,36 +138,70 @@ function TimeBoxCard({
       {...listeners}
       {...attributes}
     >
-      <span
-        className="absolute right-2 top-2 rounded border px-1.5 py-0.5 text-[10px] font-semibold"
-        style={{
-          backgroundColor: visual.statusBadgeBackground,
-          borderColor: visual.statusBadgeBorder,
-        }}
-      >
-        {visual.statusLabel}
-      </span>
-
-      {categoryLabel ? (
-        <div
-          className="mb-1 inline-flex max-w-[80%] rounded border px-1.5 py-0.5 text-[10px] text-white"
+      {isCompact ? (
+        <span
+          className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full"
+          style={{ backgroundColor: visual.statusBadgeBackground }}
+          aria-label={visual.statusLabel}
+        />
+      ) : (
+        <span
+          className="absolute right-2 top-2 rounded border px-1.5 py-0.5 text-[10px] font-semibold"
           style={{
-            backgroundColor: visual.categoryBadgeBackground,
-            borderColor: visual.categoryBadgeBorder,
+            backgroundColor: visual.statusBadgeBackground,
+            borderColor: visual.statusBadgeBorder,
           }}
         >
-          <span className="truncate">#{categoryLabel}</span>
+          {visual.statusLabel}
+        </span>
+      )}
+
+      {isCompact ? (
+        <div className="mt-0.5 flex items-center gap-1 pr-4">
+          <span className="min-w-0 flex-1 truncate font-medium">{timeBox.content}</span>
+          {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
+            <span className="max-w-[52%] truncate rounded border border-amber-300/40 bg-amber-500/15 px-1 py-0.5 text-[10px] text-amber-100">
+              사유: {timeBox.skipReason}
+            </span>
+          ) : null}
+          {!(timeBox.status === 'SKIPPED' && timeBox.skipReason) && categoryLabel ? (
+            <span
+              className="max-w-[40%] shrink truncate rounded border px-1 py-0.5 text-[10px] text-white/95"
+              style={{
+                backgroundColor: visual.categoryBadgeBackground,
+                borderColor: visual.categoryBadgeBorder,
+              }}
+            >
+              #{categoryLabel}
+            </span>
+          ) : null}
         </div>
       ) : null}
-      <div className="truncate pr-11 font-medium">{timeBox.content}</div>
-      {timeBox.status === 'COMPLETED' && actualDiff ? (
-        <div className={`mt-1 truncate text-[11px] ${actualDiff.className}`}>{actualDiff.text}</div>
-      ) : null}
-      {timeBox.status === 'PLANNED' ? (
-        <div className="mt-1 truncate text-[11px] text-white/85">계획 {plannedMinutes}분</div>
-      ) : null}
-      {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
-        <div className="mt-1 truncate text-[11px] text-amber-100">사유: {timeBox.skipReason}</div>
+
+      {!isCompact ? (
+        <>
+          {categoryLabel ? (
+            <div
+              className="mb-1 inline-flex max-w-[80%] rounded border px-1.5 py-0.5 text-[10px] text-white"
+              style={{
+                backgroundColor: visual.categoryBadgeBackground,
+                borderColor: visual.categoryBadgeBorder,
+              }}
+            >
+              <span className="truncate">#{categoryLabel}</span>
+            </div>
+          ) : null}
+          <div className="truncate pr-11 font-medium">{timeBox.content}</div>
+          {timeBox.status === 'COMPLETED' && actualDiff ? (
+            <div className={`mt-1 truncate text-[11px] ${actualDiff.className}`}>{actualDiff.text}</div>
+          ) : null}
+          {timeBox.status === 'PLANNED' ? (
+            <div className="mt-1 truncate text-[11px] text-white/85">계획 {plannedMinutes}분</div>
+          ) : null}
+          {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
+            <div className="mt-1 truncate text-[11px] text-amber-100">사유: {timeBox.skipReason}</div>
+          ) : null}
+        </>
       ) : null}
 
       <div

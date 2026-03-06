@@ -47,6 +47,8 @@ test('timebox drag interaction keeps persisted timebox data valid', async ({ pag
   await page.mouse.move(startX, startY)
   await page.mouse.down()
   await page.mouse.move(startX, startY + 64, { steps: 8 })
+  const draggingCount = await page.locator('[data-timebox-dragging="true"]').count()
+  expect(draggingCount).toBeGreaterThan(0)
   await page.mouse.up()
 
   await page.waitForTimeout(120)
@@ -54,6 +56,7 @@ test('timebox drag interaction keeps persisted timebox data valid', async ({ pag
   const after = await getStorageState(page)
   const afterBox = after?.data?.timeBoxes?.find((item) => item.id === beforeBox.id)
   expect(afterBox).toBeTruthy()
+  expect(afterBox.startSlot).not.toBe(beforeBox.startSlot)
   expect(afterBox.startSlot).toBeGreaterThanOrEqual(0)
   expect(afterBox.endSlot - afterBox.startSlot).toBe(beforeBox.endSlot - beforeBox.startSlot)
 })

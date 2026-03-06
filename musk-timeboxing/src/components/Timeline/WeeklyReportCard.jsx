@@ -6,13 +6,13 @@ function WeeklyReportCard({ report }) {
   const diffTone = report.diff > 0 ? 'text-orange-300' : report.diff < 0 ? 'text-green-300' : 'text-gray-300'
 
   return (
-    <div className="mb-4 rounded-lg border border-gray-700 bg-gray-800/70 p-3">
+    <div className="ui-panel mb-4 p-3">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">주간 리포트</h3>
         <button
           type="button"
           onClick={() => setIsExpanded((prev) => !prev)}
-          className="rounded border border-gray-600 px-2 py-0.5 text-[11px] text-gray-300 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="ui-btn-ghost text-[11px]"
         >
           {isExpanded ? '접기' : '펼치기'}
         </button>
@@ -61,6 +61,33 @@ function WeeklyReportCard({ report }) {
             {report.topSkipReasons.length > 0
               ? report.topSkipReasons.map((item) => `${item.reason}(${item.count})`).join(' · ')
               : '없음'}
+          </div>
+
+          <div className="rounded border border-gray-700 bg-gray-900/60 px-2 py-1 text-xs text-gray-300">
+            <p className="text-[11px] uppercase tracking-wide text-gray-400">
+              스킵 원인 변화 (지난주 대비)
+            </p>
+            {report.skipReasonTrend?.length > 0 ? (
+              <div className="mt-1 flex flex-wrap gap-2">
+                {report.skipReasonTrend.map((item) => {
+                  const tone =
+                    item.delta > 0 ? 'text-orange-300' : item.delta < 0 ? 'text-green-300' : 'text-gray-300'
+                  const deltaPrefix = item.delta > 0 ? '+' : ''
+
+                  return (
+                    <span
+                      key={item.reason}
+                      className={`rounded border border-gray-600 bg-gray-800 px-2 py-0.5 ${tone}`}
+                    >
+                      {item.reason}: {item.previous}→{item.current} ({deltaPrefix}
+                      {item.delta})
+                    </span>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="mt-1 text-gray-400">비교 데이터가 없습니다.</p>
+            )}
           </div>
         </div>
       ) : null}

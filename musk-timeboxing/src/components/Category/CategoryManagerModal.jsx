@@ -16,14 +16,14 @@ function CategoryRow({ category, onUpdate, onDelete }) {
   const [color, setColor] = useState(category.color)
 
   return (
-    <li className="rounded border border-gray-700 bg-gray-800/80 p-3">
+    <li className="ui-panel p-3">
       <div className="flex items-center gap-2">
         <span className="h-4 w-4 rounded-full border border-gray-500" style={{ backgroundColor: color }} />
         <input
           type="text"
           value={name}
           onChange={(event) => setName(event.target.value)}
-          className="min-w-0 flex-1 rounded bg-gray-700 p-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="ui-input min-w-0 flex-1 text-sm"
           placeholder="카테고리 이름"
         />
         <input
@@ -39,7 +39,7 @@ function CategoryRow({ category, onUpdate, onDelete }) {
         <button
           type="button"
           onClick={() => onUpdate(category.id, name, color)}
-          className="rounded bg-gray-700 px-3 py-1 text-xs hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="ui-btn-secondary px-3 py-1 text-xs"
         >
           저장
         </button>
@@ -50,7 +50,7 @@ function CategoryRow({ category, onUpdate, onDelete }) {
               onDelete(category.id)
             }
           }}
-          className="rounded bg-red-700 px-3 py-1 text-xs hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+          className="ui-btn-danger px-3 py-1 text-xs"
         >
           삭제
         </button>
@@ -71,9 +71,9 @@ function CategoryManagerModal({ categories, onClose, onAddCategory, onUpdateCate
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+    <div className="ui-modal-shell" onClick={onClose}>
       <div
-        className="w-full max-w-xl rounded-lg border border-gray-700 bg-gray-900 p-4"
+        className="ui-modal-card max-w-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -81,20 +81,20 @@ function CategoryManagerModal({ categories, onClose, onAddCategory, onUpdateCate
           <button
             type="button"
             onClick={onClose}
-            className="rounded bg-gray-800 px-2 py-1 text-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="ui-btn-ghost"
           >
             닫기
           </button>
         </div>
 
-        <div className="mt-4 rounded border border-gray-700 bg-gray-800/50 p-3">
+        <div className="ui-panel-subtle mt-4 p-3">
           <p className="mb-2 text-xs uppercase tracking-wide text-gray-400">새 카테고리</p>
           <div className="flex flex-wrap items-center gap-2">
             <input
               type="text"
               value={newName}
               onChange={(event) => setNewName(event.target.value)}
-              className="min-w-[180px] flex-1 rounded bg-gray-700 p-2 text-sm text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="ui-input min-w-[180px] flex-1 text-sm"
               placeholder="예: Deep Work"
             />
             <input
@@ -107,7 +107,7 @@ function CategoryManagerModal({ categories, onClose, onAddCategory, onUpdateCate
             <button
               type="button"
               onClick={handleAdd}
-              className="rounded bg-indigo-600 px-3 py-2 text-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="ui-btn-primary"
             >
               추가
             </button>
