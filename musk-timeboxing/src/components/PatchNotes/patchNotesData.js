@@ -1,5 +1,21 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.12.3',
+    date: '2026-03-07',
+    title: 'Gemini 라이트 모드 레퍼런스 규칙 추가',
+    summary: 'Front-end UX Guardian/가이드에 레이어드 화이트와 톤 기반 계층 원칙을 공식 반영했습니다.',
+    focus: [
+      '세션마다 라이트 모드 색상 톤이 흔들리지 않도록 참조 토큰을 고정',
+      '선 기반 분할 대신 tonal elevation 원칙을 문서 상위 규칙으로 명시',
+    ],
+    improvements: [
+      '.agents/FRONTEND_UX_GUARDIAN에 Gemini Light Mode Principle 섹션 추가',
+      'AI_FRONTEND_GUIDE에 Surface-over-Background 요약 규칙 추가',
+      '배경/카드/텍스트 색상 기준(#F8F9FA/#FFFFFF/#1F1F1F/#444746) 문서화',
+    ],
+    validation: ['문서 규칙 반영 + lint/build + patch-notes e2e + 전체 e2e 회귀 통과'],
+  },
+  {
     version: 'v0.12.2',
     date: '2026-03-07',
     title: '스켈레톤 로딩 + 삭제 마이크로 인터랙션',

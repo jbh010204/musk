@@ -12,6 +12,15 @@
 
 ## 2) Look (시각적 원칙)
 
+### Gemini Light Mode Principle
+
+- `Surface-over-Background` 아키텍처를 따른다.
+- Background: `#F8F9FA`
+- Surface(Card): `#FFFFFF` + `shadow-sm`
+- Primary Text: `#1F1F1F`
+- Secondary Text: `#444746`
+- 컨테이너 분리는 border 대신 tonal elevation(톤+명도 계층) 우선
+
 ### Surfaces
 
 - 정보성 컨테이너는 `border` 대신 surface로 구분한다.

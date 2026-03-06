@@ -10,6 +10,11 @@
 
 ## 1. Visual Rules
 
+### Gemini Reference (Light Mode)
+- Gemini Light Mode Principle: `Surface-over-Background` architecture.  
+  Background `#F8F9FA`, Cards `#FFFFFF + shadow-sm`, No container borders.  
+  Typography hierarchy: Title `Bold/Darker(#1F1F1F)`, Content `Regular(#444746)`.
+
 ### Border & Focus 정책
 - 정보성 카드(`Card`, `List Item`): `border` 사용을 지양하고 surface로 구분한다.
   - Light: `bg-white shadow-sm`
