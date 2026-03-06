@@ -5,7 +5,7 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import CategoryManagerModal from './components/Category/CategoryManagerModal'
 import DataTransferModal from './components/Data/DataTransferModal'
 import FloatingActionDock from './components/Floating/FloatingActionDock'
@@ -13,16 +13,20 @@ import Header from './components/Header'
 import BigThree from './components/LeftPanel/BigThree'
 import BrainDump from './components/LeftPanel/BrainDump'
 import Timeline from './components/Timeline'
+import RescheduleAssistantModal from './components/Timeline/RescheduleAssistantModal'
 import { useCategoryMeta } from './hooks/useCategoryMeta'
 import { useDailyData } from './hooks/useDailyData'
 import { useToast } from './hooks/useToast'
-import { loadDay } from './utils/storage'
+import { loadDay, saveDay } from './utils/storage'
 import { hasOverlap, slotDurationMinutes, TOTAL_SLOTS } from './utils/timeSlot'
 
 const DEFAULT_BOX_SLOTS = 1
 const BASE_SLOT_HEIGHT = 32
 const DETAIL_SLOT_HEIGHT = 64
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
+const THEME_KEY = 'musk-planner-theme'
+const THEME_DARK = 'dark'
+const THEME_LIGHT = 'light'
 
 const parseDate = (dateStr) => new Date(`${dateStr}T00:00:00`)
 const formatDate = (date) => {
@@ -64,6 +68,45 @@ const SKIP_SUGGESTION_BY_REASON = {
   기타: '자동 제안: 건너뜀이 반복됩니다. 오늘은 버퍼 블록 1개를 먼저 배치해보세요.',
 }
 
+const SKIP_ACTION_TEMPLATE_BY_REASON = {
+  '외부 일정/방해': {
+    label: '버퍼 30분 블록 추가',
+    content: '버퍼 블록',
+    durationSlots: 1,
+    preferredStartSlot: 10,
+  },
+  '예상보다 오래 걸림': {
+    label: '집중 블록 60분 추가',
+    content: '집중 작업(보정)',
+    durationSlots: 2,
+    preferredStartSlot: 8,
+  },
+  '우선순위 변경': {
+    label: '빅3 재정렬 30분 추가',
+    content: '빅3 재정렬',
+    durationSlots: 1,
+    preferredStartSlot: 1,
+  },
+  '컨디션 저하': {
+    label: '저강도 시작 30분 추가',
+    content: '저강도 워밍업',
+    durationSlots: 1,
+    preferredStartSlot: 0,
+  },
+  '자료/준비 부족': {
+    label: '준비/정리 30분 추가',
+    content: '준비/정리',
+    durationSlots: 1,
+    preferredStartSlot: 2,
+  },
+  기타: {
+    label: '버퍼 30분 블록 추가',
+    content: '버퍼 블록',
+    durationSlots: 1,
+    preferredStartSlot: 10,
+  },
+}
+
 const getSkipBasedSuggestion = (dayData) => {
   const skipped = (Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []).filter(
     (box) => box.status === 'SKIPPED',
@@ -85,7 +128,10 @@ const getSkipBasedSuggestion = (dayData) => {
     return null
   }
 
-  return SKIP_SUGGESTION_BY_REASON[topReason] || SKIP_SUGGESTION_BY_REASON.기타
+  return {
+    reason: topReason,
+    message: SKIP_SUGGESTION_BY_REASON[topReason] || SKIP_SUGGESTION_BY_REASON.기타,
+  }
 }
 
 const buildWeeklyReport = ({ currentDate, currentDayData }) => {
@@ -206,6 +252,51 @@ const buildWeeklyReport = ({ currentDate, currentDayData }) => {
 }
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
+
+const findAvailableStartSlot = (timeBoxes, preferredStartSlot, durationSlots) => {
+  const safeDuration = Math.max(1, Math.min(TOTAL_SLOTS, Number(durationSlots) || 1))
+  const maxStart = TOTAL_SLOTS - safeDuration
+  const safePreferred = clamp(Number(preferredStartSlot) || 0, 0, maxStart)
+
+  const findFrom = (start) => {
+    for (let slot = start; slot <= maxStart; slot += 1) {
+      if (!hasOverlap(timeBoxes, { startSlot: slot, endSlot: slot + safeDuration })) {
+        return slot
+      }
+    }
+
+    return null
+  }
+
+  return findFrom(safePreferred) ?? findFrom(0)
+}
+
+const buildWeeklyPlanningPreview = ({ currentDate, currentDayData }) => {
+  const startDate = startOfWeekMonday(currentDate)
+
+  return Array.from({ length: 5 }, (_, offset) => {
+    const date = new Date(startDate)
+    date.setDate(startDate.getDate() + offset)
+    const dateStr = formatDate(date)
+    const dayData = dateStr === currentDate ? currentDayData : loadDay(dateStr)
+    const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
+    const sorted = [...timeBoxes].sort((a, b) => a.startSlot - b.startSlot)
+    const previewItems = sorted.slice(0, 3).map((box) => ({
+      id: box.id,
+      content: box.content,
+      startSlot: box.startSlot,
+      status: box.status,
+    }))
+
+    return {
+      dateStr,
+      dayLabel: DAY_LABELS[date.getDay()],
+      dayNumber: date.getDate(),
+      total: sorted.length,
+      previewItems,
+    }
+  })
+}
 
 const resolveMovedRangeFromDelta = (activeData, deltaY, slotHeight) => {
   const activeStart = Number(activeData?.startSlot) || 0
@@ -340,6 +431,7 @@ function App() {
   const {
     currentDate,
     data,
+    lastFocus,
     goNextDay: goNextDayRaw,
     goPrevDay: goPrevDayRaw,
     goToDate: goToDateRaw,
@@ -350,6 +442,9 @@ function App() {
     removeBigThreeItem,
     addTimeBox,
     updateTimeBox,
+    startTimeBoxTimer,
+    pauseTimeBoxTimer,
+    completeTimeBoxByTimer,
     removeTimeBox,
     clearTimeBoxCategory,
     reloadCurrentDay,
@@ -357,10 +452,19 @@ function App() {
   const { categories, addCategory, updateCategory, removeCategory, reloadCategories } = useCategoryMeta()
 
   const { showToast, ToastContainer } = useToast()
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') {
+      return THEME_DARK
+    }
+
+    const stored = window.localStorage.getItem(THEME_KEY)
+    return stored === THEME_LIGHT ? THEME_LIGHT : THEME_DARK
+  })
   const [mobileTab, setMobileTab] = useState('timeline')
   const [timelineScale, setTimelineScale] = useState('30')
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false)
   const [isDataModalOpen, setIsDataModalOpen] = useState(false)
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false)
   const [activeDragPreview, setActiveDragPreview] = useState(null)
   const [dropPreviewSlot, setDropPreviewSlot] = useState(null)
   const [movingTimeBoxPreview, setMovingTimeBoxPreview] = useState(null)
@@ -370,6 +474,20 @@ function App() {
   const activeDragTypeRef = useRef(null)
   const pointerTrackingRef = useRef(false)
   const timelineSlotHeight = timelineScale === '15' ? DETAIL_SLOT_HEIGHT : BASE_SLOT_HEIGHT
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    window.localStorage.setItem(THEME_KEY, theme)
+    const root = window.document.documentElement
+    if (theme === THEME_DARK) {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  }, [theme])
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
   const updateDropPreviewSlot = (slot) => {
@@ -402,7 +520,8 @@ function App() {
     if (skipSuggestion) {
       setDailySuggestion({
         forDate: nextDate,
-        message: skipSuggestion,
+        message: skipSuggestion.message,
+        action: SKIP_ACTION_TEMPLATE_BY_REASON[skipSuggestion.reason] || SKIP_ACTION_TEMPLATE_BY_REASON.기타,
       })
       return
     }
@@ -446,6 +565,14 @@ function App() {
       }),
     [currentDate, data],
   )
+  const weeklyPlanningPreview = useMemo(
+    () =>
+      buildWeeklyPlanningPreview({
+        currentDate,
+        currentDayData: data,
+      }),
+    [currentDate, data],
+  )
   const bigThreeProgress = useMemo(() => {
     const statuses = [0, 1, 2].map((index) => {
       const item = data.bigThree[index]
@@ -479,6 +606,112 @@ function App() {
     if (!success) {
       showToast('빅 3이 이미 가득 찼습니다')
     }
+  }
+
+  const applySkipSuggestionAction = () => {
+    const action = dailySuggestion?.action
+    if (!action) {
+      return
+    }
+
+    const startSlot = findAvailableStartSlot(
+      data.timeBoxes,
+      action.preferredStartSlot,
+      action.durationSlots,
+    )
+
+    if (startSlot == null) {
+      showToast('추천 블록을 배치할 빈 시간이 없습니다')
+      return
+    }
+
+    addTimeBox({
+      content: action.content,
+      sourceId: null,
+      startSlot,
+      endSlot: Math.min(TOTAL_SLOTS, startSlot + action.durationSlots),
+    })
+    showToast(`추천 블록을 추가했습니다: ${action.content}`)
+  }
+
+  const buildReschedulePlan = () => {
+    const targetDate = shiftDate(currentDate, 1)
+    const targetDay = loadDay(targetDate)
+    const planBaseBoxes = [...targetDay.timeBoxes]
+    const pending = [...data.timeBoxes]
+      .filter((box) => box.status !== 'COMPLETED')
+      .sort((a, b) => a.startSlot - b.startSlot)
+
+    const planned = []
+    const skipped = []
+
+    pending.forEach((box) => {
+      const durationSlots = Math.max(1, box.endSlot - box.startSlot)
+      const startSlot = findAvailableStartSlot(planBaseBoxes, box.startSlot, durationSlots)
+
+      if (startSlot == null) {
+        skipped.push(box)
+        return
+      }
+
+      const nextBox = {
+        id: crypto.randomUUID(),
+        content: box.content,
+        sourceId: box.sourceId ?? null,
+        startSlot,
+        endSlot: startSlot + durationSlots,
+        status: 'PLANNED',
+        actualMinutes: null,
+        category: box.category ?? null,
+        categoryId: box.categoryId ?? null,
+        skipReason: null,
+        carryOverFromDate: currentDate,
+        carryOverFromBoxId: box.id,
+        timerStartedAt: null,
+        elapsedSeconds: 0,
+      }
+
+      planned.push(nextBox)
+      planBaseBoxes.push(nextBox)
+    })
+
+    return {
+      fromDate: currentDate,
+      targetDate,
+      planned,
+      skipped,
+    }
+  }
+
+  const applyReschedulePlan = (plan) => {
+    if (!plan || !Array.isArray(plan.planned) || plan.planned.length === 0) {
+      showToast('재배치할 일정이 없습니다')
+      return
+    }
+
+    const targetDay = loadDay(plan.targetDate)
+    const deduped = plan.planned.filter(
+      (candidate) =>
+        !targetDay.timeBoxes.some(
+          (existing) =>
+            existing.carryOverFromDate === candidate.carryOverFromDate &&
+            existing.carryOverFromBoxId === candidate.carryOverFromBoxId,
+        ),
+    )
+    if (deduped.length === 0) {
+      showToast('이미 재배치된 일정입니다')
+      setIsRescheduleModalOpen(false)
+      return
+    }
+
+    const merged = {
+      ...targetDay,
+      timeBoxes: [...targetDay.timeBoxes, ...deduped],
+    }
+
+    saveDay(plan.targetDate, merged)
+    showToast(`다음 날(${plan.targetDate})로 ${deduped.length}건 재배치했습니다`, 2600)
+    setIsRescheduleModalOpen(false)
   }
 
   const trackPointerMove = (event) => {
@@ -749,7 +982,12 @@ function App() {
       data={data}
       categories={categories}
       weeklyReport={weeklyReport}
+      weeklyPlanningPreview={weeklyPlanningPreview}
+      onJumpToDate={goToDate}
+      initialFocusSlot={lastFocus?.date === currentDate ? lastFocus.slot : null}
       suggestionMessage={dailySuggestion?.forDate === currentDate ? dailySuggestion.message : null}
+      suggestionAction={dailySuggestion?.forDate === currentDate ? dailySuggestion.action : null}
+      onApplySuggestionAction={applySkipSuggestionAction}
       onDismissSuggestion={() => setDailySuggestion(null)}
       dropPreviewSlot={dropPreviewSlot}
       movingTimeBoxPreview={movingTimeBoxPreview}
@@ -758,6 +996,9 @@ function App() {
       onTimelineScaleChange={setTimelineScale}
       addTimeBox={addTimeBox}
       updateTimeBox={updateTimeBox}
+      onTimerStart={startTimeBoxTimer}
+      onTimerPause={pauseTimeBoxTimer}
+      onTimerComplete={completeTimeBoxByTimer}
       removeTimeBox={removeTimeBox}
       showToast={showToast}
       showDropGuide={
@@ -774,7 +1015,7 @@ function App() {
       onDragCancel={handleDragCancel}
       onDragEnd={handleDragEnd}
     >
-      <div className="dark h-screen bg-gray-900 text-gray-100">
+      <div className={`${theme === THEME_DARK ? 'theme-dark dark' : 'theme-light'} h-screen bg-gray-900 text-gray-100`}>
         <div className="flex h-full flex-col overflow-hidden bg-gray-900">
           <Header
             currentDate={currentDate}
@@ -783,6 +1024,11 @@ function App() {
             weekStrip={weekStrip}
             goToDate={goToDate}
             bigThreeProgress={bigThreeProgress}
+            theme={theme}
+            onOpenReschedule={() => setIsRescheduleModalOpen(true)}
+            onToggleTheme={() =>
+              setTheme((prev) => (prev === THEME_DARK ? THEME_LIGHT : THEME_DARK))
+            }
           />
 
           <div className="hidden min-h-0 flex-1 overflow-hidden md:flex">
@@ -854,6 +1100,13 @@ function App() {
             onAddCategory={handleAddCategory}
             onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}
+          />
+        ) : null}
+        {isRescheduleModalOpen ? (
+          <RescheduleAssistantModal
+            plan={buildReschedulePlan()}
+            onClose={() => setIsRescheduleModalOpen(false)}
+            onApply={applyReschedulePlan}
           />
         ) : null}
       </div>
