@@ -38,7 +38,7 @@ function BrainDumpItem({ item, onRemove, onSendToBigThree }) {
   return (
     <div
       data-removing={isRemoving ? 'true' : 'false'}
-      className={`group ui-panel-subtle p-4 transition-all duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800 ${
+      className={`group rounded-2xl bg-slate-100 p-4 shadow-none transition-all duration-200 ease-out hover:bg-slate-50 dark:bg-slate-900/85 dark:shadow-[inset_0_0_0_1px_rgba(148,163,184,0.2)] dark:hover:bg-slate-800/85 ${
         isDragging ? 'opacity-50' : ''
       } ${isRemoving ? 'pointer-events-none translate-x-6 opacity-0' : 'translate-x-0 opacity-100'}`}
     >
@@ -47,7 +47,7 @@ function BrainDumpItem({ item, onRemove, onSendToBigThree }) {
           ref={setNodeRef}
           type="button"
           disabled={isRemoving}
-          className="min-w-0 flex-1 cursor-grab truncate rounded-xl px-2 py-1 text-left text-sm active:cursor-grabbing hover:bg-slate-50 disabled:cursor-not-allowed dark:hover:bg-slate-800"
+          className="min-w-0 flex-1 cursor-grab truncate rounded-xl px-2 py-1 text-left text-sm active:cursor-grabbing hover:bg-slate-50 disabled:cursor-not-allowed dark:hover:bg-slate-700/65"
           {...listeners}
           {...attributes}
           title={item.content}
