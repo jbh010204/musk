@@ -489,6 +489,10 @@ function Timeline({
         <MonthlyCalendarView
           monthLabel={monthCalendar.monthLabel}
           cells={monthCalendar.cells}
+          legend={monthCalendar.legend}
+          scheduledDays={monthCalendar.scheduledDays}
+          averageCompletionRate={monthCalendar.averageCompletionRate}
+          busiestDay={monthCalendar.busiestDay}
           onOpenDate={handleOpenCalendarDate}
         />
       ) : null}

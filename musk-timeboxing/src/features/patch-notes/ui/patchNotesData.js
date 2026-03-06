@@ -1,5 +1,29 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.17.0',
+    date: '2026-03-07',
+    title: '월간 카테고리/완료율 heatmap 추가(T28~T30)',
+    summary:
+      '월간 뷰 셀마다 대표 카테고리와 완료율/밀도 강도를 함께 보여주는 heatmap을 추가해 바쁜 날의 성격을 한눈에 읽을 수 있게 했습니다.',
+    focus: [
+      '월간 캘린더를 단순 일정 개수 요약이 아니라 카테고리 분포와 완료율 경향을 읽는 스캔 도구로 확장',
+      '대표 카테고리 색 tint와 category mix bar를 함께 써서 하루 성격을 빠르게 파악 가능하게 조정',
+      '월간 범례와 요약 배지로 이번 달의 주요 카테고리/완료율 상태를 상단에서 먼저 확인하도록 구성',
+    ],
+    improvements: [
+      '`calendarViewData`에 dominant category, category mix, heat level, 월간 범례 집계 추가',
+      '월간 셀 배경에 category tint overlay 적용 및 대표 카테고리 배지 추가',
+      '월간 셀 하단에 category mix bar 추가로 카테고리 비중 시각화',
+      '월간 상단에 카테고리 heatmap 범례와 일정 있는 날/평균 완료율/최다 일정 요약 배지 추가',
+      '신규 E2E `monthly-calendar-heatmap.spec.js` 추가',
+    ],
+    validation: [
+      'lint/build 통과',
+      'monthly-calendar-view, monthly-calendar-heatmap 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.16.1',
     date: '2026-03-07',
     title: '브레인 덤프 priority 가독성/정렬 UX 보정(T26~T27)',

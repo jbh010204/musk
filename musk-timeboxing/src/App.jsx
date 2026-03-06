@@ -628,8 +628,9 @@ function App() {
       buildMonthCalendarSnapshot({
         currentDate,
         currentDayData: data,
+        categories,
       }),
-    [currentDate, data],
+    [categories, currentDate, data],
   )
   const bigThreeProgress = useMemo(() => {
     const statuses = [0, 1, 2].map((index) => {

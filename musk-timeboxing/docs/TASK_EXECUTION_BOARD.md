@@ -1,4 +1,4 @@
-# Musk Planner Task Execution Board (27 Tasks)
+# Musk Planner Task Execution Board (30 Tasks)
 
 이 문서는 현재 합의된 작업을 한 번에 처리하지 않고,
 작업 단위를 쪼개서 순차 실행하기 위한 운영 보드다.
@@ -60,6 +60,9 @@
   - `T25` priority E2E/문서/패치노트 동기화
   - `T26` 브레인 덤프 priority 레이아웃 압축
   - `T27` 브레인 덤프 priority 정렬 UX 완화
+  - `T28` 월간 heatmap 데이터 스냅샷
+  - `T29` 월간 heatmap UI/범례
+  - `T30` 월간 heatmap E2E/문서/패치노트 동기화
 
 ## 3. Prioritized Task List
 
@@ -471,6 +474,74 @@
 
 권장 커밋 메시지:
 - `fix(brain-dump): delay priority sorting until reload or recommendation`
+
+---
+
+### T28. 월간 heatmap 데이터 스냅샷
+목표: 월간 셀별로 대표 카테고리와 완료율/밀도 강도를 계산할 수 있는 스냅샷 데이터 추가
+
+하위 태스크:
+1. 월간 셀별 category mix 집계
+2. 대표 카테고리(dominant category) 계산
+3. 완료율/밀도 기반 heat level 계산
+4. 월간 범례용 카테고리 집계 추가
+
+완료 기준(DoD):
+- 월간 셀 데이터에 대표 카테고리, category mix, heat level이 포함됨
+- 현재 월 기준 범례/요약 데이터 계산 가능
+
+테스트:
+- `npm run lint`
+- `npm run build`
+
+권장 커밋 메시지:
+- `feat(calendar): add monthly heatmap snapshot data`
+
+---
+
+### T29. 월간 heatmap UI/범례
+목표: 월간 캘린더에서 대표 카테고리 색과 완료율/밀도 강도를 바로 인지할 수 있는 UI 추가
+
+하위 태스크:
+1. 셀 배경에 카테고리 tint overlay 적용
+2. 대표 카테고리 배지와 category mix bar 표시
+3. 월간 범례/요약 배지 추가
+4. 현재 날짜 강조와 충돌 없는지 조정
+
+완료 기준(DoD):
+- 월간 뷰를 훑기만 해도 바쁜 날/카테고리 분포/완료율 강도를 파악 가능
+- light/dark 모두 가독성 유지
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1 e2e/monthly-calendar-view.spec.js`
+
+권장 커밋 메시지:
+- `feat(calendar): visualize monthly heatmap by category and completion`
+
+---
+
+### T30. 월간 heatmap E2E/문서/패치노트 동기화
+목표: 월간 heatmap 기능을 테스트와 세션 문서에 반영
+
+하위 태스크:
+1. heatmap E2E 추가
+2. README 월간 뷰 설명 보강
+3. 패치노트 기록 추가
+4. Task Board 완료 상태 반영
+
+완료 기준(DoD):
+- category heatmap 회귀가 자동 검출됨
+- 새 세션이 문서만 읽어도 월간 heatmap 기능을 이해 가능
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1`
+
+권장 커밋 메시지:
+- `docs(calendar): sync monthly heatmap notes and tests`
 
 ---
 
