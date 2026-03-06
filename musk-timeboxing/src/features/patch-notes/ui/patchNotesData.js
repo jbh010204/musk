@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.13.0',
+    date: '2026-03-07',
+    title: 'Shared UI Primitive 도입(T7) + 핵심 화면 치환',
+    summary: 'Button/Card/Badge/IconButton 공통 컴포넌트를 도입하고 핵심 기능 화면에 점진 적용해 스타일 중복을 줄였습니다.',
+    focus: [
+      '반복되는 `ui-btn/ui-panel` 클래스 사용을 공통 컴포넌트로 수렴해 유지보수 포인트 축소',
+      '기존 동작은 유지하면서 렌더링 레이어만 치환하는 무동작 리팩토링 방식 유지',
+      '카테고리/데이터복원/재배치/헤더/패치노트/리포트 카드의 버튼/카드 표현 일관화',
+    ],
+    improvements: [
+      '`src/shared/ui`에 `Button`, `Card`, `Badge`, `IconButton`, `cn` 유틸 추가',
+      'Header, PatchNotes, BrainDumpItem, WeeklyReportCard, DailyRecapCard에 공통 primitive 적용',
+      'CategoryManagerModal, DataTransferModal, RescheduleAssistantModal에 공통 primitive 적용',
+      '기존 E2E 스위트(30개) 통과로 회귀 없이 리팩토링 완료',
+    ],
+    validation: [
+      'lint/build 통과',
+      'E2E 전체 통과(30 passed)',
+      '핵심 회귀: micro-interactions, category-manager, data-transfer, report-toggle, reschedule-assistant, patch-notes 통과',
+    ],
+  },
+  {
     version: 'v0.12.9',
     date: '2026-03-07',
     title: '테마 토큰 통합 + 접근성 보강 + UI 회귀 테스트 확장',
