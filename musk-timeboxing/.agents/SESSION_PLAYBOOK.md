@@ -9,6 +9,7 @@
 3. 최근 변경 확인: `git log --oneline -n 10`
 4. 아래 고정 제약 확인
 5. UI 작업이면 `.agents/FRONTEND_UX_GUARDIAN.md` 먼저 확인
+6. 태스크 실행은 `docs/TASK_EXECUTION_BOARD.md`의 Current Task부터 시작
 
 ## 2) Fixed Product Constraints
 
@@ -47,6 +48,16 @@
    - 규칙: 최신 버전 항목을 맨 위에 추가하고 `focus/improvements/validation`을 채운다.
 6. 커밋 + 푸시
 7. 카테고리/DnD/모달/타임라인 수정 시 `npm run test:e2e` 실행
+
+## 4-2) Sequential Task Policy (required)
+
+- `docs/TASK_EXECUTION_BOARD.md`를 단일 실행 보드로 사용한다.
+- 한 번에 1개 Task만 진행하고, 완료 후 즉시 아래 순서로 보고한다:
+  1. 구현
+  2. 리뷰
+  3. 검증
+  4. 다음 작업 추천(다음 Task ID)
+- 사용자가 중단 지시를 하지 않으면, 다음 턴에서 추천한 다음 Task를 우선 착수한다.
 
 ## 4-1) Patch Note Policy (required)
 

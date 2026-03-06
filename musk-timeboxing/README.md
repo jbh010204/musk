@@ -100,3 +100,4 @@ npm run build
 - 도커 개발 워크플로: `docs/DOCKER_DEV_WORKFLOW.md`
 - 전달/리뷰 워크플로: `docs/DELIVERY_WORKFLOW.md`
 - 패치노트 운영 워크플로: `docs/PATCH_NOTES_WORKFLOW.md`
+- 태스크 실행 보드(13개): `docs/TASK_EXECUTION_BOARD.md`
