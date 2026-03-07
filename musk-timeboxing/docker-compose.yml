@@ -1,16 +1,41 @@
 services:
   app:
+    image: musk-timeboxing-app
     build:
       context: .
       dockerfile: Dockerfile.dev
     container_name: musk-timeboxing-dev
     command: npm run dev -- --host 0.0.0.0 --port 5173
     ports:
-      - "5173:5173"
+      - "${APP_PORT:-5173}:5173"
+      - "${LEGACY_PORT:-4173}:5173"
     environment:
       CHOKIDAR_USEPOLLING: "true"
       CHOKIDAR_INTERVAL: "300"
+      VITE_SERVER_STORAGE: "true"
+      VITE_STORAGE_API_PROXY_TARGET: "http://api:8787"
     volumes:
       - .:/app
       - /app/node_modules
+    depends_on:
+      - api
     restart: unless-stopped
+
+  api:
+    image: musk-timeboxing-app
+    container_name: musk-timeboxing-api
+    command: node server/index.js
+    environment:
+      PLANNER_SERVER_HOST: "0.0.0.0"
+      PLANNER_SERVER_PORT: "8787"
+      PLANNER_DATA_DIR: "/data"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - planner-data:/data
+    ports:
+      - "${API_PORT:-8787}:8787"
+    restart: unless-stopped
+
+volumes:
+  planner-data:

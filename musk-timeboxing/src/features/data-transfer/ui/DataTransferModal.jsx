@@ -1,12 +1,19 @@
 import { useRef, useState } from 'react'
 import { Button, Card } from '../../../shared/ui'
-import { exportPlannerData, importPlannerData } from '../../../entities/planner'
+import {
+  exportPlannerData,
+  getPlannerPersistenceStatus,
+  importPlannerData,
+  syncPlannerDataToServer,
+} from '../../../entities/planner'
 
 function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
   const [exportText, setExportText] = useState('')
   const [importText, setImportText] = useState('')
   const [importMode, setImportMode] = useState('merge')
+  const [isSyncingServer, setIsSyncingServer] = useState(false)
   const fileInputRef = useRef(null)
+  const persistenceStatus = getPlannerPersistenceStatus()
 
   const handleExportAll = () => {
     const payload = exportPlannerData()
@@ -93,10 +100,26 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
     onClose()
   }
 
+  const handleSyncToServer = async () => {
+    setIsSyncingServer(true)
+
+    try {
+      const result = await syncPlannerDataToServer({ mode: 'merge' })
+      if (!result.ok) {
+        showToast('서버 저장소 동기화에 실패했습니다')
+        return
+      }
+
+      showToast(`현재 브라우저 데이터 ${result.localDayCount || 0}일치를 서버 저장소에 반영했습니다`, 2600)
+    } finally {
+      setIsSyncingServer(false)
+    }
+  }
+
   return (
     <div className="ui-modal-shell" onClick={onClose}>
       <div
-        className="ui-modal-card max-w-2xl"
+        className="ui-modal-card max-h-[90vh] max-w-2xl overflow-y-auto"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -107,6 +130,28 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
             닫기
           </Button>
         </div>
+
+        <Card tone="subtle" className="mt-4 p-3">
+          <p className="mb-2 text-xs uppercase tracking-wide text-gray-400">Docker 저장소 동기화</p>
+          <p className="text-sm text-gray-300">
+            서버 저장소: {persistenceStatus.serverEnabled ? '사용 가능' : '비활성'} / 연결 상태:{' '}
+            {persistenceStatus.serverAvailability}
+          </p>
+          <p className="mt-1 text-xs text-gray-400">
+            4173 포트에 남아 있는 기존 브라우저 데이터를 Docker volume으로 옮기려면 이 브라우저에서
+            동기화를 실행하세요.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              variant="primary"
+              onClick={handleSyncToServer}
+              disabled={isSyncingServer}
+              data-testid="server-storage-sync"
+            >
+              {isSyncingServer ? '동기화 중...' : '현재 브라우저 데이터를 서버 저장소로 동기화'}
+            </Button>
+          </div>
+        </Card>
 
         <Card tone="subtle" className="mt-4 p-3">
           <p className="mb-2 text-xs uppercase tracking-wide text-gray-400">내보내기 (Export)</p>

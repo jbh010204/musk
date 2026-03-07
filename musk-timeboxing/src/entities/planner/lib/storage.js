@@ -1,23 +1,45 @@
 import { normalizeBrainDumpPriority, sortBrainDumpItems } from './brainDumpPriority'
+import {
+  bootstrapServerStorage,
+  clearPlannerDataOnServer,
+  getServerAvailability,
+  isServerPersistenceEnabled,
+  saveDayToServer,
+  saveLastActiveDateToServer,
+  saveLastFocusToServer,
+  saveMetaToServer,
+  syncSnapshotToServer,
+} from './storageServer'
 
-const createEmptyDay = (dateStr) => ({
-  schemaVersion: 2,
-  date: dateStr,
-  brainDump: [],
-  bigThree: [],
-  timeBoxes: [],
-})
+const SCHEMA_VERSION = 2
 const META_KEY = 'musk-planner-meta'
 const DAY_KEY_PREFIX = 'musk-planner-'
 const DAY_KEY_PATTERN = /^musk-planner-\d{4}-\d{2}-\d{2}$/
 const DATE_STR_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const LAST_ACTIVE_DATE_KEY = 'musk-planner-last-date'
 const LAST_FOCUS_KEY = 'musk-planner-last-focus'
-const SCHEMA_VERSION = 2
+
+const createEmptyDay = (dateStr) => ({
+  schemaVersion: SCHEMA_VERSION,
+  date: dateStr,
+  brainDump: [],
+  bigThree: [],
+  timeBoxes: [],
+})
+
 const createEmptyMeta = () => ({
   schemaVersion: SCHEMA_VERSION,
   categories: [],
 })
+
+const hasMeaningfulDayData = (dayData) => {
+  const safeDay = dayData && typeof dayData === 'object' ? dayData : {}
+  return (
+    (Array.isArray(safeDay.brainDump) && safeDay.brainDump.length > 0) ||
+    (Array.isArray(safeDay.bigThree) && safeDay.bigThree.length > 0) ||
+    (Array.isArray(safeDay.timeBoxes) && safeDay.timeBoxes.length > 0)
+  )
+}
 
 const normalizeBrainDumpItem = (item) => {
   const content = typeof item?.content === 'string' ? item.content.trim() : ''
@@ -72,6 +94,156 @@ const toPlainDayData = (dateStr, data) => ({
   ...migrateDayData(dateStr, data),
 })
 
+const clearPlannerDataLocal = () => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  Object.keys(window.localStorage).forEach((key) => {
+    if (isDayKey(key) || key === META_KEY || key === LAST_ACTIVE_DATE_KEY || key === LAST_FOCUS_KEY) {
+      window.localStorage.removeItem(key)
+    }
+  })
+}
+
+const saveDayLocal = (dateStr, data) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const payload = toPlainDayData(dateStr, data)
+  window.localStorage.setItem(getKey(dateStr), JSON.stringify(payload))
+}
+
+const saveMetaLocal = (meta) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const payload = {
+    schemaVersion: SCHEMA_VERSION,
+    categories: Array.isArray(meta?.categories) ? meta.categories : [],
+  }
+
+  window.localStorage.setItem(META_KEY, JSON.stringify(payload))
+}
+
+const saveLastActiveDateLocal = (dateStr) => {
+  if (typeof window === 'undefined' || !DATE_STR_PATTERN.test(String(dateStr))) {
+    return
+  }
+
+  window.localStorage.setItem(LAST_ACTIVE_DATE_KEY, dateStr)
+}
+
+const saveLastFocusLocal = ({ date, slot, ts = Date.now() }) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  if (!DATE_STR_PATTERN.test(String(date)) || !Number.isInteger(slot)) {
+    return
+  }
+
+  window.localStorage.setItem(
+    LAST_FOCUS_KEY,
+    JSON.stringify({
+      date,
+      slot,
+      ts,
+    }),
+  )
+}
+
+const parseImportPayload = (input) => {
+  if (typeof input === 'string') {
+    return JSON.parse(input)
+  }
+
+  return input
+}
+
+const readLocalDaysSnapshot = (dateStr = null) => {
+  if (typeof window === 'undefined') {
+    return {}
+  }
+
+  const days = {}
+
+  if (dateStr) {
+    days[dateStr] = loadDay(dateStr)
+    return days
+  }
+
+  Object.keys(window.localStorage)
+    .filter((key) => isDayKey(key))
+    .forEach((key) => {
+      const dayStr = key.replace(DAY_KEY_PREFIX, '')
+      days[dayStr] = loadDay(dayStr)
+    })
+
+  return days
+}
+
+const buildSnapshotPayload = (dateStr = null) => ({
+  schemaVersion: SCHEMA_VERSION,
+  exportedAt: new Date().toISOString(),
+  days: readLocalDaysSnapshot(dateStr),
+  meta: loadMeta(),
+  lastActiveDate: loadLastActiveDate(),
+  lastFocus: loadLastFocus(),
+})
+
+const hasPlannerLocalData = () => {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  return (
+    Object.keys(window.localStorage)
+      .filter((key) => isDayKey(key))
+      .some((key) => hasMeaningfulDayData(loadDay(key.replace(DAY_KEY_PREFIX, '')))) ||
+    loadMeta().categories.length > 0 ||
+    loadLastActiveDate() !== null ||
+    loadLastFocus() !== null
+  )
+}
+
+const applySnapshotToLocal = (snapshot) => {
+  if (typeof window === 'undefined' || !snapshot || typeof snapshot !== 'object') {
+    return
+  }
+
+  clearPlannerDataLocal()
+
+  if (snapshot.days && typeof snapshot.days === 'object') {
+    Object.entries(snapshot.days).forEach(([dateStr, dayData]) => {
+      if (!DATE_STR_PATTERN.test(dateStr)) {
+        return
+      }
+
+      saveDayLocal(dateStr, dayData)
+    })
+  }
+
+  if (snapshot.meta && typeof snapshot.meta === 'object') {
+    saveMetaLocal(snapshot.meta)
+  }
+
+  if (DATE_STR_PATTERN.test(String(snapshot.lastActiveDate))) {
+    saveLastActiveDateLocal(snapshot.lastActiveDate)
+  }
+
+  if (
+    snapshot.lastFocus &&
+    typeof snapshot.lastFocus === 'object' &&
+    DATE_STR_PATTERN.test(String(snapshot.lastFocus.date)) &&
+    Number.isInteger(snapshot.lastFocus.slot)
+  ) {
+    saveLastFocusLocal(snapshot.lastFocus)
+  }
+}
+
 export const getKey = (dateStr) => `${DAY_KEY_PREFIX}${dateStr}`
 
 export const isDayKey = (key) => DAY_KEY_PATTERN.test(String(key))
@@ -88,9 +260,7 @@ export const loadDay = (dateStr) => {
   }
 
   try {
-    const parsed = JSON.parse(raw)
-
-    return migrateDayData(dateStr, parsed)
+    return migrateDayData(dateStr, JSON.parse(raw))
   } catch {
     return createEmptyDay(dateStr)
   }
@@ -102,8 +272,8 @@ export const saveDay = (dateStr, data) => {
   }
 
   const payload = toPlainDayData(dateStr, data)
-
-  window.localStorage.setItem(getKey(dateStr), JSON.stringify(payload))
+  saveDayLocal(dateStr, payload)
+  void saveDayToServer(dateStr, payload)
 }
 
 export const loadMeta = () => {
@@ -139,7 +309,8 @@ export const saveMeta = (meta) => {
     categories: Array.isArray(meta?.categories) ? meta.categories : [],
   }
 
-  window.localStorage.setItem(META_KEY, JSON.stringify(payload))
+  saveMetaLocal(payload)
+  void saveMetaToServer(payload)
 }
 
 export const loadLastActiveDate = () => {
@@ -156,7 +327,8 @@ export const saveLastActiveDate = (dateStr) => {
     return
   }
 
-  window.localStorage.setItem(LAST_ACTIVE_DATE_KEY, dateStr)
+  saveLastActiveDateLocal(dateStr)
+  void saveLastActiveDateToServer(dateStr)
 }
 
 export const getMostRecentStoredDate = () => {
@@ -185,11 +357,7 @@ export const loadLastFocus = () => {
 
   try {
     const parsed = JSON.parse(raw)
-    if (!DATE_STR_PATTERN.test(String(parsed?.date))) {
-      return null
-    }
-
-    if (!Number.isInteger(parsed?.slot)) {
+    if (!DATE_STR_PATTERN.test(String(parsed?.date)) || !Number.isInteger(parsed?.slot)) {
       return null
     }
 
@@ -212,53 +380,29 @@ export const saveLastFocus = ({ date, slot }) => {
     return
   }
 
-  window.localStorage.setItem(
-    LAST_FOCUS_KEY,
-    JSON.stringify({
-      date,
-      slot,
-      ts: Date.now(),
-    }),
-  )
-}
-
-const parseImportPayload = (input) => {
-  if (typeof input === 'string') {
-    return JSON.parse(input)
+  const payload = {
+    date,
+    slot,
+    ts: Date.now(),
   }
 
-  return input
+  saveLastFocusLocal(payload)
+  void saveLastFocusToServer(payload)
 }
 
 export const exportPlannerData = (dateStr = null) => {
   if (typeof window === 'undefined') {
     return {
-      schemaVersion: 1,
+      schemaVersion: SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
       days: {},
       meta: createEmptyMeta(),
+      lastActiveDate: null,
+      lastFocus: null,
     }
   }
 
-  const days = {}
-
-  if (dateStr) {
-    days[dateStr] = loadDay(dateStr)
-  } else {
-    Object.keys(window.localStorage)
-      .filter((key) => isDayKey(key))
-      .forEach((key) => {
-        const dayStr = key.replace(DAY_KEY_PREFIX, '')
-        days[dayStr] = loadDay(dayStr)
-      })
-  }
-
-  return {
-    schemaVersion: SCHEMA_VERSION,
-    exportedAt: new Date().toISOString(),
-    days,
-    meta: loadMeta(),
-  }
+  return buildSnapshotPayload(dateStr)
 }
 
 export const clearPlannerData = () => {
@@ -266,11 +410,8 @@ export const clearPlannerData = () => {
     return
   }
 
-  Object.keys(window.localStorage).forEach((key) => {
-    if (isDayKey(key) || key === META_KEY || key === LAST_ACTIVE_DATE_KEY || key === LAST_FOCUS_KEY) {
-      window.localStorage.removeItem(key)
-    }
-  })
+  clearPlannerDataLocal()
+  void clearPlannerDataOnServer()
 }
 
 export const importPlannerData = (input, options = {}) => {
@@ -293,13 +434,21 @@ export const importPlannerData = (input, options = {}) => {
 
   const days = payload.days && typeof payload.days === 'object' ? payload.days : null
   const meta = payload.meta && typeof payload.meta === 'object' ? payload.meta : null
+  const lastActiveDate = DATE_STR_PATTERN.test(String(payload.lastActiveDate)) ? payload.lastActiveDate : null
+  const lastFocus =
+    payload.lastFocus &&
+    typeof payload.lastFocus === 'object' &&
+    DATE_STR_PATTERN.test(String(payload.lastFocus.date)) &&
+    Number.isInteger(payload.lastFocus.slot)
+      ? payload.lastFocus
+      : null
 
-  if (!days && !meta) {
+  if (!days && !meta && !lastActiveDate && !lastFocus) {
     return { ok: false, error: 'days 또는 meta 데이터가 필요합니다' }
   }
 
   if (mode === 'replace') {
-    clearPlannerData()
+    clearPlannerDataLocal()
   }
 
   let importedDays = 0
@@ -312,18 +461,28 @@ export const importPlannerData = (input, options = {}) => {
         return
       }
 
-      saveDay(dateStr, toPlainDayData(dateStr, dayData))
+      saveDayLocal(dateStr, toPlainDayData(dateStr, dayData))
       importedDays += 1
     })
   }
 
   let importedCategories = 0
   if (meta && Array.isArray(meta.categories)) {
-    saveMeta({
+    saveMetaLocal({
       categories: meta.categories,
     })
     importedCategories = meta.categories.length
   }
+
+  if (lastActiveDate) {
+    saveLastActiveDateLocal(lastActiveDate)
+  }
+
+  if (lastFocus) {
+    saveLastFocusLocal(lastFocus)
+  }
+
+  void syncSnapshotToServer(buildSnapshotPayload(), { mode: 'replace' })
 
   return {
     ok: true,
@@ -332,3 +491,34 @@ export const importPlannerData = (input, options = {}) => {
     importedCategories,
   }
 }
+
+export const hydratePlannerStorageFromServer = () => {
+  if (typeof window === 'undefined') {
+    return Promise.resolve({ mode: 'disabled', hydrated: false, serverAvailable: false })
+  }
+
+  return bootstrapServerStorage({
+    hasLocalData: hasPlannerLocalData,
+    readLocalSnapshot: () => buildSnapshotPayload(),
+    applyServerSnapshot: applySnapshotToLocal,
+  })
+}
+
+export const syncPlannerDataToServer = async (options = {}) => {
+  if (typeof window === 'undefined') {
+    return { ok: false, mode: 'disabled' }
+  }
+
+  const payload = buildSnapshotPayload(options.dateStr ?? null)
+  const result = await syncSnapshotToServer(payload, { mode: options.mode })
+  return {
+    ...result,
+    localDayCount: Object.keys(payload.days).length,
+  }
+}
+
+export const getPlannerPersistenceStatus = () => ({
+  serverEnabled: isServerPersistenceEnabled(),
+  serverAvailability: getServerAvailability(),
+  hasLocalData: hasPlannerLocalData(),
+})

@@ -35,6 +35,7 @@ const THEME_DARK = 'dark'
 const THEME_LIGHT = 'light'
 const INSIGHTS_LOADING_MS = 220
 const UNDO_TOAST_MS = 5000
+const BOOTSTRAP_NOTICE_KEY = 'musk-planner-bootstrap-notice-shown'
 
 const parseDate = (dateStr) => new Date(`${dateStr}T00:00:00`)
 const formatDate = (date) => {
@@ -509,6 +510,28 @@ function App() {
       root.classList.remove('dark')
     }
   }, [theme])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const result = window.__MUSK_PLANNER_BOOTSTRAP_RESULT__
+    if (!result || window.sessionStorage.getItem(BOOTSTRAP_NOTICE_KEY) === 'true') {
+      return
+    }
+
+    if (result.mode === 'server-migrated-local') {
+      showToast(
+        `이 브라우저 데이터 ${result.migratedDays || 0}일치를 Docker 저장소로 이관했습니다`,
+        3200,
+      )
+    } else if (result.mode === 'server-hydrated' && Number(result.dayCount) > 0) {
+      showToast(`Docker 저장소에서 ${result.dayCount}일 데이터를 불러왔습니다`, 2400)
+    }
+
+    window.sessionStorage.setItem(BOOTSTRAP_NOTICE_KEY, 'true')
+  }, [showToast])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
