@@ -1,6 +1,6 @@
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   getCategoryColor,
   getCategoryLabel,
@@ -44,6 +44,7 @@ function TimeBoxCard({
   const visual = getTimeBoxVisual(categoryColor, timeBox.status)
   const canUseTimer = timeBox.status !== 'COMPLETED' && timeBox.status !== 'SKIPPED'
   const layout = resolveTimeBoxLayout({ boxHeight, canUseTimer })
+  const [isResizing, setIsResizing] = useState(false)
   const isRunning = Number.isFinite(timeBox.timerStartedAt)
   const runningSeconds =
     isRunning && nowTimestamp > 0
@@ -69,6 +70,40 @@ function TimeBoxCard({
     }
   }, [timeBox])
 
+  const summaryLine = useMemo(() => {
+    if (timeBox.status === 'COMPLETED' && actualDiff) {
+      return actualDiff
+    }
+
+    if (timeBox.status === 'PLANNED') {
+      return {
+        text: `계획 ${plannedMinutes}분`,
+        className: 'text-white/85',
+      }
+    }
+
+    if (timeBox.status === 'SKIPPED' && timeBox.skipReason) {
+      return {
+        text: `사유: ${timeBox.skipReason}`,
+        className: 'text-amber-100',
+      }
+    }
+
+    return null
+  }, [actualDiff, plannedMinutes, timeBox.skipReason, timeBox.status])
+
+  const runtimeLine =
+    canUseTimer && elapsedSeconds > 0 && layout.showInlineRuntimeLabel
+      ? {
+          text: `실행 ${timerLabel}`,
+          className: 'text-cyan-100',
+        }
+      : null
+
+  const infoLines = layout.showSecondaryMeta
+    ? [runtimeLine, summaryLine].filter(Boolean)
+    : [summaryLine || runtimeLine].filter(Boolean)
+
   const resizingRef = useRef({
     startY: 0,
     startEnd: 0,
@@ -83,6 +118,7 @@ function TimeBoxCard({
   const handleResizeMouseDown = (event) => {
     event.preventDefault()
     event.stopPropagation()
+    setIsResizing(true)
 
     resizingRef.current = {
       startY: event.clientY,
@@ -106,6 +142,7 @@ function TimeBoxCard({
     const onMouseUp = () => {
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
+      setIsResizing(false)
       onResizeEnd?.(timeBox.id, resizingRef.current.currentEnd)
     }
 
@@ -124,15 +161,14 @@ function TimeBoxCard({
       ref={setNodeRef}
       type="button"
       data-timebox-dragging={isDragging ? 'true' : 'false'}
-      className={`timebox-card absolute left-0 right-0 overflow-hidden rounded px-2 py-1 text-left text-xs text-white shadow pointer-events-auto transition-[transform,top,height,opacity] duration-100 ease-out will-change-transform ${
+      data-testid="timebox-card"
+      className={`timebox-card group/timebox absolute left-0 right-0 text-left text-xs text-white pointer-events-auto transition-[transform,top,height,opacity] duration-100 ease-out will-change-transform ${
         isDragging ? 'z-40 opacity-80 ring-2 ring-cyan-300/70' : ''
       }`}
       style={{
         top: timeBox.startSlot * slotHeight,
         height: boxHeight,
         transform: transform ? CSS.Translate.toString({ x: 0, y: snappedDragY }) : undefined,
-        background: visual.cardBackground,
-        borderLeft: `8px solid ${visual.categoryStripe}`,
       }}
       onMouseDown={(event) => {
         pointerRef.current = {
@@ -166,118 +202,130 @@ function TimeBoxCard({
       {...attributes}
     >
       <div
-        data-testid="timebox-top-actions"
-        className={`absolute right-2 z-20 flex items-center gap-1 ${layout.topActionsTopClass}`}
-      >
-        <span
-          className={`rounded border px-1.5 py-0.5 font-semibold ${layout.statusTextClass}`}
-          style={{
-            backgroundColor: visual.statusBadgeBackground,
-            borderColor: visual.statusBadgeBorder,
-          }}
-          aria-label={visual.statusLabel}
-        >
-          {visual.statusLabel}
-        </span>
-
-        {canUseTimer ? (
-          <>
-            <button
-              type="button"
-              onMouseDown={(event) => event.stopPropagation()}
-              onClick={(event) =>
-                handleTimerAction(event, isRunning ? onTimerPause : onTimerStart)
-              }
-              className={`rounded border border-white/35 bg-black/20 px-1 py-0.5 text-[10px] leading-none text-white transition-all hover:scale-110 hover:bg-black/35 focus:outline-none focus:ring-2 focus:ring-indigo-300 ${
-                isRunning ? 'ring-1 ring-cyan-200/80' : ''
-              }`}
-              aria-label={isRunning ? '타이머 일시정지' : '타이머 시작'}
-            >
-              {isRunning ? '⏸' : '▶'}
-            </button>
-            {elapsedSeconds > 0 ? (
-              <>
-                {layout.showTopTimerLabel ? (
-                  <span className="rounded bg-black/20 px-1 py-0.5 text-[10px] text-white/90">
-                    {timerLabel}
-                  </span>
-                ) : null}
-                <button
-                  type="button"
-                  onMouseDown={(event) => event.stopPropagation()}
-                  onClick={(event) => handleTimerAction(event, onTimerComplete)}
-                  className="rounded border border-emerald-300/50 bg-emerald-500/20 px-1 py-0.5 text-[10px] leading-none text-emerald-100 transition-all hover:scale-110 hover:bg-emerald-500/35 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-                  aria-label="타이머 완료 처리"
-                >
-                  ✓
-                </button>
-              </>
-            ) : null}
-          </>
-        ) : null}
-      </div>
-
-      {layout.showCompactRow ? (
-        <div
-          data-testid="timebox-compact-row"
-          className={`${layout.compactRowMarginTopClass} flex items-center gap-1.5 ${layout.contentPaddingRightClass}`}
-        >
-          {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
-            <span className="max-w-[50%] shrink-0 truncate rounded border border-amber-300/40 bg-amber-500/15 px-1 py-0.5 text-[10px] text-amber-100">
-              사유: {timeBox.skipReason}
-            </span>
-          ) : categoryLabel ? (
-            <span
-              data-testid="timebox-compact-tag"
-              className="max-w-[42%] shrink-0 truncate rounded border px-1 py-0.5 text-[10px] text-white/95"
-              style={{
-                backgroundColor: visual.categoryBadgeBackground,
-                borderColor: visual.categoryBadgeBorder,
-              }}
-            >
-              #{categoryLabel}
-            </span>
-          ) : null}
-          <span className="min-w-0 flex-1 truncate font-medium">{timeBox.content}</span>
-        </div>
-      ) : null}
-
-      {!layout.showCompactRow ? (
-        <div className={`${layout.detailPaddingTopClass} ${layout.contentPaddingRightClass}`}>
-          {categoryLabel ? (
-            <div
-              className="mb-1 inline-flex max-w-[80%] rounded border px-1.5 py-0.5 text-[10px] text-white"
-              style={{
-                backgroundColor: visual.categoryBadgeBackground,
-                borderColor: visual.categoryBadgeBorder,
-              }}
-            >
-              <span className="truncate">#{categoryLabel}</span>
-            </div>
-          ) : null}
-          <div className="truncate pr-11 font-medium">{timeBox.content}</div>
-          {canUseTimer && elapsedSeconds > 0 && layout.showInlineRuntimeLabel ? (
-            <div className="mt-1 truncate text-[11px] text-cyan-100">실행 {timerLabel}</div>
-          ) : null}
-          {timeBox.status === 'COMPLETED' && actualDiff ? (
-            <div className={`mt-1 truncate text-[11px] ${actualDiff.className}`}>{actualDiff.text}</div>
-          ) : null}
-          {timeBox.status === 'PLANNED' ? (
-            <div className="mt-1 truncate text-[11px] text-white/85">계획 {plannedMinutes}분</div>
-          ) : null}
-          {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
-            <div className="mt-1 truncate text-[11px] text-amber-100">사유: {timeBox.skipReason}</div>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div
-        className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize bg-black/20"
-        onPointerDown={(event) => {
-          event.stopPropagation()
+        className="absolute inset-x-0 overflow-hidden rounded shadow"
+        style={{
+          top: layout.surfaceInsetY,
+          bottom: layout.surfaceInsetY,
+          background: visual.cardBackground,
+          borderLeft: `8px solid ${visual.categoryStripe}`,
         }}
-        onMouseDown={handleResizeMouseDown}
-      />
+      >
+        <div
+          data-testid="timebox-top-actions"
+          className={`absolute right-2 z-20 flex items-center gap-1 ${layout.topActionsClass}`}
+        >
+          <span
+            className={`rounded border px-1.5 py-0.5 font-semibold ${layout.statusTextClass}`}
+            style={{
+              backgroundColor: visual.statusBadgeBackground,
+              borderColor: visual.statusBadgeBorder,
+            }}
+            aria-label={visual.statusLabel}
+          >
+            {visual.statusLabel}
+          </span>
+
+          {canUseTimer ? (
+            <>
+              <button
+                type="button"
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) =>
+                  handleTimerAction(event, isRunning ? onTimerPause : onTimerStart)
+                }
+                className={`rounded border border-white/35 bg-black/20 px-1 py-0.5 text-[10px] leading-none text-white transition-all hover:scale-110 hover:bg-black/35 focus:outline-none focus:ring-2 focus:ring-indigo-300 ${
+                  isRunning ? 'ring-1 ring-cyan-200/80' : ''
+                }`}
+                aria-label={isRunning ? '타이머 일시정지' : '타이머 시작'}
+              >
+                {isRunning ? '⏸' : '▶'}
+              </button>
+              {elapsedSeconds > 0 ? (
+                <>
+                  {layout.showTopTimerLabel ? (
+                    <span className="rounded bg-black/20 px-1 py-0.5 text-[10px] text-white/90">
+                      {timerLabel}
+                    </span>
+                  ) : null}
+                  <button
+                    type="button"
+                    onMouseDown={(event) => event.stopPropagation()}
+                    onClick={(event) => handleTimerAction(event, onTimerComplete)}
+                    className="rounded border border-emerald-300/50 bg-emerald-500/20 px-1 py-0.5 text-[10px] leading-none text-emerald-100 transition-all hover:scale-110 hover:bg-emerald-500/35 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                    aria-label="타이머 완료 처리"
+                  >
+                    ✓
+                  </button>
+                </>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+
+        {layout.showCompactRow ? (
+          <div
+            data-testid="timebox-compact-row"
+            className={`${layout.compactRowClass} ${layout.contentInsetClass}`}
+          >
+            {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
+              <span className="max-w-[48%] shrink-0 truncate rounded border border-amber-300/40 bg-amber-500/15 px-1 py-0.5 text-[10px] text-amber-100">
+                사유: {timeBox.skipReason}
+              </span>
+            ) : categoryLabel ? (
+              <span
+                data-testid="timebox-compact-tag"
+                className="max-w-[40%] shrink-0 truncate rounded border px-1 py-0.5 text-[10px] text-white/95"
+                style={{
+                  backgroundColor: visual.categoryBadgeBackground,
+                  borderColor: visual.categoryBadgeBorder,
+                }}
+              >
+                #{categoryLabel}
+              </span>
+            ) : null}
+            <span className="min-w-0 flex-1 truncate font-medium leading-tight">{timeBox.content}</span>
+          </div>
+        ) : null}
+
+        {!layout.showCompactRow ? (
+          <div className={`${layout.detailBodyClass} ${layout.contentInsetClass}`}>
+            {categoryLabel ? (
+              <div
+                className="mb-1 inline-flex max-w-[80%] rounded border px-1.5 py-0.5 text-[10px] text-white"
+                style={{
+                  backgroundColor: visual.categoryBadgeBackground,
+                  borderColor: visual.categoryBadgeBorder,
+                }}
+              >
+                <span className="truncate">#{categoryLabel}</span>
+              </div>
+            ) : null}
+            <div className="truncate pr-11 font-medium leading-tight">{timeBox.content}</div>
+            {infoLines.map((line, index) => (
+              <div
+                key={`${line.text}-${index}`}
+                className={`mt-1 truncate text-[11px] ${line.className}`}
+              >
+                {line.text}
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        <div
+          data-testid="timebox-resize-handle"
+          className={`absolute bottom-0 left-0 right-0 h-1.5 cursor-ns-resize bg-black/25 transition-opacity duration-150 ${
+            isResizing
+              ? 'opacity-100'
+              : 'opacity-0 group-hover/timebox:opacity-100 group-focus-within/timebox:opacity-100'
+          }`}
+          onPointerDown={(event) => {
+            event.stopPropagation()
+          }}
+          onMouseDown={handleResizeMouseDown}
+        />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/10" />
+      </div>
     </button>
   )
 }

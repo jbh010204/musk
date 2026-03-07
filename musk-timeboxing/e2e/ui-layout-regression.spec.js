@@ -88,3 +88,80 @@ test('compact timebox keeps tag-first row and top action alignment', async ({ pa
   expect(compactRowTexts[0]).toContain('#레이아웃카테고리')
   expect(compactRowTexts[1]).toContain('컴팩트-정렬-테스트')
 })
+
+test('stacked timeboxes keep compact content within bounds and hide resize seam until hover', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.evaluate(() => {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
+
+    window.localStorage.clear()
+    window.localStorage.setItem(
+      `musk-planner-${dateStr}`,
+      JSON.stringify({
+        date: dateStr,
+        brainDump: [],
+        bigThree: [],
+        timeBoxes: [
+          {
+            id: 'layout-large-completed',
+            content: '리준쉴량 디코',
+            sourceId: null,
+            startSlot: 10,
+            endSlot: 13,
+            status: 'COMPLETED',
+            actualMinutes: 60,
+            category: '개인',
+            categoryId: null,
+          },
+          {
+            id: 'layout-compact-planned',
+            content: '[GDG] 자기소개 템플리 만들기',
+            sourceId: null,
+            startSlot: 13,
+            endSlot: 14,
+            status: 'PLANNED',
+            actualMinutes: null,
+            category: '개인',
+            categoryId: null,
+          },
+        ],
+      }),
+    )
+    window.localStorage.setItem('musk-planner-last-date', dateStr)
+  })
+  await page.reload()
+
+  const compactCard = page.locator('button[title="[GDG] 자기소개 템플리 만들기"]:visible').first()
+  await expect(compactCard).toBeVisible()
+
+  const compactRow = compactCard.getByTestId('timebox-compact-row')
+  const handle = compactCard.getByTestId('timebox-resize-handle')
+
+  const cardBox = await compactCard.boundingBox()
+  const compactRowBox = await compactRow.boundingBox()
+  const handleBox = await handle.boundingBox()
+
+  if (!cardBox || !compactRowBox || !handleBox) {
+    throw new Error('timebox card geometry not available')
+  }
+
+  expect(compactRowBox.y).toBeGreaterThanOrEqual(cardBox.y)
+  expect(compactRowBox.y + compactRowBox.height).toBeLessThanOrEqual(cardBox.y + cardBox.height - 2)
+
+  const initialOpacity = Number(
+    await handle.evaluate((node) => window.getComputedStyle(node).opacity),
+  )
+  expect(initialOpacity).toBeLessThan(0.1)
+
+  await compactCard.hover()
+
+  await expect
+    .poll(async () => Number(await handle.evaluate((node) => window.getComputedStyle(node).opacity)))
+    .toBeGreaterThan(0.5)
+})

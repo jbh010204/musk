@@ -72,6 +72,12 @@
   - `T41` 주간 스트립 날짜 클릭 복구
   - `T42` 주간 스트립 카드 폭/드래그 감도 재조정
   - `T43` Docker 저장소 자동 주기 동기화
+  - `T44` 타임박스 clipping 재현 회귀 테스트
+  - `T45` TimeBoxCard frame/surface/content 분리
+  - `T46` 타임박스 높이별 레이아웃 토큰 재정의
+  - `T47` 리사이즈 핸들 시각 분리
+  - `T48` 타임박스 배경 불투명도 조정
+  - `T49` 타임박스 seam 회귀/문서 동기화
 
 ## 3. Prioritized Task List
 
@@ -754,6 +760,130 @@
 
 권장 커밋 메시지:
 - `feat(storage): add scheduled auto-sync for docker persistence`
+
+---
+
+### T44. 타임박스 clipping 재현 회귀 테스트
+목표: 90분 카드 아래 30분 카드가 붙을 때 내용이 잘리거나 seam이 과하게 드러나는 케이스를 고정
+
+하위 태스크:
+1. stacked timebox fixture를 localStorage로 주입
+2. compact 카드의 content/handle bounding box 검증
+3. 기본 상태에서 handle이 숨겨지는지 확인
+
+완료 기준(DoD):
+- compact 카드 본문이 카드 높이 밖으로 넘치지 않음
+- hover 전 seam/handle이 상시 떠 있지 않음
+
+테스트:
+- `npm run test:e2e -- --workers=1 e2e/ui-layout-regression.spec.js`
+
+권장 커밋 메시지:
+- `test(timeline): lock stacked timebox clipping regression`
+
+---
+
+### T45. TimeBoxCard frame/surface/content 분리
+목표: absolute 배치 프레임과 실제 카드 표면/본문/핸들을 분리해 clipping 원인을 줄이기
+
+하위 태스크:
+1. outer frame은 위치 계산만 담당
+2. inner surface에만 rounded/shadow/background 적용
+3. content와 handle 레이어를 서로 분리
+
+완료 기준(DoD):
+- 카드 높이 계산은 유지
+- 내부 레이어가 서로 겹치지 않음
+
+테스트:
+- `npm run lint`
+- `npm run test:e2e -- --workers=1 e2e/ui-layout-regression.spec.js`
+
+권장 커밋 메시지:
+- `refactor(timeline): separate timebox frame from content surface`
+
+---
+
+### T46. 타임박스 높이별 레이아웃 토큰 재정의
+목표: compact/medium/spacious별 고정 margin/padding 의존을 줄이고 높이에 맞는 텍스트 우선순위를 다시 정의
+
+하위 태스크:
+1. compact는 수직 중앙 정렬 + 제목 1줄 우선
+2. medium은 핵심 요약 1라인만 노출
+3. spacious만 보조 정보 2라인 허용
+
+완료 기준(DoD):
+- 30분 카드에서 텍스트 잘림이 줄어듦
+- 60분/90분 카드에서 정보량 우선순위가 안정적임
+
+테스트:
+- `npm run lint`
+- `npm run test:e2e -- --workers=1 e2e/ui-layout-regression.spec.js`
+
+권장 커밋 메시지:
+- `fix(timeline): rebalance compact and medium timebox density`
+
+---
+
+### T47. 리사이즈 핸들 시각 분리
+목표: 카드 하단의 어두운 띠가 상시 seam처럼 보이는 인상을 없애기
+
+하위 태스크:
+1. handle을 hover/focus/resizing 때만 노출
+2. 본문 하단에 handle reserve 공간 확보
+3. 카드 표면과 handle 색 대비 약화
+
+완료 기준(DoD):
+- 기본 상태에서 하단 seam 노이즈 감소
+- resize 발견성은 hover/focus에서 유지
+
+테스트:
+- `npm run test:e2e -- --workers=1 e2e/ui-layout-regression.spec.js`
+
+권장 커밋 메시지:
+- `fix(timeline): decouple resize handle from resting card surface`
+
+---
+
+### T48. 타임박스 배경 불투명도 조정
+목표: 그리드 선이 카드 내부로 비쳐 clipping처럼 보이는 착시를 줄이기
+
+하위 태스크:
+1. 카드 gradient alpha 상향
+2. category stripe/배지 대비는 유지
+3. 라이트/다크 공통 가독성 점검
+
+완료 기준(DoD):
+- 슬롯 선이 카드 내부에서 덜 거슬림
+- 카테고리/상태 색 구분은 유지
+
+테스트:
+- `npm run lint`
+- `npm run test:e2e -- --workers=1`
+
+권장 커밋 메시지:
+- `fix(timeline): increase timebox surface opacity for clearer stacking`
+
+---
+
+### T49. 타임박스 seam 회귀/문서 동기화
+목표: 새 레이아웃 규칙을 문서/패치노트/세션 보드에 반영
+
+하위 태스크:
+1. layout matrix 업데이트
+2. task board/patch notes 기록 추가
+3. 전체 E2E 회귀 재실행
+
+완료 기준(DoD):
+- 새 세션이 문서만 읽어도 timebox seam 보정 의도를 이해 가능
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1`
+
+권장 커밋 메시지:
+- `docs(timeline): sync timebox seam refactor notes`
 
 ---
 

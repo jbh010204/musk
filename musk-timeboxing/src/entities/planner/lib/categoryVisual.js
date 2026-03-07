@@ -133,7 +133,7 @@ export const getTimeBoxVisual = (categoryColor, status) => {
   const statusVisual = getStatusVisual(status)
 
   return {
-    cardBackground: `linear-gradient(180deg, ${hexToRgba(baseColor, 0.82)} 0%, ${hexToRgba(baseColor, 0.68)} 100%)`,
+    cardBackground: `linear-gradient(180deg, ${hexToRgba(baseColor, 0.92)} 0%, ${hexToRgba(baseColor, 0.84)} 100%)`,
     categoryStripe: baseColor,
     categoryBadgeBackground: hexToRgba(baseColor, 0.5),
     categoryBadgeBorder: hexToRgba(baseColor, 0.85),

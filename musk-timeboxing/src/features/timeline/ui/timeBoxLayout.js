@@ -1,39 +1,46 @@
 const COMPACT_MAX_HEIGHT = 44
 const MEDIUM_MAX_HEIGHT = 80
+const HANDLE_HEIGHT_PX = 6
 
 const LAYOUT_BY_MODE = {
   compact: {
-    topActionsTopClass: 'top-1.5',
+    topActionsClass: 'top-1/2 -translate-y-1/2',
     statusTextClass: 'text-[9px]',
     showCompactRow: true,
-    compactRowMarginTopClass: 'mt-5',
-    detailPaddingTopClass: 'pt-5',
+    compactRowClass: 'absolute left-2 top-0 bottom-1.5 flex min-h-0 items-center gap-1.5',
+    detailBodyClass: '',
     showTopTimerLabel: false,
     showInlineRuntimeLabel: false,
-    paddingRightWithTimerClass: 'pr-20',
-    paddingRightWithoutTimerClass: 'pr-12',
+    showSecondaryMeta: false,
+    contentInsetWithTimerClass: 'right-20',
+    contentInsetWithoutTimerClass: 'right-12',
+    surfaceInsetY: 0.5,
   },
   medium: {
-    topActionsTopClass: 'top-2',
+    topActionsClass: 'top-2',
     statusTextClass: 'text-[10px]',
     showCompactRow: false,
-    compactRowMarginTopClass: 'mt-5',
-    detailPaddingTopClass: 'pt-5',
+    compactRowClass: '',
+    detailBodyClass: 'absolute left-2 top-0 bottom-2 pt-8',
     showTopTimerLabel: true,
-    showInlineRuntimeLabel: true,
-    paddingRightWithTimerClass: 'pr-20',
-    paddingRightWithoutTimerClass: 'pr-12',
+    showInlineRuntimeLabel: false,
+    showSecondaryMeta: false,
+    contentInsetWithTimerClass: 'right-20',
+    contentInsetWithoutTimerClass: 'right-12',
+    surfaceInsetY: 1,
   },
   spacious: {
-    topActionsTopClass: 'top-2',
+    topActionsClass: 'top-2',
     statusTextClass: 'text-[10px]',
     showCompactRow: false,
-    compactRowMarginTopClass: 'mt-5',
-    detailPaddingTopClass: 'pt-6',
+    compactRowClass: '',
+    detailBodyClass: 'absolute left-2 top-0 bottom-2.5 pt-9',
     showTopTimerLabel: true,
     showInlineRuntimeLabel: true,
-    paddingRightWithTimerClass: 'pr-20',
-    paddingRightWithoutTimerClass: 'pr-12',
+    showSecondaryMeta: true,
+    contentInsetWithTimerClass: 'right-20',
+    contentInsetWithoutTimerClass: 'right-12',
+    surfaceInsetY: 1,
   },
 }
 
@@ -56,9 +63,10 @@ export const resolveTimeBoxLayout = ({ boxHeight, canUseTimer }) => {
   return {
     mode,
     isCompact: mode === 'compact',
+    handleHeight: HANDLE_HEIGHT_PX,
     ...profile,
-    contentPaddingRightClass: canUseTimer
-      ? profile.paddingRightWithTimerClass
-      : profile.paddingRightWithoutTimerClass,
+    contentInsetClass: canUseTimer
+      ? profile.contentInsetWithTimerClass
+      : profile.contentInsetWithoutTimerClass,
   }
 }

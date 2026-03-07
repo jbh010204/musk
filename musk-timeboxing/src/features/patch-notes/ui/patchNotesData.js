@@ -1,5 +1,28 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.19.4',
+    date: '2026-03-07',
+    title: '타임박스 seam/clipping 레이아웃 재정비(T44~T49)',
+    summary:
+      'stacked timebox에서 하단 seam이 과하게 보이고 compact 카드 본문이 잘리던 문제를 카드 구조와 레이아웃 토큰을 다시 나누는 방식으로 정리했습니다.',
+    focus: [
+      'compact 카드의 본문 row가 32px 높이 안에 실제로 들어오도록 수직 중앙 정렬로 재배치',
+      '카드 frame과 실제 surface를 분리해 슬롯 정합성은 유지하면서도 시각적인 잘림 인상을 완화',
+      '리사이즈 핸들은 기본 상태에서 숨기고 hover/focus/resizing 때만 드러나게 조정',
+    ],
+    improvements: [
+      '`TimeBoxCard.jsx`를 frame/surface/content/handle 구조로 재정리',
+      '`timeBoxLayout.js`에서 compact/medium/spacious 토큰을 높이 우선 레이아웃으로 재정의',
+      '카드 배경 alpha를 높여 그리드 라인이 내부로 비치는 정도를 완화',
+      'stacked timebox clipping 회귀 테스트와 layout matrix 문서를 함께 갱신',
+    ],
+    validation: [
+      'lint/build 통과',
+      'ui-layout-regression 신규 stacked seam 검증 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.19.3',
     date: '2026-03-07',
     title: 'Docker 저장소 자동 주기 동기화 추가(T43)',
