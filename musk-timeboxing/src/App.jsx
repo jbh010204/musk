@@ -581,8 +581,9 @@ function App() {
 
   const weekStrip = useMemo(() => {
     const startDate = startOfWeekMonday(currentDate)
+    startDate.setDate(startDate.getDate() - 7)
 
-    return Array.from({ length: 7 }, (_, index) => {
+    return Array.from({ length: 21 }, (_, index) => {
       const date = new Date(startDate)
       date.setDate(startDate.getDate() + index)
       const dateStr = formatDate(date)

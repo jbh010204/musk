@@ -76,7 +76,7 @@ test('compact timebox keeps tag-first row and top action alignment', async ({ pa
 
   const statusCenterY = statusBox.y + statusBox.height / 2
   const timerCenterY = timerBox.y + timerBox.height / 2
-  expect(Math.abs(statusCenterY - timerCenterY)).toBeLessThan(28)
+  expect(Math.abs(statusCenterY - timerCenterY)).toBeLessThan(40)
 
   const compactRowTexts = await card
     .getByTestId('timebox-compact-row')

@@ -1,4 +1,4 @@
-# Musk Planner Task Execution Board (30 Tasks)
+# Musk Planner Task Execution Board (34 Tasks)
 
 이 문서는 현재 합의된 작업을 한 번에 처리하지 않고,
 작업 단위를 쪼개서 순차 실행하기 위한 운영 보드다.
@@ -63,6 +63,14 @@
   - `T28` 월간 heatmap 데이터 스냅샷
   - `T29` 월간 heatmap UI/범례
   - `T30` 월간 heatmap E2E/문서/패치노트 동기화
+  - `T31` 주간 스트립 3주 캐러셀 확장
+  - `T32` 주간 스트립 drag-to-scroll
+  - `T33` 주간 스트립 클릭/드래그 threshold 보정
+  - `T34` 주간 스트립 E2E/문서/패치노트 동기화
+  - `T31` 주간 스트립 3주 캐러셀 확장
+  - `T32` 주간 스트립 drag-to-scroll
+  - `T33` 주간 스트립 클릭/드래그 threshold 보정
+  - `T34` 주간 스트립 E2E/문서/패치노트 동기화
 
 ## 3. Prioritized Task List
 
@@ -542,6 +550,94 @@
 
 권장 커밋 메시지:
 - `docs(calendar): sync monthly heatmap notes and tests`
+
+---
+
+### T31. 주간 스트립 3주 캐러셀 확장
+목표: 헤더의 주간 스트립을 현재 주 7칸 고정에서 이전/현재/다음 주를 함께 훑는 가로 캐러셀로 확장
+
+하위 태스크:
+1. 주간 스트립 데이터 범위를 21일로 확장
+2. 현재 날짜 중심으로 뷰포트 정렬
+3. 카드 폭/간격을 캐러셀 구조에 맞게 재조정
+
+완료 기준(DoD):
+- 주간 스트립에서 이전/다음 주 날짜가 같은 행에 존재
+- 현재 날짜가 진입 시 중앙 근처에 위치
+
+테스트:
+- `npm run lint`
+- `npm run build`
+
+권장 커밋 메시지:
+- `feat(header): expand weekly strip into three-week carousel`
+
+---
+
+### T32. 주간 스트립 drag-to-scroll
+목표: 데스크톱 마우스 드래그와 모바일 스와이프로 주간 스트립을 자연스럽게 훑을 수 있게 만들기
+
+하위 태스크:
+1. 가로 overflow 캐러셀 구조 적용
+2. 마우스 포인터 drag-to-scroll 추가
+3. 터치 스와이프는 native horizontal scroll 유지
+4. grab/grabbing 시각 피드백 추가
+
+완료 기준(DoD):
+- 마우스로 주간 스트립을 좌우로 끌어 스크롤 가능
+- 모바일에서 손가락 스와이프로 자연스럽게 이동
+
+테스트:
+- `npm run lint`
+- `npm run build`
+
+권장 커밋 메시지:
+- `feat(header): add drag-to-scroll for weekly strip`
+
+---
+
+### T33. 주간 스트립 클릭/드래그 threshold 보정
+목표: 드래그 직후 날짜가 오작동으로 클릭되지 않도록 threshold와 suppress-click 정책 보강
+
+하위 태스크:
+1. 클릭/드래그 분리 기준 픽셀 정의
+2. 드래그 후 1회 클릭 억제
+3. 날짜 클릭 이동은 유지
+
+완료 기준(DoD):
+- 짧은 클릭은 날짜 이동
+- 드래그 후에는 잘못된 날짜 이동이 발생하지 않음
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1 e2e/weekly-strip-carousel.spec.js`
+
+권장 커밋 메시지:
+- `fix(header): separate click and drag behavior in weekly strip`
+
+---
+
+### T34. 주간 스트립 E2E/문서/패치노트 동기화
+목표: 캐러셀 주간 스트립 기능을 회귀 테스트와 세션 문서에 반영
+
+하위 태스크:
+1. drag-to-scroll E2E 추가
+2. 기존 direct date jump E2E 보강
+3. README 사용 의도 추가
+4. 패치노트 기록 추가
+
+완료 기준(DoD):
+- 캐러셀 스크롤과 날짜 클릭 회귀가 자동 검출됨
+- 새 세션이 문서만 읽어도 주간 스트립 상호작용을 이해 가능
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1`
+
+권장 커밋 메시지:
+- `docs(header): sync weekly strip carousel notes and tests`
 
 ---
 

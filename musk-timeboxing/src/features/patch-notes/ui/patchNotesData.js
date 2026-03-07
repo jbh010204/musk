@@ -1,5 +1,29 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.18.0',
+    date: '2026-03-07',
+    title: '주간 스트립 3주 캐러셀 + drag-to-scroll 추가(T31~T34)',
+    summary:
+      '헤더의 주간 스트립을 3주 범위 가로 캐러셀로 확장하고, 데스크톱에서는 마우스 drag-to-scroll로 이전/다음 주를 바로 훑을 수 있게 했습니다.',
+    focus: [
+      '기존 7칸 고정 스트립을 이전/현재/다음 주를 동시에 훑는 탐색형 UI로 변경',
+      '마우스 드래그와 날짜 클릭이 충돌하지 않도록 threshold와 suppress-click 정책을 함께 적용',
+      '모바일은 native horizontal swipe를 그대로 살리고 데스크톱에만 drag-to-scroll 보조를 추가',
+    ],
+    improvements: [
+      '주간 스트립 데이터 범위를 7일에서 21일로 확장',
+      '현재 날짜 카드가 진입 시 중앙 근처에 오도록 자동 정렬 추가',
+      '주간 스트립을 horizontal carousel 구조로 변경하고 grab/grabbing 피드백 추가',
+      '드래그 후 잘못된 날짜 클릭을 막는 click/drag 분리 로직 추가',
+      '신규 E2E `weekly-strip-carousel.spec.js` 추가 및 기존 주간 스트립 테스트 보강',
+    ],
+    validation: [
+      'lint/build 통과',
+      'weekly-strip, weekly-strip-carousel 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.17.0',
     date: '2026-03-07',
     title: '월간 카테고리/완료율 heatmap 추가(T28~T30)',
