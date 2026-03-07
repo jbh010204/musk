@@ -4,19 +4,19 @@ export const PATCH_NOTES = [
     date: '2026-03-07',
     title: '주간 스트립 카드 폭/드래그 감도 재조정(T42)',
     summary:
-      '주간 스트립 카드 폭을 1주 레이아웃 감각에 가깝게 키우고, drag는 포인터를 즉시 따라가도록 바꿔 끊기는 느낌을 줄였습니다.',
+      '주간 스트립 카드 폭을 1주 레이아웃 감각에 가깝게 키우고, drag는 포인터를 더 직접 따라가도록 바꿔 끊기는 느낌을 줄였습니다.',
     focus: [
       '3주 캐러셀 구조는 유지하되 각 날짜 카드의 시각 밀도는 기존 1주 레이아웃에 가깝게 복원',
       'drag 중에는 lerp 지연을 제거하고 포인터와 scroll을 바로 동기화해 체감 반응성을 높임',
-      'release 이후에만 관성을 유지해 부드러움과 제어감을 동시에 확보',
+      '상단 패딩을 보강해 주간 스트립 카드가 헤더 상단에서 살짝 잘려 보이던 인상을 줄임',
     ],
     improvements: [
-      '주간 스트립 카드 폭을 7칸 기준 계산식으로 변경해 더 넉넉하게 표시',
-      'drag 중 `target -> lerp` 방식을 제거하고 `scrollLeft`를 직접 갱신',
-      '관성 감쇠 계수를 재조정해 뚝뚝 끊기는 느낌을 완화',
+      '주간 스트립 날짜 카드를 `w-[112px] / md:w-[128px]`로 키워 1주형 카드 비율에 가깝게 조정',
+      'drag 중 `target -> lerp` 지연을 제거하고 requestAnimationFrame 단위로 `scrollLeft`를 즉시 반영',
+      '스크롤 컨테이너에 상단/하단 패딩을 추가하고 관성 감쇠 계수를 다시 조정',
     ],
     validation: [
-      'header 관련 E2E 통과',
+      'weekly-strip / weekly-strip-carousel / ui-layout-regression 통과',
       'lint 및 전체 E2E 회귀 통과',
     ],
   },

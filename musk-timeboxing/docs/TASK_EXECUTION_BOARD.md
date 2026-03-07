@@ -69,10 +69,8 @@
   - `T34` 주간 스트립 E2E/문서/패치노트 동기화
   - `T35` 주간 스트립 drag smoothing/inertia
   - `T36` 주간 스트립 smoothing 회귀 검증
-  - `T31` 주간 스트립 3주 캐러셀 확장
-  - `T32` 주간 스트립 drag-to-scroll
-  - `T33` 주간 스트립 클릭/드래그 threshold 보정
-  - `T34` 주간 스트립 E2E/문서/패치노트 동기화
+  - `T41` 주간 스트립 날짜 클릭 복구
+  - `T42` 주간 스트립 카드 폭/드래그 감도 재조정
 
 ## 3. Prioritized Task List
 
@@ -684,6 +682,52 @@
 
 권장 커밋 메시지:
 - `docs(header): sync weekly strip smoothing updates`
+
+---
+
+### T41. 주간 스트립 날짜 클릭 복구
+목표: drag-to-scroll 도입 이후 날짜 카드 직접 클릭이 막히지 않도록 click과 drag를 다시 분리
+
+하위 태스크:
+1. pointer capture 시점을 drag threshold 이후로 이동
+2. click suppression이 실제 drag 종료 시에만 동작하도록 보정
+3. 날짜 이동 검증 기준을 header/last-date 상태 기반으로 강화
+4. 회귀 테스트로 직접 date jump를 재검증
+
+완료 기준(DoD):
+- 주간 스트립 날짜 클릭이 즉시 해당 일자로 이동
+- drag 후에는 accidental click이 다시 발생하지 않음
+
+테스트:
+- `npm run lint`
+- `npm run test:e2e -- --workers=1 e2e/weekly-strip.spec.js e2e/weekly-strip-carousel.spec.js`
+
+권장 커밋 메시지:
+- `fix(header): restore direct date clicks in weekly strip`
+
+---
+
+### T42. 주간 스트립 카드 폭/드래그 감도 재조정
+목표: 3주 캐러셀 구조를 유지하면서도 카드 밀도와 drag 반응성을 1주 레이아웃에 가까운 체감으로 보정
+
+하위 태스크:
+1. 날짜 카드 폭을 더 넉넉하게 조정
+2. drag 중 포인터와 scroll을 직접 동기화해 지연 감소
+3. release 이후에만 관성을 적용하고 감쇠값 재조정
+4. 스트립 상단/하단 패딩을 보강해 카드 잘림 인상 제거
+
+완료 기준(DoD):
+- 드래그 중 스트립이 손을 바로 따라옴
+- 날짜 카드가 상단에서 잘려 보이지 않음
+- 기존 날짜 클릭 및 전체 planner 플로우 회귀 없음
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1`
+
+권장 커밋 메시지:
+- `fix(header): rebalance weekly strip card sizing and drag response`
 
 ---
 

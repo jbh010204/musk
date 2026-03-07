@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Badge, Button, Card } from '../../../shared/ui'
 
 const DRAG_THRESHOLD_PX = 6
-const MOMENTUM_FRICTION = 0.92
-const MIN_MOMENTUM_VELOCITY = 0.22
+const MOMENTUM_FRICTION = 0.94
+const MIN_MOMENTUM_VELOCITY = 0.08
+const MAX_MOMENTUM_VELOCITY = 22
 
 const formatKoreanDate = (dateStr) => {
   const date = new Date(`${dateStr}T00:00:00`)
@@ -30,6 +31,7 @@ function Header({
 }) {
   const stripRef = useRef(null)
   const currentDayRef = useRef(null)
+  const [isDragging, setIsDragging] = useState(false)
   const dragStateRef = useRef({
     active: false,
     pointerId: null,
@@ -37,9 +39,12 @@ function Header({
     startX: 0,
     startScrollLeft: 0,
     moved: false,
+    pendingScrollLeft: 0,
     targetScrollLeft: 0,
     lastMoveTs: 0,
+    lastMomentumTs: 0,
     velocity: 0,
+    frameId: null,
     momentumFrameId: null,
   })
   const suppressClickRef = useRef(false)
@@ -48,6 +53,9 @@ function Header({
     const dragState = dragStateRef.current
 
     return () => {
+      if (dragState.frameId) {
+        window.cancelAnimationFrame(dragState.frameId)
+      }
       if (dragState.momentumFrameId) {
         window.cancelAnimationFrame(dragState.momentumFrameId)
       }
@@ -75,6 +83,29 @@ function Header({
       window.cancelAnimationFrame(dragState.momentumFrameId)
       dragState.momentumFrameId = null
     }
+    dragState.lastMomentumTs = 0
+  }
+
+  const stopDragFrame = () => {
+    const dragState = dragStateRef.current
+    if (dragState.frameId) {
+      window.cancelAnimationFrame(dragState.frameId)
+      dragState.frameId = null
+    }
+  }
+
+  const scheduleScrollWrite = () => {
+    const strip = stripRef.current
+    const dragState = dragStateRef.current
+
+    if (!strip || dragState.frameId) {
+      return
+    }
+
+    dragState.frameId = window.requestAnimationFrame(() => {
+      dragState.frameId = null
+      strip.scrollLeft = dragState.pendingScrollLeft
+    })
   }
 
   const startMomentum = () => {
@@ -87,20 +118,26 @@ function Header({
 
     cancelMomentum()
 
-    const step = () => {
+    const step = (timestamp) => {
       dragState.momentumFrameId = null
+      const elapsed = dragState.lastMomentumTs > 0 ? Math.max(1, timestamp - dragState.lastMomentumTs) : 16
+      const frameScale = elapsed / 16
       const before = strip.scrollLeft
-      strip.scrollLeft += dragState.velocity
+
+      strip.scrollLeft += dragState.velocity * frameScale
       const applied = strip.scrollLeft - before
+      dragState.lastMomentumTs = timestamp
 
       if (Math.abs(applied) < 0.25) {
         dragState.velocity = 0
+        dragState.lastMomentumTs = 0
         return
       }
 
-      dragState.velocity *= MOMENTUM_FRICTION
+      dragState.velocity *= Math.pow(MOMENTUM_FRICTION, frameScale)
       if (Math.abs(dragState.velocity) < MIN_MOMENTUM_VELOCITY) {
         dragState.velocity = 0
+        dragState.lastMomentumTs = 0
         return
       }
 
@@ -124,8 +161,14 @@ function Header({
 
     if (dragState.moved) {
       suppressClickRef.current = true
+      if (strip) {
+        strip.scrollLeft = dragState.pendingScrollLeft
+      }
       startMomentum()
     }
+
+    stopDragFrame()
+    setIsDragging(false)
 
     Object.assign(dragStateRef.current, {
       active: false,
@@ -134,9 +177,12 @@ function Header({
       startX: 0,
       startScrollLeft: 0,
       moved: false,
+      pendingScrollLeft: strip?.scrollLeft ?? 0,
       targetScrollLeft: strip?.scrollLeft ?? 0,
       lastMoveTs: 0,
+      lastMomentumTs: dragState.lastMomentumTs,
       velocity: dragState.velocity,
+      frameId: null,
       momentumFrameId: dragState.momentumFrameId,
     })
   }
@@ -147,6 +193,7 @@ function Header({
     }
 
     cancelMomentum()
+    stopDragFrame()
 
     if (suppressClickRef.current) {
       suppressClickRef.current = false
@@ -159,9 +206,12 @@ function Header({
       startX: event.clientX,
       startScrollLeft: stripRef.current.scrollLeft,
       moved: false,
+      pendingScrollLeft: stripRef.current.scrollLeft,
       targetScrollLeft: stripRef.current.scrollLeft,
       lastMoveTs: performance.now(),
+      lastMomentumTs: 0,
       velocity: 0,
+      frameId: null,
       momentumFrameId: null,
     })
   }
@@ -177,6 +227,7 @@ function Header({
     const deltaX = event.clientX - dragState.startX
     if (!dragState.moved && Math.abs(deltaX) > DRAG_THRESHOLD_PX) {
       dragState.moved = true
+      setIsDragging(true)
       if (!dragState.captured) {
         try {
           strip.setPointerCapture(event.pointerId)
@@ -191,16 +242,19 @@ function Header({
       return
     }
 
-    const previousScrollLeft = strip.scrollLeft
     const nextTarget = dragState.startScrollLeft - deltaX
     const now = performance.now()
     const elapsed = Math.max(1, now - dragState.lastMoveTs)
+    const deltaTarget = nextTarget - dragState.pendingScrollLeft
 
-    strip.scrollLeft = nextTarget
-    const appliedDelta = strip.scrollLeft - previousScrollLeft
-    dragState.velocity = (appliedDelta / elapsed) * 16
-    dragState.targetScrollLeft = strip.scrollLeft
+    dragState.velocity = Math.max(
+      -MAX_MOMENTUM_VELOCITY,
+      Math.min(MAX_MOMENTUM_VELOCITY, (deltaTarget / elapsed) * 16),
+    )
+    dragState.pendingScrollLeft = nextTarget
+    dragState.targetScrollLeft = nextTarget
     dragState.lastMoveTs = now
+    scheduleScrollWrite()
     event.preventDefault()
   }
 
@@ -314,7 +368,9 @@ function Header({
         <div
           ref={stripRef}
           data-testid="week-strip-scroll"
-          className="flex cursor-grab gap-3 overflow-x-auto pb-2 select-none snap-x snap-proximity [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x] [&::-webkit-scrollbar]:hidden active:cursor-grabbing"
+          className={`flex cursor-grab gap-3 overflow-x-auto px-1 pt-2 pb-3 select-none [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x] [&::-webkit-scrollbar]:hidden active:cursor-grabbing ${
+            isDragging ? 'snap-none' : 'snap-x snap-proximity'
+          }`}
           onPointerDown={handleStripPointerDown}
           onPointerMove={handleStripPointerMove}
           onPointerUp={handleStripPointerUp}
@@ -330,7 +386,7 @@ function Header({
                 type="button"
                 data-testid={`week-strip-day-${day.dateStr}`}
                 onClick={handleDayClick(day.dateStr)}
-                className={`relative w-[96px] shrink-0 snap-center overflow-hidden rounded-2xl px-3 py-3 text-center transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-[max(112px,calc((100%-4.5rem)/7))] ${
+                className={`relative w-[112px] shrink-0 snap-center overflow-hidden rounded-2xl px-3 py-3 text-center transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 md:w-[128px] ${
                   day.isCurrent
                     ? 'bg-gradient-to-br from-indigo-600/35 via-indigo-600/25 to-cyan-500/20 text-gray-100 ring-1 ring-indigo-300/75 shadow-[0_8px_20px_rgba(79,70,229,0.18)]'
                     : 'bg-white/45 text-slate-600 hover:bg-white/80 dark:bg-slate-800/15 dark:text-slate-400 dark:hover:bg-slate-800/35'
