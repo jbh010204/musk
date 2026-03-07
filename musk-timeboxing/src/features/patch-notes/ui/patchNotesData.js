@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.19.1',
+    date: '2026-03-07',
+    title: '주간 스트립 날짜 클릭 복구(T41)',
+    summary:
+      '주간 스트립의 drag-to-scroll 도입 이후 날짜 버튼 클릭이 무시되던 문제를 고쳐, 일반 클릭과 drag를 다시 분리했습니다.',
+    focus: [
+      'pointer capture를 pointerdown 시점에 바로 잡지 않고 실제 drag threshold를 넘긴 뒤에만 활성화',
+      '날짜 클릭은 그대로 전달하고, drag일 때만 click suppression이 동작하도록 구조를 단순화',
+      '회귀 테스트도 `헤딩/last-date` 기준으로 바꿔 실제 날짜 이동 여부를 직접 검증',
+    ],
+    improvements: [
+      '`Header.jsx`의 주간 스트립 pointer capture 시점을 threshold 이후로 이동',
+      'drag 종료 시 pointer state 정리를 명시적으로 보강',
+      '`weekly-strip.spec.js`, `weekly-strip-carousel.spec.js`를 실제 날짜 이동 기준으로 업데이트',
+    ],
+    validation: [
+      '실브라우저에서 2026-03-10 클릭 시 헤딩이 즉시 변경되는 것 확인',
+      'weekly-strip, weekly-strip-carousel 통과',
+      'lint 및 E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.19.0',
     date: '2026-03-07',
     title: 'Docker volume 영속화 + 4173 legacy migration 추가(T37~T40)',

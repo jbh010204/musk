@@ -34,6 +34,7 @@ function Header({
   const dragStateRef = useRef({
     active: false,
     pointerId: null,
+    captured: false,
     startX: 0,
     startScrollLeft: 0,
     moved: false,
@@ -149,11 +150,11 @@ function Header({
     dragState.momentumFrameId = window.requestAnimationFrame(step)
   }
 
-  const finishDrag = (pointerId = null) => {
+  const finishDrag = () => {
     const strip = stripRef.current
     const dragState = dragStateRef.current
 
-    if (strip && dragState.active && dragState.pointerId != null) {
+    if (strip && dragState.active && dragState.captured && dragState.pointerId != null) {
       try {
         strip.releasePointerCapture(dragState.pointerId)
       } catch {
@@ -170,7 +171,8 @@ function Header({
 
     Object.assign(dragStateRef.current, {
       active: false,
-      pointerId,
+      pointerId: null,
+      captured: false,
       startX: 0,
       startScrollLeft: 0,
       moved: false,
@@ -198,6 +200,7 @@ function Header({
     Object.assign(dragStateRef.current, {
       active: true,
       pointerId: event.pointerId,
+      captured: false,
       startX: event.clientX,
       startScrollLeft: stripRef.current.scrollLeft,
       moved: false,
@@ -208,7 +211,6 @@ function Header({
       frameId: null,
       momentumFrameId: null,
     })
-    stripRef.current.setPointerCapture(event.pointerId)
   }
 
   const handleStripPointerMove = (event) => {
@@ -222,6 +224,14 @@ function Header({
     const deltaX = event.clientX - dragState.startX
     if (!dragState.moved && Math.abs(deltaX) > DRAG_THRESHOLD_PX) {
       dragState.moved = true
+      if (!dragState.captured) {
+        try {
+          strip.setPointerCapture(event.pointerId)
+          dragState.captured = true
+        } catch {
+          dragState.captured = false
+        }
+      }
     }
 
     if (!dragState.moved) {
@@ -246,7 +256,7 @@ function Header({
       return
     }
 
-    finishDrag(event.pointerId)
+    finishDrag()
   }
 
   const handleStripPointerCancel = (event) => {
@@ -254,7 +264,7 @@ function Header({
       return
     }
 
-    finishDrag(event.pointerId)
+    finishDrag()
   }
 
   const handleDayClick = (dateStr) => (event) => {
@@ -366,11 +376,6 @@ function Header({
                 ref={day.isCurrent ? currentDayRef : null}
                 type="button"
                 data-testid={`week-strip-day-${day.dateStr}`}
-                onPointerDown={() => {
-                  if (suppressClickRef.current) {
-                    suppressClickRef.current = false
-                  }
-                }}
                 onClick={handleDayClick(day.dateStr)}
                 className={`relative w-[104px] shrink-0 snap-center overflow-hidden rounded-2xl px-3 py-3 text-center transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 md:w-[112px] ${
                   day.isCurrent

@@ -5,15 +5,8 @@ test('weekly strip supports drag-to-scroll without accidental date change', asyn
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
 
-  const currentDate = await page.evaluate(() => {
-    const dayKey = Object.keys(window.localStorage).find((key) =>
-      /^musk-planner-\d{4}-\d{2}-\d{2}$/.test(key),
-    )
-    if (!dayKey) {
-      throw new Error('day key not found')
-    }
-    return dayKey.replace('musk-planner-', '')
-  })
+  const currentDate = await page.evaluate(() => window.localStorage.getItem('musk-planner-last-date'))
+  expect(currentDate).toBeTruthy()
 
   const strip = page.getByTestId('week-strip-scroll')
 
