@@ -2,6 +2,9 @@ import { useEffect, useRef } from 'react'
 import { Badge, Button, Card } from '../../../shared/ui'
 
 const DRAG_THRESHOLD_PX = 6
+const DRAG_LERP_FACTOR = 0.32
+const MOMENTUM_FRICTION = 0.9
+const MIN_MOMENTUM_VELOCITY = 0.35
 
 const formatKoreanDate = (dateStr) => {
   const date = new Date(`${dateStr}T00:00:00`)
@@ -34,8 +37,27 @@ function Header({
     startX: 0,
     startScrollLeft: 0,
     moved: false,
+    targetScrollLeft: 0,
+    lastPointerX: 0,
+    lastMoveTs: 0,
+    velocity: 0,
+    frameId: null,
+    momentumFrameId: null,
   })
   const suppressClickRef = useRef(false)
+
+  useEffect(() => {
+    const dragState = dragStateRef.current
+
+    return () => {
+      if (dragState.frameId) {
+        window.cancelAnimationFrame(dragState.frameId)
+      }
+      if (dragState.momentumFrameId) {
+        window.cancelAnimationFrame(dragState.momentumFrameId)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const strip = stripRef.current
@@ -52,6 +74,81 @@ function Header({
     })
   }, [currentDate, weekStrip.length])
 
+  const cancelMomentum = () => {
+    const dragState = dragStateRef.current
+    if (dragState.momentumFrameId) {
+      window.cancelAnimationFrame(dragState.momentumFrameId)
+      dragState.momentumFrameId = null
+    }
+  }
+
+  const stopDragFrame = () => {
+    const dragState = dragStateRef.current
+    if (dragState.frameId) {
+      window.cancelAnimationFrame(dragState.frameId)
+      dragState.frameId = null
+    }
+  }
+
+  const startDragFrame = () => {
+    const strip = stripRef.current
+    const dragState = dragStateRef.current
+
+    if (!strip || dragState.frameId) {
+      return
+    }
+
+    const step = () => {
+      dragState.frameId = null
+
+      const delta = dragState.targetScrollLeft - strip.scrollLeft
+      if (Math.abs(delta) < 0.5) {
+        strip.scrollLeft = dragState.targetScrollLeft
+      } else {
+        strip.scrollLeft += delta * DRAG_LERP_FACTOR
+      }
+
+      if (dragState.active || Math.abs(dragState.targetScrollLeft - strip.scrollLeft) >= 0.5) {
+        dragState.frameId = window.requestAnimationFrame(step)
+      }
+    }
+
+    dragState.frameId = window.requestAnimationFrame(step)
+  }
+
+  const startMomentum = () => {
+    const strip = stripRef.current
+    const dragState = dragStateRef.current
+
+    if (!strip || Math.abs(dragState.velocity) < MIN_MOMENTUM_VELOCITY) {
+      return
+    }
+
+    cancelMomentum()
+
+    const step = () => {
+      dragState.momentumFrameId = null
+      const before = strip.scrollLeft
+      strip.scrollLeft += dragState.velocity
+      const applied = strip.scrollLeft - before
+
+      if (Math.abs(applied) < 0.25) {
+        dragState.velocity = 0
+        return
+      }
+
+      dragState.velocity *= MOMENTUM_FRICTION
+      if (Math.abs(dragState.velocity) < MIN_MOMENTUM_VELOCITY) {
+        dragState.velocity = 0
+        return
+      }
+
+      dragState.momentumFrameId = window.requestAnimationFrame(step)
+    }
+
+    dragState.momentumFrameId = window.requestAnimationFrame(step)
+  }
+
   const finishDrag = (pointerId = null) => {
     const strip = stripRef.current
     const dragState = dragStateRef.current
@@ -66,15 +163,24 @@ function Header({
 
     if (dragState.moved) {
       suppressClickRef.current = true
+      startMomentum()
     }
 
-    dragStateRef.current = {
+    stopDragFrame()
+
+    Object.assign(dragStateRef.current, {
       active: false,
       pointerId,
       startX: 0,
       startScrollLeft: 0,
       moved: false,
-    }
+      targetScrollLeft: strip?.scrollLeft ?? 0,
+      lastPointerX: 0,
+      lastMoveTs: 0,
+      velocity: dragState.velocity,
+      frameId: null,
+      momentumFrameId: dragState.momentumFrameId,
+    })
   }
 
   const handleStripPointerDown = (event) => {
@@ -82,17 +188,26 @@ function Header({
       return
     }
 
+    cancelMomentum()
+    stopDragFrame()
+
     if (suppressClickRef.current) {
       suppressClickRef.current = false
     }
 
-    dragStateRef.current = {
+    Object.assign(dragStateRef.current, {
       active: true,
       pointerId: event.pointerId,
       startX: event.clientX,
       startScrollLeft: stripRef.current.scrollLeft,
       moved: false,
-    }
+      targetScrollLeft: stripRef.current.scrollLeft,
+      lastPointerX: event.clientX,
+      lastMoveTs: performance.now(),
+      velocity: 0,
+      frameId: null,
+      momentumFrameId: null,
+    })
     stripRef.current.setPointerCapture(event.pointerId)
   }
 
@@ -113,7 +228,16 @@ function Header({
       return
     }
 
-    strip.scrollLeft = dragState.startScrollLeft - deltaX
+    const nextTarget = dragState.startScrollLeft - deltaX
+    const now = performance.now()
+    const elapsed = Math.max(1, now - dragState.lastMoveTs)
+    const deltaTarget = nextTarget - dragState.targetScrollLeft
+
+    dragState.velocity = (deltaTarget / elapsed) * 16
+    dragState.targetScrollLeft = nextTarget
+    dragState.lastPointerX = event.clientX
+    dragState.lastMoveTs = now
+    startDragFrame()
     event.preventDefault()
   }
 
@@ -227,7 +351,7 @@ function Header({
         <div
           ref={stripRef}
           data-testid="week-strip-scroll"
-          className="flex cursor-grab gap-3 overflow-x-auto pb-2 select-none snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x] [&::-webkit-scrollbar]:hidden active:cursor-grabbing"
+          className="flex cursor-grab gap-3 overflow-x-auto pb-2 select-none snap-x snap-proximity [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x] [&::-webkit-scrollbar]:hidden active:cursor-grabbing"
           onPointerDown={handleStripPointerDown}
           onPointerMove={handleStripPointerMove}
           onPointerUp={handleStripPointerUp}

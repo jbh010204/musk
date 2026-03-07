@@ -1,4 +1,4 @@
-# Musk Planner Task Execution Board (34 Tasks)
+# Musk Planner Task Execution Board (36 Tasks)
 
 이 문서는 현재 합의된 작업을 한 번에 처리하지 않고,
 작업 단위를 쪼개서 순차 실행하기 위한 운영 보드다.
@@ -67,6 +67,8 @@
   - `T32` 주간 스트립 drag-to-scroll
   - `T33` 주간 스트립 클릭/드래그 threshold 보정
   - `T34` 주간 스트립 E2E/문서/패치노트 동기화
+  - `T35` 주간 스트립 drag smoothing/inertia
+  - `T36` 주간 스트립 smoothing 회귀 검증
   - `T31` 주간 스트립 3주 캐러셀 확장
   - `T32` 주간 스트립 drag-to-scroll
   - `T33` 주간 스트립 클릭/드래그 threshold 보정
@@ -638,6 +640,50 @@
 
 권장 커밋 메시지:
 - `docs(header): sync weekly strip carousel notes and tests`
+
+---
+
+### T35. 주간 스트립 drag smoothing/inertia
+목표: 마우스 drag-to-scroll이 뚝뚝 끊기지 않도록 보간과 release 후 관성 이동을 추가
+
+하위 태스크:
+1. pointer move 기반 목표 scroll 위치 추적
+2. requestAnimationFrame 보간 적용
+3. release 후 velocity 감쇠 기반 inertia 추가
+4. snap 강도를 완화해 끊김 감소
+
+완료 기준(DoD):
+- 드래그 중 가로 이동이 즉시 부드럽게 따라옴
+- 손을 놓은 뒤 약한 관성 이동이 이어짐
+
+테스트:
+- `npm run lint`
+- `npm run build`
+
+권장 커밋 메시지:
+- `fix(header): smooth weekly strip dragging with inertia`
+
+---
+
+### T36. 주간 스트립 smoothing 회귀 검증
+목표: smoothing 보정 이후 drag와 date jump 회귀가 없는지 다시 고정
+
+하위 태스크:
+1. 기존 weekly-strip/weekly-strip-carousel 회귀 재검증
+2. 문구/README 업데이트
+3. 패치노트 기록 추가
+
+완료 기준(DoD):
+- 스크롤과 날짜 클릭이 모두 유지됨
+- 새 세션이 smoothing 추가 배경을 문서에서 확인 가능
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1`
+
+권장 커밋 메시지:
+- `docs(header): sync weekly strip smoothing updates`
 
 ---
 

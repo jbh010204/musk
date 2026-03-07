@@ -1,5 +1,28 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.18.1',
+    date: '2026-03-07',
+    title: '주간 스트립 drag smoothing/inertia 보정(T35~T36)',
+    summary:
+      '주간 스트립 drag-to-scroll이 끊겨 보이던 문제를 줄이기 위해 보간과 release 후 관성 이동을 추가했습니다.',
+    focus: [
+      '마우스 drag가 포인터 이벤트 빈도에 직접 묶여 뻣뻣하게 느껴지던 부분을 requestAnimationFrame 기반으로 완화',
+      'release 이후 아주 짧은 관성 이동을 더해 캐러셀의 연속성을 높임',
+      '기존 날짜 클릭 및 accidental click 방지 정책은 유지',
+    ],
+    improvements: [
+      '주간 스트립 drag target을 rAF 보간 방식으로 처리',
+      'release 후 velocity 감쇠 기반 inertia 추가',
+      'scroll snap 강도를 mandatory에서 proximity로 완화',
+      'weekly-strip/weekly-strip-carousel 회귀 검증 재실행',
+    ],
+    validation: [
+      'lint/build 통과',
+      'weekly-strip, weekly-strip-carousel, ui-layout-regression 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.18.0',
     date: '2026-03-07',
     title: '주간 스트립 3주 캐러셀 + drag-to-scroll 추가(T31~T34)',
