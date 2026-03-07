@@ -1,5 +1,28 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.19.3',
+    date: '2026-03-07',
+    title: 'Docker 저장소 자동 주기 동기화 추가(T43)',
+    summary:
+      'Docker volume 저장 모드에서 planner snapshot을 주기적으로 다시 밀어 넣도록 바꿔, 서버 재연결 이후에도 데이터가 자동으로 맞춰지게 했습니다.',
+    focus: [
+      '개별 `day/meta` write와 전체 snapshot sync를 같은 서버 write queue에 넣어 순서 꼬임을 방지',
+      'local 변경은 dirty 상태로 추적하고, 약 20초마다 full snapshot 체크포인트를 다시 저장',
+      '브라우저가 다시 온라인 상태가 되거나 탭으로 복귀하면 dirty 상태를 즉시 재시도',
+    ],
+    improvements: [
+      '`storage.js`에 auto-sync scheduler/dirty tracking/최근 동기화 상태 기록 추가',
+      '`storageServer.js`의 `/import` sync도 write queue에 직렬화해 개별 write와 경합하지 않게 조정',
+      '데이터 모달에 auto-sync 주기/마지막 성공 시각 표시 추가',
+      'README 및 Docker 영속화 문서에 자동 동기화 운영 규칙과 환경변수(`VITE_STORAGE_AUTO_SYNC_INTERVAL_MS`) 기록',
+    ],
+    validation: [
+      'lint/build 통과',
+      '기존 E2E 전체 회귀 통과',
+      'temp API 환경에서 auto-sync smoke 확인',
+    ],
+  },
+  {
     version: 'v0.19.2',
     date: '2026-03-07',
     title: '주간 스트립 카드 폭/드래그 감도 재조정(T42)',

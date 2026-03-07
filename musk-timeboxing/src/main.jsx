@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
-import { hydratePlannerStorageFromServer } from './entities/planner'
+import { hydratePlannerStorageFromServer, startPlannerAutoSync } from './entities/planner'
 import './index.css'
 
 const bootstrap = async () => {
@@ -10,6 +10,8 @@ const bootstrap = async () => {
   if (typeof window !== 'undefined') {
     window.__MUSK_PLANNER_BOOTSTRAP_RESULT__ = bootstrapResult
   }
+
+  startPlannerAutoSync()
 
   createRoot(document.getElementById('root')).render(
     <StrictMode>

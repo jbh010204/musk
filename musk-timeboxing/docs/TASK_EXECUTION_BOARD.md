@@ -71,6 +71,7 @@
   - `T36` 주간 스트립 smoothing 회귀 검증
   - `T41` 주간 스트립 날짜 클릭 복구
   - `T42` 주간 스트립 카드 폭/드래그 감도 재조정
+  - `T43` Docker 저장소 자동 주기 동기화
 
 ## 3. Prioritized Task List
 
@@ -728,6 +729,31 @@
 
 권장 커밋 메시지:
 - `fix(header): rebalance weekly strip card sizing and drag response`
+
+---
+
+### T43. Docker 저장소 자동 주기 동기화
+목표: 서버 저장소를 쓰는 Docker 모드에서 변경 사항이 주기적으로 자동 체크포인트 되도록 보강
+
+하위 태스크:
+1. local 변경 시 dirty 상태를 추적
+2. 서버 write queue와 full snapshot sync를 한 레일로 직렬화
+3. 약 20초 간격 자동 sync + online/visibility 복귀 시 즉시 재시도
+4. 데이터 모달/README/영속화 문서에 운영 방식 반영
+
+완료 기준(DoD):
+- 서버가 잠깐 내려가도 다음 auto-sync 주기에서 snapshot이 다시 반영됨
+- 수동 sync 버튼 없이도 Docker volume이 지속적으로 최신 상태를 따라감
+- 문서만 읽어도 auto-sync 동작 시점과 설정 키를 이해 가능
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- `npm run test:e2e -- --workers=1`
+- temp API 환경에서 auto-sync smoke 확인
+
+권장 커밋 메시지:
+- `feat(storage): add scheduled auto-sync for docker persistence`
 
 ---
 

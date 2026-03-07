@@ -14,6 +14,13 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
   const [isSyncingServer, setIsSyncingServer] = useState(false)
   const fileInputRef = useRef(null)
   const persistenceStatus = getPlannerPersistenceStatus()
+  const lastSyncLabel = persistenceStatus.autoSyncLastSuccessAt
+    ? new Date(persistenceStatus.autoSyncLastSuccessAt).toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    : '아직 없음'
 
   const handleExportAll = () => {
     const payload = exportPlannerData()
@@ -138,8 +145,12 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
             {persistenceStatus.serverAvailability}
           </p>
           <p className="mt-1 text-xs text-gray-400">
-            4173 포트에 남아 있는 기존 브라우저 데이터를 Docker volume으로 옮기려면 이 브라우저에서
-            동기화를 실행하세요.
+            자동 동기화: 약 {Math.round((persistenceStatus.autoSyncIntervalMs || 0) / 1000)}초마다 /
+            마지막 성공: {lastSyncLabel}
+          </p>
+          <p className="mt-1 text-xs text-gray-400">
+            편집 내용은 주기적으로 서버 저장소로 자동 반영됩니다. 4173 포트에 남아 있는 기존 브라우저
+            데이터를 즉시 옮기거나 수동 체크포인트를 남기고 싶을 때만 아래 버튼을 사용하세요.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button

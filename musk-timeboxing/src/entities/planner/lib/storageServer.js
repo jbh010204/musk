@@ -53,8 +53,13 @@ const requestJson = async (path, options = {}, requestOptions = {}) => {
   }
 }
 
-const enqueueWrite = (path, payload, method = 'PUT') => {
-  if (!SERVER_STORAGE_ENABLED || serverAvailability !== 'online') {
+const enqueueWrite = (path, payload, method = 'PUT', options = {}) => {
+  if (!SERVER_STORAGE_ENABLED) {
+    return Promise.resolve(null)
+  }
+
+  const force = options.force === true
+  if (!force && serverAvailability !== 'online') {
     return Promise.resolve(null)
   }
 
@@ -66,7 +71,7 @@ const enqueueWrite = (path, payload, method = 'PUT') => {
           method,
           body: payload == null ? undefined : JSON.stringify(payload),
         },
-        { force: true },
+        { force },
       ),
     )
     .catch(() => null)
@@ -158,15 +163,13 @@ export const syncSnapshotToServer = (payload, options = {}) => {
 
   const mode = options.mode === 'replace' ? 'replace' : 'merge'
 
-  return requestJson(
+  return enqueueWrite(
     '/import',
     {
-      method: 'POST',
-      body: JSON.stringify({
-        mode,
-        payload,
-      }),
+      mode,
+      payload,
     },
+    'POST',
     { force: true },
   ).then((response) => ({
     ok: Boolean(response?.ok),

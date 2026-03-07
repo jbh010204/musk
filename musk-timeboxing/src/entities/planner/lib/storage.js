@@ -1,7 +1,6 @@
 import { normalizeBrainDumpPriority, sortBrainDumpItems } from './brainDumpPriority'
 import {
   bootstrapServerStorage,
-  clearPlannerDataOnServer,
   getServerAvailability,
   isServerPersistenceEnabled,
   saveDayToServer,
@@ -18,6 +17,20 @@ const DAY_KEY_PATTERN = /^musk-planner-\d{4}-\d{2}-\d{2}$/
 const DATE_STR_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const LAST_ACTIVE_DATE_KEY = 'musk-planner-last-date'
 const LAST_FOCUS_KEY = 'musk-planner-last-focus'
+const AUTO_SYNC_INTERVAL_KEY = 'musk-planner-auto-sync-interval-ms'
+const DEFAULT_AUTO_SYNC_INTERVAL_MS = Number(import.meta.env.VITE_STORAGE_AUTO_SYNC_INTERVAL_MS || 20000)
+const MIN_AUTO_SYNC_INTERVAL_MS = 5000
+
+let autoSyncStarted = false
+let autoSyncTimerId = null
+let autoSyncDirty = false
+let autoSyncMode = 'merge'
+let autoSyncInFlight = null
+let autoSyncLastSuccessAt = null
+let autoSyncLastAttemptAt = null
+let autoSyncLastStatus = 'idle'
+let autoSyncListenersCleanup = null
+let plannerChangeVersion = 0
 
 const createEmptyDay = (dateStr) => ({
   schemaVersion: SCHEMA_VERSION,
@@ -244,6 +257,46 @@ const applySnapshotToLocal = (snapshot) => {
   }
 }
 
+const getAutoSyncIntervalMs = () => {
+  if (typeof window === 'undefined') {
+    return Math.max(MIN_AUTO_SYNC_INTERVAL_MS, DEFAULT_AUTO_SYNC_INTERVAL_MS)
+  }
+
+  const runtimeOverride = Number(window.__MUSK_PLANNER_AUTO_SYNC_INTERVAL_MS__)
+  if (Number.isFinite(runtimeOverride) && runtimeOverride >= MIN_AUTO_SYNC_INTERVAL_MS) {
+    return runtimeOverride
+  }
+
+  const persistedOverride = Number(window.localStorage.getItem(AUTO_SYNC_INTERVAL_KEY))
+  if (Number.isFinite(persistedOverride) && persistedOverride >= MIN_AUTO_SYNC_INTERVAL_MS) {
+    return persistedOverride
+  }
+
+  return Math.max(MIN_AUTO_SYNC_INTERVAL_MS, DEFAULT_AUTO_SYNC_INTERVAL_MS)
+}
+
+const markPlannerDirty = (mode = 'merge') => {
+  plannerChangeVersion += 1
+  autoSyncDirty = true
+  autoSyncLastStatus = 'pending'
+  if (mode === 'replace') {
+    autoSyncMode = 'replace'
+  }
+}
+
+const finalizePlannerSync = (syncedVersion) => {
+  autoSyncLastSuccessAt = Date.now()
+  if (syncedVersion >= plannerChangeVersion) {
+    autoSyncDirty = false
+    autoSyncMode = 'merge'
+    autoSyncLastStatus = 'synced'
+    return
+  }
+
+  autoSyncDirty = true
+  autoSyncLastStatus = 'pending'
+}
+
 export const getKey = (dateStr) => `${DAY_KEY_PREFIX}${dateStr}`
 
 export const isDayKey = (key) => DAY_KEY_PATTERN.test(String(key))
@@ -273,6 +326,7 @@ export const saveDay = (dateStr, data) => {
 
   const payload = toPlainDayData(dateStr, data)
   saveDayLocal(dateStr, payload)
+  markPlannerDirty('merge')
   void saveDayToServer(dateStr, payload)
 }
 
@@ -310,6 +364,7 @@ export const saveMeta = (meta) => {
   }
 
   saveMetaLocal(payload)
+  markPlannerDirty('merge')
   void saveMetaToServer(payload)
 }
 
@@ -328,6 +383,7 @@ export const saveLastActiveDate = (dateStr) => {
   }
 
   saveLastActiveDateLocal(dateStr)
+  markPlannerDirty('merge')
   void saveLastActiveDateToServer(dateStr)
 }
 
@@ -387,6 +443,7 @@ export const saveLastFocus = ({ date, slot }) => {
   }
 
   saveLastFocusLocal(payload)
+  markPlannerDirty('merge')
   void saveLastFocusToServer(payload)
 }
 
@@ -411,7 +468,8 @@ export const clearPlannerData = () => {
   }
 
   clearPlannerDataLocal()
-  void clearPlannerDataOnServer()
+  markPlannerDirty('replace')
+  void syncPlannerDataToServer({ mode: 'replace', force: true })
 }
 
 export const importPlannerData = (input, options = {}) => {
@@ -482,7 +540,8 @@ export const importPlannerData = (input, options = {}) => {
     saveLastFocusLocal(lastFocus)
   }
 
-  void syncSnapshotToServer(buildSnapshotPayload(), { mode: 'replace' })
+  markPlannerDirty(mode)
+  void syncPlannerDataToServer({ mode, force: true })
 
   return {
     ok: true,
@@ -500,7 +559,13 @@ export const hydratePlannerStorageFromServer = () => {
   return bootstrapServerStorage({
     hasLocalData: hasPlannerLocalData,
     readLocalSnapshot: () => buildSnapshotPayload(),
-    applyServerSnapshot: applySnapshotToLocal,
+    applyServerSnapshot: (snapshot) => {
+      applySnapshotToLocal(snapshot)
+      plannerChangeVersion = 0
+      autoSyncDirty = false
+      autoSyncMode = 'merge'
+      autoSyncLastStatus = 'idle'
+    },
   })
 }
 
@@ -509,11 +574,107 @@ export const syncPlannerDataToServer = async (options = {}) => {
     return { ok: false, mode: 'disabled' }
   }
 
+  let requestedMode = options.mode === 'replace' ? 'replace' : autoSyncMode
+  const force = options.force === true
+
+  if (!force && !autoSyncDirty) {
+    return {
+      ok: true,
+      mode: requestedMode,
+      skipped: true,
+      localDayCount: Object.keys(readLocalDaysSnapshot()).length,
+    }
+  }
+
+  if (autoSyncInFlight) {
+    await autoSyncInFlight
+    requestedMode = options.mode === 'replace' ? 'replace' : autoSyncMode
+    if (!force && !autoSyncDirty) {
+      return {
+        ok: true,
+        mode: requestedMode,
+        skipped: true,
+        localDayCount: Object.keys(readLocalDaysSnapshot()).length,
+      }
+    }
+  }
+
   const payload = buildSnapshotPayload(options.dateStr ?? null)
-  const result = await syncSnapshotToServer(payload, { mode: options.mode })
-  return {
-    ...result,
-    localDayCount: Object.keys(payload.days).length,
+  const syncVersion = plannerChangeVersion
+  autoSyncLastAttemptAt = Date.now()
+  autoSyncLastStatus = 'syncing'
+
+  autoSyncInFlight = syncSnapshotToServer(payload, { mode: requestedMode })
+    .then((result) => {
+      if (result?.ok) {
+        finalizePlannerSync(syncVersion)
+      } else {
+        autoSyncLastStatus = 'error'
+      }
+
+      return {
+        ...result,
+        localDayCount: Object.keys(payload.days).length,
+      }
+    })
+    .finally(() => {
+      autoSyncInFlight = null
+    })
+
+  return autoSyncInFlight
+}
+
+export const startPlannerAutoSync = () => {
+  if (typeof window === 'undefined' || autoSyncStarted || !isServerPersistenceEnabled()) {
+    return () => {}
+  }
+
+  autoSyncStarted = true
+
+  const flushIfDirty = (options = {}) => {
+    if (!autoSyncDirty && options.force !== true) {
+      return
+    }
+
+    void syncPlannerDataToServer(options)
+  }
+
+  autoSyncTimerId = window.setInterval(() => {
+    flushIfDirty()
+  }, getAutoSyncIntervalMs())
+
+  const handleOnline = () => {
+    flushIfDirty({ force: true })
+  }
+
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      flushIfDirty({ force: true })
+    }
+  }
+
+  const handlePageHide = () => {
+    flushIfDirty({ force: true })
+  }
+
+  window.addEventListener('online', handleOnline)
+  window.document.addEventListener('visibilitychange', handleVisibilityChange)
+  window.addEventListener('pagehide', handlePageHide)
+
+  autoSyncListenersCleanup = () => {
+    window.removeEventListener('online', handleOnline)
+    window.document.removeEventListener('visibilitychange', handleVisibilityChange)
+    window.removeEventListener('pagehide', handlePageHide)
+  }
+
+  return () => {
+    if (autoSyncTimerId != null) {
+      window.clearInterval(autoSyncTimerId)
+      autoSyncTimerId = null
+    }
+    autoSyncListenersCleanup?.()
+    autoSyncListenersCleanup = null
+    autoSyncStarted = false
   }
 }
 
@@ -521,4 +682,9 @@ export const getPlannerPersistenceStatus = () => ({
   serverEnabled: isServerPersistenceEnabled(),
   serverAvailability: getServerAvailability(),
   hasLocalData: hasPlannerLocalData(),
+  autoSyncIntervalMs: getAutoSyncIntervalMs(),
+  autoSyncDirty,
+  autoSyncLastSuccessAt,
+  autoSyncLastAttemptAt,
+  autoSyncLastStatus,
 })
