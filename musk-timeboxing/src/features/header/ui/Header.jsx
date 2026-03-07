@@ -2,9 +2,8 @@ import { useEffect, useRef } from 'react'
 import { Badge, Button, Card } from '../../../shared/ui'
 
 const DRAG_THRESHOLD_PX = 6
-const DRAG_LERP_FACTOR = 0.32
-const MOMENTUM_FRICTION = 0.9
-const MIN_MOMENTUM_VELOCITY = 0.35
+const MOMENTUM_FRICTION = 0.92
+const MIN_MOMENTUM_VELOCITY = 0.22
 
 const formatKoreanDate = (dateStr) => {
   const date = new Date(`${dateStr}T00:00:00`)
@@ -39,10 +38,8 @@ function Header({
     startScrollLeft: 0,
     moved: false,
     targetScrollLeft: 0,
-    lastPointerX: 0,
     lastMoveTs: 0,
     velocity: 0,
-    frameId: null,
     momentumFrameId: null,
   })
   const suppressClickRef = useRef(false)
@@ -51,9 +48,6 @@ function Header({
     const dragState = dragStateRef.current
 
     return () => {
-      if (dragState.frameId) {
-        window.cancelAnimationFrame(dragState.frameId)
-      }
       if (dragState.momentumFrameId) {
         window.cancelAnimationFrame(dragState.momentumFrameId)
       }
@@ -81,40 +75,6 @@ function Header({
       window.cancelAnimationFrame(dragState.momentumFrameId)
       dragState.momentumFrameId = null
     }
-  }
-
-  const stopDragFrame = () => {
-    const dragState = dragStateRef.current
-    if (dragState.frameId) {
-      window.cancelAnimationFrame(dragState.frameId)
-      dragState.frameId = null
-    }
-  }
-
-  const startDragFrame = () => {
-    const strip = stripRef.current
-    const dragState = dragStateRef.current
-
-    if (!strip || dragState.frameId) {
-      return
-    }
-
-    const step = () => {
-      dragState.frameId = null
-
-      const delta = dragState.targetScrollLeft - strip.scrollLeft
-      if (Math.abs(delta) < 0.5) {
-        strip.scrollLeft = dragState.targetScrollLeft
-      } else {
-        strip.scrollLeft += delta * DRAG_LERP_FACTOR
-      }
-
-      if (dragState.active || Math.abs(dragState.targetScrollLeft - strip.scrollLeft) >= 0.5) {
-        dragState.frameId = window.requestAnimationFrame(step)
-      }
-    }
-
-    dragState.frameId = window.requestAnimationFrame(step)
   }
 
   const startMomentum = () => {
@@ -167,8 +127,6 @@ function Header({
       startMomentum()
     }
 
-    stopDragFrame()
-
     Object.assign(dragStateRef.current, {
       active: false,
       pointerId: null,
@@ -177,10 +135,8 @@ function Header({
       startScrollLeft: 0,
       moved: false,
       targetScrollLeft: strip?.scrollLeft ?? 0,
-      lastPointerX: 0,
       lastMoveTs: 0,
       velocity: dragState.velocity,
-      frameId: null,
       momentumFrameId: dragState.momentumFrameId,
     })
   }
@@ -191,7 +147,6 @@ function Header({
     }
 
     cancelMomentum()
-    stopDragFrame()
 
     if (suppressClickRef.current) {
       suppressClickRef.current = false
@@ -205,10 +160,8 @@ function Header({
       startScrollLeft: stripRef.current.scrollLeft,
       moved: false,
       targetScrollLeft: stripRef.current.scrollLeft,
-      lastPointerX: event.clientX,
       lastMoveTs: performance.now(),
       velocity: 0,
-      frameId: null,
       momentumFrameId: null,
     })
   }
@@ -238,16 +191,16 @@ function Header({
       return
     }
 
+    const previousScrollLeft = strip.scrollLeft
     const nextTarget = dragState.startScrollLeft - deltaX
     const now = performance.now()
     const elapsed = Math.max(1, now - dragState.lastMoveTs)
-    const deltaTarget = nextTarget - dragState.targetScrollLeft
 
-    dragState.velocity = (deltaTarget / elapsed) * 16
-    dragState.targetScrollLeft = nextTarget
-    dragState.lastPointerX = event.clientX
+    strip.scrollLeft = nextTarget
+    const appliedDelta = strip.scrollLeft - previousScrollLeft
+    dragState.velocity = (appliedDelta / elapsed) * 16
+    dragState.targetScrollLeft = strip.scrollLeft
     dragState.lastMoveTs = now
-    startDragFrame()
     event.preventDefault()
   }
 
@@ -377,7 +330,7 @@ function Header({
                 type="button"
                 data-testid={`week-strip-day-${day.dateStr}`}
                 onClick={handleDayClick(day.dateStr)}
-                className={`relative w-[104px] shrink-0 snap-center overflow-hidden rounded-2xl px-3 py-3 text-center transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 md:w-[112px] ${
+                className={`relative w-[96px] shrink-0 snap-center overflow-hidden rounded-2xl px-3 py-3 text-center transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-[max(112px,calc((100%-4.5rem)/7))] ${
                   day.isCurrent
                     ? 'bg-gradient-to-br from-indigo-600/35 via-indigo-600/25 to-cyan-500/20 text-gray-100 ring-1 ring-indigo-300/75 shadow-[0_8px_20px_rgba(79,70,229,0.18)]'
                     : 'bg-white/45 text-slate-600 hover:bg-white/80 dark:bg-slate-800/15 dark:text-slate-400 dark:hover:bg-slate-800/35'
