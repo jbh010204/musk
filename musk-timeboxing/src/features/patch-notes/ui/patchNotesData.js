@@ -1,5 +1,30 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.19.0',
+    date: '2026-03-07',
+    title: 'Docker volume 영속화 + 4173 legacy migration 추가(T37~T40)',
+    summary:
+      'planner 데이터를 브라우저 localStorage 단독에서 Docker volume source-of-truth 구조로 확장하고, 4173 레거시 브라우저 데이터를 서버 저장소로 이관할 수 있게 했습니다.',
+    focus: [
+      '앱 레이어를 크게 흔들지 않기 위해 기존 sync localStorage API를 유지하고 시작 전 bootstrap hydrate만 추가',
+      '포트가 달라도 같은 데이터가 보이도록 browser local mirror + Docker volume persistence 구조로 전환',
+      '이전 4173 origin 데이터는 legacy bridge 포트와 수동/자동 migration 경로로 흡수하도록 설계',
+    ],
+    improvements: [
+      '`server/index.js` 추가: planner snapshot을 `/data/planner-store.json`에 저장하는 Node API 도입',
+      '`storage.js`를 local mirror + remote sync 구조로 확장하고 `main.jsx`에서 bootstrap hydrate 수행',
+      '서버 비어 있고 현재 origin에 의미 있는 planner 데이터가 있으면 자동 migration 수행',
+      '데이터 백업/복원 모달에 `현재 브라우저 데이터를 서버 저장소로 동기화` 액션 추가',
+      '`docker-compose.yml`, `scripts/docker-dev.sh`를 `app + api + planner-data` 구조로 정리하고 4173 legacy bridge 포트 동시 오픈',
+      'README/DOCKER workflow/신규 persistence 문서로 운영 가이드 동기화',
+    ],
+    validation: [
+      'lint/build 통과',
+      'Docker API health 확인(`http://localhost:8787/health`)',
+      '실브라우저 smoke: 4173 localStorage -> Docker volume migration 후 5173에서 동일 데이터 복원 확인',
+    ],
+  },
+  {
     version: 'v0.18.1',
     date: '2026-03-07',
     title: '주간 스트립 drag smoothing/inertia 보정(T35~T36)',

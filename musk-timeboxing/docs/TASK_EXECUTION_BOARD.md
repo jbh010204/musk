@@ -884,6 +884,91 @@
 권장 커밋 메시지:
 - `feat(data): add file download and upload for backup restore`
 
+---
+
+### T37. Docker volume 저장 API 도입
+목표: planner 데이터를 브라우저 localStorage가 아니라 Docker volume에도 영속화
+
+하위 태스크:
+1. `server/index.js` Node API 추가
+2. `/api/planner/bootstrap`, `/api/planner/day/:date`, `/api/planner/import` 등 저장 엔드포인트 구현
+3. `planner-data` volume 및 API 컨테이너 구성
+4. 서버 health 체크 경로 추가
+
+완료 기준(DoD):
+- Docker volume(`/data/planner-store.json`)에 planner snapshot이 저장됨
+
+테스트:
+- `npm run lint`
+- `curl http://localhost:8787/health`
+
+권장 커밋 메시지:
+- `feat(storage): add docker volume backed planner api`
+
+---
+
+### T38. 클라이언트 bootstrap hydrate + legacy 4173 이관
+목표: 앱 진입 전에 서버 snapshot으로 local mirror를 맞추고, 4173 legacy browser data를 서버로 옮길 수 있게 한다
+
+하위 태스크:
+1. `storage.js`를 local mirror + remote sync 구조로 확장
+2. `main.jsx`에서 bootstrap hydrate 실행
+3. 서버 비어 있고 local data가 있으면 자동 migration
+4. 데이터 모달에 `현재 브라우저 데이터를 서버 저장소로 동기화` 액션 추가
+
+완료 기준(DoD):
+- 4173 origin에 남아 있던 planner 데이터가 5173에서도 동일하게 복원됨
+
+테스트:
+- `npm run lint`
+- `npm run build`
+- Docker app에서 4173 -> 5173 수동 smoke 확인
+
+권장 커밋 메시지:
+- `feat(storage): hydrate from server and migrate legacy browser data`
+
+---
+
+### T39. Docker 실행 스크립트/포트 전략 정리
+목표: 쉘 스크립트 한 번으로 app/api/volume을 같이 올리고 legacy bridge 포트까지 안내
+
+하위 태스크:
+1. `docker-compose.yml`에 `app + api + planner-data` 구성 반영
+2. `4173`, `5173`, `8787` 포트 동시 구성
+3. `scripts/docker-dev.sh`에 health wait 및 안내 메시지 추가
+4. `APP_PORT`, `LEGACY_PORT`, `API_PORT` 환경변수 대응
+
+완료 기준(DoD):
+- `./scripts/docker-dev.sh up` 한 번으로 전체 개발 스택이 기동됨
+
+테스트:
+- `./scripts/docker-dev.sh up`
+- `./scripts/docker-dev.sh ps`
+
+권장 커밋 메시지:
+- `chore(docker): add one-command app api and legacy bridge startup`
+
+---
+
+### T40. 문서/운영 가이드 동기화
+목표: 새 세션이나 외부 사용자도 Docker persistence와 이관 방식을 바로 이해하게 만든다
+
+하위 태스크:
+1. README에 저장 구조/접속 포트/이관 절차 반영
+2. `docs/DOCKER_DEV_WORKFLOW.md` 업데이트
+3. `docs/DOCKER_DATA_PERSISTENCE.md` 신설
+4. 패치노트에 버전 추가
+
+완료 기준(DoD):
+- 저장 구조와 4173 legacy migration 절차가 문서만 읽고 재현 가능
+
+테스트:
+- 문서 경로 검수
+- 패치노트 모달 최신 버전 확인
+
+권장 커밋 메시지:
+- `docs(storage): document docker persistence and legacy migration`
+
 ## 4. 보고 템플릿 (Task 완료 시)
 
 아래 4블록을 고정 사용한다.
