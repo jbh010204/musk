@@ -28,7 +28,7 @@ function WeeklyCalendarView({ rangeLabel, days = [], onOpenDate = () => {}, onQu
               }
             }}
             data-testid={`week-calendar-day-${day.dateStr}`}
-            className={`rounded-2xl p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+            className={`group/day relative rounded-2xl p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
               day.isCurrent
                 ? 'bg-gradient-to-br from-indigo-600/20 via-cyan-500/10 to-emerald-500/10 shadow-sm ring-1 ring-indigo-300/60'
                 : 'bg-slate-50/80 hover:bg-slate-100 dark:bg-slate-800/35 dark:hover:bg-slate-800/50'
@@ -44,13 +44,15 @@ function WeeklyCalendarView({ rangeLabel, days = [], onOpenDate = () => {}, onQu
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge tone="neutral">{day.total}건</Badge>
+                <Badge tone="neutral" className="bg-slate-200/55 text-slate-500 dark:bg-slate-800/55 dark:text-slate-300">
+                  {day.total}건
+                </Badge>
                 <Button
                   variant="ghost"
                   size="icon"
                   aria-label={`${day.dateStr} 빠른 일정 추가`}
                   data-testid={`week-calendar-quick-add-${day.dateStr}`}
-                  className="rounded-xl text-slate-500 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
+                  className="rounded-full bg-white/88 text-slate-500 shadow-sm opacity-70 transition-all hover:bg-white hover:text-slate-900 md:opacity-0 md:translate-y-1 md:group-hover/day:translate-y-0 md:group-hover/day:opacity-100 md:group-focus-within/day:translate-y-0 md:group-focus-within/day:opacity-100 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100"
                   onClick={(event) => {
                     event.stopPropagation()
                     onQuickAdd(day.dateStr, `${day.dayLabel} ${day.dayNumber} 빠른 일정 추가`)

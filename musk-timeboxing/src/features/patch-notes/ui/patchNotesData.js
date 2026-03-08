@@ -1,5 +1,28 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.20.1',
+    date: '2026-03-08',
+    title: '라이트 모드 계층/타임라인 액션 hierarchy 재정리(T54~T56)',
+    summary:
+      '라이트 모드에서 패널과 카드의 계층이 평평하게 보이던 문제를 줄이고, 타임라인 상단의 주행동/보조행동을 분리해 시선 흐름을 정리했습니다.',
+    focus: [
+      '라이트 모드에서 메인 패널은 떠 있는 surface로, 보조 패널은 플랫한 subtle surface로 분리',
+      '타임라인 상단 컨트롤을 탐색(일간/주간/월간, 빠른 추가)과 보기 옵션(집중 모드, 축척)으로 재배치',
+      '주간/월간 카드의 `+` 액션은 hover/focus 중심으로 약화해 날짜/preview 정보와 경쟁하지 않도록 조정',
+    ],
+    improvements: [
+      '`index.css` light theme 토큰에서 surface/shadow 값을 다시 조정하고 subtle panel 그림자를 제거',
+      '`App.jsx`에서 우측 메인 패널을 `ui-panel`로 승격해 좌측 사이드바와 계층 차이를 강화',
+      '`Timeline/index.jsx`에서 헤더 액션을 2단 구조로 재배치하고 필터 라벨을 수직 정렬로 정리',
+      '`WeeklyCalendarView.jsx`, `MonthlyCalendarView.jsx`에서 quick add 버튼을 더 작은 원형 액션으로 약화',
+    ],
+    validation: [
+      'lint/build 통과',
+      'Playwright full-page 캡처로 light/dark 홈 화면 재확인',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.20.0',
     date: '2026-03-07',
     title: '저장 상태 배지 + 퀵 템플릿 + 캘린더 빠른 일정 추가(T50~T53)',

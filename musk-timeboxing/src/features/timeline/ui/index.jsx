@@ -304,39 +304,47 @@ function Timeline({
 
   return (
     <section ref={sectionRef} className="h-full p-6 pb-24 md:pb-16">
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          ⏱ 타임라인
-        </h2>
-        <div className="flex items-center gap-2">
-          <div className="ui-panel-subtle inline-flex items-center p-1 text-[11px]">
-            {VIEW_MODE_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                data-testid={`timeline-view-${option.value.toLowerCase()}`}
-                aria-pressed={viewMode === option.value}
-                onClick={() => setViewMode(option.value)}
-                className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                  viewMode === option.value
-                    ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
-                    : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
+      <div className="mb-6 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              ⏱ 타임라인
+            </h2>
+            <div className="ui-panel-subtle inline-flex items-center p-1 text-[11px]">
+              {VIEW_MODE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  data-testid={`timeline-view-${option.value.toLowerCase()}`}
+                  aria-pressed={viewMode === option.value}
+                  onClick={() => setViewMode(option.value)}
+                  className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    viewMode === option.value
+                      ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
+                      : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {isDayView ? (
-            <>
-              <button
-                type="button"
-                onClick={() => onOpenQuickAdd(currentDate, { dateLabel: '오늘 빠른 일정 추가' })}
-                className="rounded-xl px-2.5 py-1.5 text-xs text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-              >
-                빠른 추가
-              </button>
+            <button
+              type="button"
+              onClick={() => onOpenQuickAdd(currentDate, { dateLabel: '오늘 빠른 일정 추가' })}
+              className="ui-btn-secondary px-3 py-1.5 text-xs"
+            >
+              빠른 추가
+            </button>
+          ) : null}
+        </div>
+
+        {isDayView ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-slate-50/80 px-3 py-2 text-[11px] text-slate-500 dark:bg-slate-800/35 dark:text-slate-400">
+            <span className="font-semibold uppercase tracking-wide">보기 옵션</span>
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 data-testid="timeline-focus-toggle"
@@ -344,7 +352,7 @@ function Timeline({
                 className={`rounded-xl px-2.5 py-1.5 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                   focusMode
                     ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-200 text-slate-700 hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600'
+                    : 'text-slate-500 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100'
                 }`}
               >
                 집중 모드
@@ -376,9 +384,9 @@ function Timeline({
                   15분 보기
                 </button>
               </div>
-            </>
-          ) : null}
-        </div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {!isDayView ? (
@@ -391,8 +399,8 @@ function Timeline({
 
       {isDayView ? (
         <div className="mb-6 grid gap-3 md:grid-cols-2">
-          <label className="ui-panel-subtle flex items-center gap-2 p-3 text-xs text-slate-500 dark:text-slate-300">
-            상태 필터
+          <label className="ui-panel-subtle flex flex-col items-start gap-1 p-3 text-xs text-slate-500 dark:text-slate-300">
+            <span className="font-semibold uppercase tracking-wide">상태 필터</span>
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
@@ -407,8 +415,8 @@ function Timeline({
             </select>
           </label>
 
-          <label className="ui-panel-subtle flex items-center gap-2 p-3 text-xs text-slate-500 dark:text-slate-300">
-            카테고리 필터
+          <label className="ui-panel-subtle flex flex-col items-start gap-1 p-3 text-xs text-slate-500 dark:text-slate-300">
+            <span className="font-semibold uppercase tracking-wide">카테고리 필터</span>
             <select
               value={categoryFilter}
               onChange={(event) => setCategoryFilter(event.target.value)}

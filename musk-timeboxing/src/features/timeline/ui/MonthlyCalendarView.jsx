@@ -113,7 +113,7 @@ function MonthlyCalendarView({
             data-testid={`month-calendar-day-${cell.dateStr}`}
             data-heat-intensity={cell.heatLevel}
             data-dominant-category={cell.dominantCategory?.label || 'none'}
-            className={`relative min-h-[156px] overflow-hidden rounded-2xl p-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+            className={`group/day relative min-h-[156px] overflow-hidden rounded-2xl p-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
               cell.isCurrent
                 ? 'ring-1 ring-indigo-300/60 shadow-sm'
                 : cell.inCurrentMonth
@@ -145,7 +145,7 @@ function MonthlyCalendarView({
                   {cell.dayNumber}
                 </p>
                 <div className="flex items-center gap-1">
-                  <span className="rounded-xl bg-slate-200/80 px-2 py-0.5 text-[11px] text-slate-700 dark:bg-slate-800/70 dark:text-slate-200">
+                  <span className="rounded-xl bg-slate-200/55 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800/55 dark:text-slate-300">
                     {cell.total}건
                   </span>
                   <Button
@@ -153,7 +153,7 @@ function MonthlyCalendarView({
                     size="icon"
                     aria-label={`${cell.dateStr} 빠른 일정 추가`}
                     data-testid={`month-calendar-quick-add-${cell.dateStr}`}
-                    className="rounded-xl text-slate-500 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
+                    className="rounded-full bg-white/88 text-slate-500 shadow-sm opacity-70 transition-all hover:bg-white hover:text-slate-900 md:opacity-0 md:translate-y-1 md:group-hover/day:translate-y-0 md:group-hover/day:opacity-100 md:group-focus-within/day:translate-y-0 md:group-focus-within/day:opacity-100 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100"
                     onClick={(event) => {
                       event.stopPropagation()
                       onQuickAdd(cell.dateStr, `${cell.dayNumber}일 빠른 일정 추가`)

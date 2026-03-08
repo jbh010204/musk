@@ -1395,7 +1395,7 @@ function App() {
               {dumpSection}
               {bigThreeSection}
             </aside>
-            <main className="ui-panel-subtle flex-1 overflow-y-auto">{timelineSection}</main>
+            <main className="ui-panel flex-1 overflow-y-auto">{timelineSection}</main>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto pb-16 md:hidden">
