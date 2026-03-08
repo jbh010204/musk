@@ -1,4 +1,5 @@
 import { normalizeBrainDumpPriority, sortBrainDumpItems } from './brainDumpPriority'
+import { TOTAL_SLOTS } from './timeSlot'
 import {
   bootstrapServerStorage,
   getServerAvailability,
@@ -7,6 +8,7 @@ import {
   saveLastActiveDateToServer,
   saveLastFocusToServer,
   saveMetaToServer,
+  subscribeServerAvailability,
   syncSnapshotToServer,
 } from './storageServer'
 
@@ -31,6 +33,8 @@ let autoSyncLastAttemptAt = null
 let autoSyncLastStatus = 'idle'
 let autoSyncListenersCleanup = null
 let plannerChangeVersion = 0
+const persistenceListeners = new Set()
+let stopServerAvailabilitySubscription = null
 
 const createEmptyDay = (dateStr) => ({
   schemaVersion: SCHEMA_VERSION,
@@ -43,7 +47,28 @@ const createEmptyDay = (dateStr) => ({
 const createEmptyMeta = () => ({
   schemaVersion: SCHEMA_VERSION,
   categories: [],
+  templates: [],
 })
+
+const normalizeTemplate = (template) => {
+  const name = typeof template?.name === 'string' ? template.name.trim() : ''
+  const content = typeof template?.content === 'string' ? template.content.trim() : ''
+
+  if (!name || !content) {
+    return null
+  }
+
+  return {
+    id: typeof template?.id === 'string' ? template.id : crypto.randomUUID(),
+    name,
+    content,
+    durationSlots: Math.max(1, Math.min(TOTAL_SLOTS, Number(template?.durationSlots) || 1)),
+    categoryId:
+      typeof template?.categoryId === 'string' && template.categoryId.trim().length > 0
+        ? template.categoryId
+        : null,
+  }
+}
 
 const hasMeaningfulDayData = (dayData) => {
   const safeDay = dayData && typeof dayData === 'object' ? dayData : {}
@@ -133,9 +158,13 @@ const saveMetaLocal = (meta) => {
     return
   }
 
+  const currentMeta = loadMeta()
   const payload = {
     schemaVersion: SCHEMA_VERSION,
-    categories: Array.isArray(meta?.categories) ? meta.categories : [],
+    categories: Array.isArray(meta?.categories) ? meta.categories : currentMeta.categories,
+    templates: Array.isArray(meta?.templates)
+      ? meta.templates.map(normalizeTemplate).filter(Boolean)
+      : currentMeta.templates,
   }
 
   window.localStorage.setItem(META_KEY, JSON.stringify(payload))
@@ -217,6 +246,7 @@ const hasPlannerLocalData = () => {
       .filter((key) => isDayKey(key))
       .some((key) => hasMeaningfulDayData(loadDay(key.replace(DAY_KEY_PREFIX, '')))) ||
     loadMeta().categories.length > 0 ||
+    loadMeta().templates.length > 0 ||
     loadLastActiveDate() !== null ||
     loadLastFocus() !== null
   )
@@ -257,6 +287,27 @@ const applySnapshotToLocal = (snapshot) => {
   }
 }
 
+const emitPersistenceStatus = () => {
+  const status = getPlannerPersistenceStatus()
+  persistenceListeners.forEach((listener) => {
+    try {
+      listener(status)
+    } catch {
+      // no-op
+    }
+  })
+}
+
+const ensurePersistenceStatusSubscription = () => {
+  if (stopServerAvailabilitySubscription || typeof window === 'undefined') {
+    return
+  }
+
+  stopServerAvailabilitySubscription = subscribeServerAvailability(() => {
+    emitPersistenceStatus()
+  })
+}
+
 const getAutoSyncIntervalMs = () => {
   if (typeof window === 'undefined') {
     return Math.max(MIN_AUTO_SYNC_INTERVAL_MS, DEFAULT_AUTO_SYNC_INTERVAL_MS)
@@ -282,6 +333,7 @@ const markPlannerDirty = (mode = 'merge') => {
   if (mode === 'replace') {
     autoSyncMode = 'replace'
   }
+  emitPersistenceStatus()
 }
 
 const finalizePlannerSync = (syncedVersion) => {
@@ -290,11 +342,13 @@ const finalizePlannerSync = (syncedVersion) => {
     autoSyncDirty = false
     autoSyncMode = 'merge'
     autoSyncLastStatus = 'synced'
+    emitPersistenceStatus()
     return
   }
 
   autoSyncDirty = true
   autoSyncLastStatus = 'pending'
+  emitPersistenceStatus()
 }
 
 export const getKey = (dateStr) => `${DAY_KEY_PREFIX}${dateStr}`
@@ -347,6 +401,7 @@ export const loadMeta = () => {
     return {
       schemaVersion: SCHEMA_VERSION,
       categories: Array.isArray(parsed.categories) ? parsed.categories : [],
+      templates: Array.isArray(parsed.templates) ? parsed.templates.map(normalizeTemplate).filter(Boolean) : [],
     }
   } catch {
     return createEmptyMeta()
@@ -360,7 +415,10 @@ export const saveMeta = (meta) => {
 
   const payload = {
     schemaVersion: SCHEMA_VERSION,
-    categories: Array.isArray(meta?.categories) ? meta.categories : [],
+    categories: Array.isArray(meta?.categories) ? meta.categories : loadMeta().categories,
+    templates: Array.isArray(meta?.templates)
+      ? meta.templates.map(normalizeTemplate).filter(Boolean)
+      : loadMeta().templates,
   }
 
   saveMetaLocal(payload)
@@ -525,11 +583,20 @@ export const importPlannerData = (input, options = {}) => {
   }
 
   let importedCategories = 0
+  let importedTemplates = 0
   if (meta && Array.isArray(meta.categories)) {
     saveMetaLocal({
       categories: meta.categories,
+      templates: Array.isArray(meta.templates) ? meta.templates : loadMeta().templates,
     })
     importedCategories = meta.categories.length
+    importedTemplates = Array.isArray(meta.templates) ? meta.templates.length : 0
+  } else if (meta && Array.isArray(meta.templates)) {
+    saveMetaLocal({
+      categories: loadMeta().categories,
+      templates: meta.templates,
+    })
+    importedTemplates = meta.templates.length
   }
 
   if (lastActiveDate) {
@@ -548,6 +615,7 @@ export const importPlannerData = (input, options = {}) => {
     importedDays,
     skippedDays,
     importedCategories,
+    importedTemplates,
   }
 }
 
@@ -565,6 +633,7 @@ export const hydratePlannerStorageFromServer = () => {
       autoSyncDirty = false
       autoSyncMode = 'merge'
       autoSyncLastStatus = 'idle'
+      emitPersistenceStatus()
     },
   })
 }
@@ -603,6 +672,7 @@ export const syncPlannerDataToServer = async (options = {}) => {
   const syncVersion = plannerChangeVersion
   autoSyncLastAttemptAt = Date.now()
   autoSyncLastStatus = 'syncing'
+  emitPersistenceStatus()
 
   autoSyncInFlight = syncSnapshotToServer(payload, { mode: requestedMode })
     .then((result) => {
@@ -610,6 +680,7 @@ export const syncPlannerDataToServer = async (options = {}) => {
         finalizePlannerSync(syncVersion)
       } else {
         autoSyncLastStatus = 'error'
+        emitPersistenceStatus()
       }
 
       return {
@@ -630,6 +701,8 @@ export const startPlannerAutoSync = () => {
   }
 
   autoSyncStarted = true
+  ensurePersistenceStatusSubscription()
+  emitPersistenceStatus()
 
   const flushIfDirty = (options = {}) => {
     if (!autoSyncDirty && options.force !== true) {
@@ -688,3 +761,17 @@ export const getPlannerPersistenceStatus = () => ({
   autoSyncLastAttemptAt,
   autoSyncLastStatus,
 })
+
+export const subscribePlannerPersistenceStatus = (listener) => {
+  if (typeof listener !== 'function') {
+    return () => {}
+  }
+
+  ensurePersistenceStatusSubscription()
+  persistenceListeners.add(listener)
+  listener(getPlannerPersistenceStatus())
+
+  return () => {
+    persistenceListeners.delete(listener)
+  }
+}

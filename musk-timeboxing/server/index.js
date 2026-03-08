@@ -17,6 +17,7 @@ const createEmptyState = () => ({
   meta: {
     schemaVersion: SCHEMA_VERSION,
     categories: [],
+    templates: [],
   },
   lastActiveDate: null,
   lastFocus: null,
@@ -53,6 +54,7 @@ const normalizeState = (input) => {
     meta: {
       schemaVersion: SCHEMA_VERSION,
       categories: Array.isArray(meta.categories) ? meta.categories : [],
+      templates: Array.isArray(meta.templates) ? meta.templates : [],
     },
     lastActiveDate: DATE_STR_PATTERN.test(String(safeInput.lastActiveDate)) ? safeInput.lastActiveDate : null,
     lastFocus: normalizeLastFocus(safeInput.lastFocus),
@@ -75,6 +77,7 @@ const hasAnyData = (state) => {
   return (
     getMeaningfulDayCount(state) > 0 ||
     state.meta.categories.length > 0 ||
+    state.meta.templates.length > 0 ||
     DATE_STR_PATTERN.test(String(state.lastActiveDate)) ||
     normalizeLastFocus(state.lastFocus) !== null
   )
@@ -84,6 +87,7 @@ const summarizeState = (state) => ({
   dayCount: getMeaningfulDayCount(state),
   storedDayCount: Object.keys(state.days).length,
   categoryCount: state.meta.categories.length,
+  templateCount: state.meta.templates.length,
   hasData: hasAnyData(state),
 })
 
@@ -174,6 +178,9 @@ const mergeImportPayload = (currentState, payload, mode) => {
       categories: Array.isArray(safePayload.meta.categories)
         ? safePayload.meta.categories
         : nextState.meta.categories,
+      templates: Array.isArray(safePayload.meta.templates)
+        ? safePayload.meta.templates
+        : nextState.meta.templates,
     }
   }
 

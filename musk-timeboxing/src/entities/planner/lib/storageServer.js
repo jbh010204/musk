@@ -5,6 +5,22 @@ const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_STORAGE_REQUEST_TIMEOUT_M
 let serverAvailability = SERVER_STORAGE_ENABLED ? 'unknown' : 'disabled'
 let writeQueue = Promise.resolve()
 let bootstrapPromise = null
+const availabilityListeners = new Set()
+
+const setServerAvailability = (nextAvailability) => {
+  if (serverAvailability === nextAvailability) {
+    return
+  }
+
+  serverAvailability = nextAvailability
+  availabilityListeners.forEach((listener) => {
+    try {
+      listener(serverAvailability)
+    } catch {
+      // no-op
+    }
+  })
+}
 
 const requestJson = async (path, options = {}, requestOptions = {}) => {
   if (!SERVER_STORAGE_ENABLED) {
@@ -38,11 +54,11 @@ const requestJson = async (path, options = {}, requestOptions = {}) => {
       throw new Error(`request failed: ${response.status}`)
     }
 
-    serverAvailability = 'online'
+    setServerAvailability('online')
     return await response.json()
   } catch {
     if (!force) {
-      serverAvailability = 'offline'
+      setServerAvailability('offline')
     }
 
     return null
@@ -82,6 +98,17 @@ const enqueueWrite = (path, payload, method = 'PUT', options = {}) => {
 export const isServerPersistenceEnabled = () => SERVER_STORAGE_ENABLED
 
 export const getServerAvailability = () => serverAvailability
+
+export const subscribeServerAvailability = (listener) => {
+  if (typeof listener !== 'function') {
+    return () => {}
+  }
+
+  availabilityListeners.add(listener)
+  return () => {
+    availabilityListeners.delete(listener)
+  }
+}
 
 export const bootstrapServerStorage = (callbacks = {}) => {
   if (!SERVER_STORAGE_ENABLED || typeof window === 'undefined') {

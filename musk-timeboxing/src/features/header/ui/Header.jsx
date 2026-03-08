@@ -13,6 +13,41 @@ const formatKoreanDate = (dateStr) => {
   return `${year}년 ${month}월 ${day}일 (${weekday})`
 }
 
+const getPersistenceBadge = (status) => {
+  if (!status?.serverEnabled) {
+    return {
+      tone: 'neutral',
+      label: '로컬 저장',
+    }
+  }
+
+  if (status.serverAvailability === 'offline') {
+    return {
+      tone: 'danger',
+      label: '오프라인',
+    }
+  }
+
+  if (status.autoSyncLastStatus === 'syncing') {
+    return {
+      tone: 'neutral',
+      label: '동기화 중',
+    }
+  }
+
+  if (status.autoSyncDirty) {
+    return {
+      tone: 'neutral',
+      label: '저장 대기',
+    }
+  }
+
+  return {
+    tone: 'success',
+    label: '저장됨',
+  }
+}
+
 function Header({
   currentDate,
   goNextDay,
@@ -26,6 +61,7 @@ function Header({
     isPerfect: false,
   },
   theme = 'dark',
+  persistenceStatus = null,
   onOpenReschedule = () => {},
   onToggleTheme = () => {},
 }) {
@@ -48,6 +84,7 @@ function Header({
     momentumFrameId: null,
   })
   const suppressClickRef = useRef(false)
+  const persistenceBadge = getPersistenceBadge(persistenceStatus)
 
   useEffect(() => {
     const dragState = dragStateRef.current
@@ -295,6 +332,7 @@ function Header({
         <h1 className="text-lg font-semibold">{formatKoreanDate(currentDate)}</h1>
 
         <div className="flex items-center gap-2">
+          <Badge tone={persistenceBadge.tone}>{persistenceBadge.label}</Badge>
           <Button
             onClick={onOpenReschedule}
             className="px-3 py-1.5 text-xs"
