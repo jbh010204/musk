@@ -50,13 +50,15 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
   return (
     <div
       ref={setDroppableNodeRef}
-      className={`p-6 ${
+      className={`p-4 ${
         slot ? 'ui-panel' : 'ui-panel-subtle'
       } ${isOver && !slot ? 'bg-indigo-500/10 ring-2 ring-indigo-400' : ''} ${
         isDragging ? 'opacity-50' : ''
       }`}
     >
-      <div className="mb-2 text-sm text-slate-500 dark:text-slate-400">슬롯 {slotIndex + 1}</div>
+      <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        슬롯 {slotIndex + 1}
+      </div>
 
       {!slot && !isEditing ? (
         <button
@@ -67,7 +69,7 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
         >
           <span className="inline-flex items-center gap-2">
             <span className="text-lg leading-none text-slate-400/80 dark:text-slate-500/80">＋</span>
-            <span className="sr-only">빅3 슬롯 입력</span>
+            <span className="text-xs font-medium uppercase tracking-wide">핵심 추가</span>
           </span>
         </button>
       ) : null}
@@ -114,7 +116,7 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
           <button
             ref={setDraggableNodeRef}
             type="button"
-            className="min-w-0 flex-1 cursor-grab truncate rounded-xl px-3 py-2 text-left text-sm active:cursor-grabbing hover:bg-slate-50 dark:hover:bg-slate-800"
+            className="min-w-0 flex-1 cursor-grab truncate rounded-xl px-2 py-1.5 text-left text-sm active:cursor-grabbing hover:bg-slate-50 dark:hover:bg-slate-800"
             {...listeners}
             {...attributes}
             title={slot.content}
@@ -124,7 +126,7 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
           <button
             type="button"
             onClick={() => onRemove(slot.id)}
-            className="ui-btn-secondary px-2 py-1 text-xs"
+            className="ui-btn-secondary px-2 py-1 text-[11px]"
             aria-label="빅3 삭제"
           >
             ✕

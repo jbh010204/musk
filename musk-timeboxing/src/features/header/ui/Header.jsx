@@ -332,22 +332,35 @@ function Header({
         <h1 className="text-lg font-semibold">{formatKoreanDate(currentDate)}</h1>
 
         <div className="flex items-center gap-2">
-          <Badge tone={persistenceBadge.tone}>{persistenceBadge.label}</Badge>
-          <Button
-            onClick={onOpenReschedule}
-            className="px-3 py-1.5 text-xs"
-            aria-label="자동 재배치"
+          <Badge
+            tone={persistenceBadge.tone}
+            className="px-2.5 py-1 text-[11px] font-medium tracking-wide"
           >
-            재배치
-          </Button>
-          <Button
-            onClick={onToggleTheme}
-            className="px-3 py-1.5 text-xs"
-            aria-label="테마 전환"
-            aria-pressed={theme === 'light'}
-          >
-            {theme === 'dark' ? '라이트' : '다크'}
-          </Button>
+            {persistenceBadge.label}
+          </Badge>
+          <div className="ui-panel-subtle inline-flex items-center gap-1 p-1">
+            <Button
+              variant="ghost"
+              onClick={onOpenReschedule}
+              className="px-2.5 py-1.5 text-[11px] font-medium"
+              aria-label="자동 재배치"
+            >
+              재배치
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={onToggleTheme}
+              className={`px-2.5 py-1.5 text-[11px] font-medium ${
+                theme === 'light'
+                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-slate-100'
+                  : ''
+              }`}
+              aria-label="테마 전환"
+              aria-pressed={theme === 'light'}
+            >
+              {theme === 'dark' ? '라이트' : '다크'}
+            </Button>
+          </div>
           <Button onClick={goNextDay} className="px-3 py-1 text-lg" aria-label="다음 날짜">
             →
           </Button>

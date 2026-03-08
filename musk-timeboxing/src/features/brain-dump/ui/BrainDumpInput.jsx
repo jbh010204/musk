@@ -39,7 +39,7 @@ function BrainDumpInput({ onAdd }) {
       onCompositionEnd={() => setIsComposing(false)}
       onKeyDown={handleKeyDown}
       placeholder="할 일을 입력하고 엔터..."
-      className="ui-input"
+      className="ui-input !px-3 !py-2.5 text-sm"
     />
   )
 }

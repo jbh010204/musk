@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.20.2',
+    date: '2026-03-08',
+    title: '헤더 액션 hierarchy + 사이드바 density 정리(T57~T59)',
+    summary:
+      '헤더 우측 상태/유틸리티 액션을 더 명확히 분리하고, 브레인 덤프와 빅3 슬롯의 padding/컨트롤 크기를 줄여 사이드바 스캔 속도를 높였습니다.',
+    focus: [
+      '저장 상태는 읽기 전용 badge로, 재배치/테마 전환은 작은 utility cluster로 분리',
+      '브레인 덤프/빅3는 정보량은 유지하되 padding과 버튼 크기를 줄여 한 화면에서 더 빠르게 훑히도록 조정',
+      '라이트 모드에서 작은 버튼과 subtle surface가 너무 떠 보이지 않도록 secondary tone도 함께 미세 조정',
+    ],
+    improvements: [
+      '`Header.jsx` 우측 액션을 상태 badge + utility cluster 구조로 재배치',
+      '`BrainDumpInput.jsx`, `BrainDumpItem.jsx`, `BigThreeSlot.jsx`, `big-three/index.jsx`에서 spacing과 컨트롤 크기 축소',
+      'empty Big3 slot에 `핵심 추가` 힌트를 넣어 빈 상태 의미를 더 분명히 표시',
+    ],
+    validation: [
+      'lint/build 통과',
+      'Playwright full-page 캡처로 light/dark 홈 화면 재확인',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.20.1',
     date: '2026-03-08',
     title: '라이트 모드 계층/타임라인 액션 hierarchy 재정리(T54~T56)',
