@@ -16,7 +16,7 @@ test('header shows big3 completion progress', async ({ page }) => {
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('BIG3-완료대시')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')
 
-  const createdBox = page.locator('main button[title="BIG3-완료대시"]:visible').first()
+  const createdBox = page.locator('main [title="BIG3-완료대시"]:visible').first()
   await createdBox.dispatchEvent('click')
   await page.getByRole('button', { name: '완료 ✓' }).click()
   await page.locator('#actual-minutes').fill('30')

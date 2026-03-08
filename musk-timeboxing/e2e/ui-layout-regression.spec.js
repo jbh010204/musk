@@ -55,7 +55,7 @@ test('compact timebox keeps tag-first row and top action alignment', async ({ pa
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('컴팩트-정렬-테스트')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')
 
-  const createdBox = page.locator('button[title="컴팩트-정렬-테스트"]:visible').first()
+  const createdBox = page.locator('[title="컴팩트-정렬-테스트"]:visible').first()
   await expect(createdBox).toBeVisible()
   await createdBox.focus()
   await page.keyboard.press('Enter')
@@ -63,7 +63,7 @@ test('compact timebox keeps tag-first row and top action alignment', async ({ pa
   await page.selectOption('#timebox-category', { label: '레이아웃카테고리' })
   await page.getByRole('button', { name: '저장' }).click()
 
-  const card = page.locator('button[title="컴팩트-정렬-테스트"]:visible').first()
+  const card = page.locator('[title="컴팩트-정렬-테스트"]:visible').first()
   const topActions = card.getByTestId('timebox-top-actions')
   const statusBadge = topActions.locator('span').first()
   const timerStart = card.locator('button[aria-label="타이머 시작"]').first()
@@ -137,7 +137,7 @@ test('stacked timeboxes keep compact content within bounds and hide resize seam 
   })
   await page.reload()
 
-  const compactCard = page.locator('button[title="[GDG] 자기소개 템플리 만들기"]:visible').first()
+  const compactCard = page.locator('[title="[GDG] 자기소개 템플리 만들기"]:visible').first()
   await expect(compactCard).toBeVisible()
 
   const compactRow = compactCard.getByTestId('timebox-compact-row')

@@ -9,7 +9,7 @@ test('shows skip-based suggestion when moving to next day', async ({ page }) => 
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('스킵제안-테스트')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')
 
-  const box = page.locator('button[title="스킵제안-테스트"]:visible').first()
+  const box = page.locator('[title="스킵제안-테스트"]:visible').first()
   await box.focus()
   await page.keyboard.press('Enter')
   await page.getByRole('button', { name: '건너뜀 ✗' }).click()

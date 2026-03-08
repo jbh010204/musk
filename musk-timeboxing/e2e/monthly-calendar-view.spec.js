@@ -64,5 +64,5 @@ test('monthly calendar view summarizes the month and can jump to a selected date
   await page.locator(`[data-testid="month-calendar-day-${setup.targetDate}"]:visible`).first().click()
 
   await expect(page.locator('[data-testid="timeline-day-view"]:visible').first()).toBeVisible()
-  await expect(page.locator('button[title="월간캘린더-테스트"]:visible').first()).toBeVisible()
+  await expect(page.locator('[title="월간캘린더-테스트"]:visible').first()).toBeVisible()
 })

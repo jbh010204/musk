@@ -9,7 +9,7 @@ test('skip reason is saved and displayed', async ({ page }) => {
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('스킵사유-테스트')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')
 
-  const box = page.locator('button[title="스킵사유-테스트"]:visible').first()
+  const box = page.locator('[title="스킵사유-테스트"]:visible').first()
   await box.focus()
   await page.keyboard.press('Enter')
 
@@ -17,7 +17,7 @@ test('skip reason is saved and displayed', async ({ page }) => {
   await page.selectOption('#skip-reason', { label: '외부 일정/방해' })
   await page.getByRole('button', { name: '저장' }).click()
 
-  await expect(page.locator('button[title="스킵사유-테스트"]:visible').first()).toContainText(
+  await expect(page.locator('[title="스킵사유-테스트"]:visible').first()).toContainText(
     '사유: 외부 일정/방해',
   )
   await expect(page.getByText('주요 스킵 사유 외부 일정/방해').first()).toBeVisible()

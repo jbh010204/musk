@@ -1,5 +1,29 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.20.0',
+    date: '2026-03-07',
+    title: '저장 상태 배지 + 퀵 템플릿 + 캘린더 빠른 일정 추가(T50~T53)',
+    summary:
+      '헤더에서 현재 저장 상태를 바로 읽을 수 있게 하고, 자주 쓰는 블록을 템플릿으로 저장해 일간/주간/월간 뷰에서 빠르게 일정으로 넣는 흐름을 추가했습니다.',
+    focus: [
+      'Docker 저장 모드와 로컬 저장 모드를 사용자가 헤더에서 바로 구분하도록 저장 상태 배지를 상시 노출',
+      '퀵 템플릿을 meta 저장소에 포함시켜 백업/복원/Docker 동기화와 같은 경로로 함께 다루도록 확장',
+      '일간 템플릿 스트립, 주간/월간 셀별 `+` 액션, 빠른 일정 추가 모달을 하나의 생성 흐름으로 통합',
+    ],
+    improvements: [
+      '`storage.js`와 `storageServer.js`에 persistence 상태 구독과 template 메타 저장을 추가',
+      '`Header.jsx`에 `로컬 저장/저장 대기/동기화 중/저장됨/오프라인` 배지 추가',
+      '`TemplateManagerModal.jsx`, `QuickAddModal.jsx`를 추가하고 FAB에서 템플릿 관리 진입 지원',
+      '`Timeline` 일간 뷰에 템플릿 스트립을 추가하고, 주간/월간 캘린더 카드에서도 빠른 일정 추가 버튼 지원',
+      '`TimeBoxCard.jsx`와 주간/월간 캘린더 카드 루트를 button 중첩이 없는 접근성 구조로 정리',
+    ],
+    validation: [
+      'lint/build 통과',
+      '신규 E2E 통과(template-quick-add, calendar-quick-add, persistence-badge)',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.19.4',
     date: '2026-03-07',
     title: '타임박스 seam/clipping 레이아웃 재정비(T44~T49)',

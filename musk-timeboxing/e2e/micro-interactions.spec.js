@@ -18,7 +18,7 @@ test('brain dump item slides out on remove', async ({ page }) => {
   await page.getByPlaceholder('할 일을 입력하고 엔터...').fill('SLIDE-삭제-테스트')
   await page.getByPlaceholder('할 일을 입력하고 엔터...').press('Enter')
 
-  const card = page.locator('div[data-removing]:has(button[title="SLIDE-삭제-테스트"])').first()
+  const card = page.locator('div[data-removing]:has([title="SLIDE-삭제-테스트"])').first()
   await expect(card).toHaveAttribute('data-removing', 'false')
   await card.hover()
   await card.getByRole('button', { name: '삭제', exact: true }).click()

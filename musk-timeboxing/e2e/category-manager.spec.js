@@ -19,7 +19,7 @@ test('category manager assigns managed category to timebox', async ({ page }) =>
   await input.fill('CatTest Task')
   await input.press('Enter')
 
-  const box = page.locator('button[title="CatTest Task"]:visible').first()
+  const box = page.locator('[title="CatTest Task"]:visible').first()
   await expect(box).toBeVisible()
   await box.focus()
   await page.keyboard.press('Enter')
@@ -28,7 +28,7 @@ test('category manager assigns managed category to timebox', async ({ page }) =>
   await page.selectOption('#timebox-category', { label: 'Deep Work' })
   await page.getByRole('button', { name: '저장' }).click()
 
-  await expect(page.locator('button[title="CatTest Task"]:visible').first()).toContainText('#Deep Work')
+  await expect(page.locator('[title="CatTest Task"]:visible').first()).toContainText('#Deep Work')
 
   const storage = await page.evaluate(() => {
     const dayKey = Object.keys(window.localStorage).find((key) =>

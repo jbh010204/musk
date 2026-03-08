@@ -1,4 +1,4 @@
-# Musk Planner Task Execution Board (36 Tasks)
+# Musk Planner Task Execution Board (53 Tasks)
 
 이 문서는 현재 합의된 작업을 한 번에 처리하지 않고,
 작업 단위를 쪼개서 순차 실행하기 위한 운영 보드다.
@@ -78,6 +78,10 @@
   - `T47` 리사이즈 핸들 시각 분리
   - `T48` 타임박스 배경 불투명도 조정
   - `T49` 타임박스 seam 회귀/문서 동기화
+  - `T50` 저장 상태 배지
+  - `T51` 타임박스/캘린더 카드 DOM 접근성 정리
+  - `T52` 퀵 템플릿 관리
+  - `T53` 주간/월간 빠른 일정 추가
 
 ## 3. Prioritized Task List
 

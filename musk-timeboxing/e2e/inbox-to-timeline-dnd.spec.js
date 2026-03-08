@@ -27,7 +27,7 @@ test('brain dump item can be dropped into timeline slot', async ({ page }) => {
   await page.getByPlaceholder('할 일을 입력하고 엔터...').fill('BDD-드롭-테스트')
   await page.getByPlaceholder('할 일을 입력하고 엔터...').press('Enter')
 
-  const source = page.locator('button[title="BDD-드롭-테스트"]:visible').first()
+  const source = page.locator('[title="BDD-드롭-테스트"]:visible').first()
   const targetSlot = page.locator('button[aria-label="10:00 슬롯"]:visible').first()
   await dragBetween(page, source, targetSlot)
 
@@ -56,7 +56,7 @@ test('drag guide appears while dragging from brain dump', async ({ page }) => {
   await page.getByPlaceholder('할 일을 입력하고 엔터...').fill('GUIDE-테스트')
   await page.getByPlaceholder('할 일을 입력하고 엔터...').press('Enter')
 
-  const source = page.locator('button[title="GUIDE-테스트"]:visible').first()
+  const source = page.locator('[title="GUIDE-테스트"]:visible').first()
   const targetSlot = page.locator('button[aria-label="10:00 슬롯"]:visible').first()
   const sourceBox = await source.boundingBox()
   const targetBox = await targetSlot.boundingBox()
@@ -81,7 +81,7 @@ test('big three item can be dropped into timeline slot', async ({ page }) => {
   await page.getByPlaceholder('빅3 입력 후 엔터').fill('BIG3-드롭-테스트')
   await page.getByPlaceholder('빅3 입력 후 엔터').press('Enter')
 
-  const source = page.locator('button[title="BIG3-드롭-테스트"]:visible').first()
+  const source = page.locator('[title="BIG3-드롭-테스트"]:visible').first()
   const targetSlot = page.locator('button[aria-label="11:00 슬롯"]:visible').first()
   await dragBetween(page, source, targetSlot)
 

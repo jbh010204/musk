@@ -157,10 +157,12 @@ function TimeBoxCard({
   }
 
   return (
-    <button
+    <div
       ref={setNodeRef}
-      type="button"
+      role="button"
+      tabIndex={0}
       data-timebox-dragging={isDragging ? 'true' : 'false'}
+      data-timebox-title={timeBox.content}
       data-testid="timebox-card"
       className={`timebox-card group/timebox absolute left-0 right-0 text-left text-xs text-white pointer-events-auto transition-[transform,top,height,opacity] duration-100 ease-out will-change-transform ${
         isDragging ? 'z-40 opacity-80 ring-2 ring-cyan-300/70' : ''
@@ -195,6 +197,14 @@ function TimeBoxCard({
           return
         }
 
+        onTimeBoxClick(timeBox)
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+          return
+        }
+
+        event.preventDefault()
         onTimeBoxClick(timeBox)
       }}
       title={timeBox.content}
@@ -326,7 +336,7 @@ function TimeBoxCard({
         />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/10" />
       </div>
-    </button>
+    </div>
   )
 }
 

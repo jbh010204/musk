@@ -40,5 +40,5 @@ test('refresh restores the most recently used date and focus slot', async ({ pag
   expect(lastFocus.slot).toBeGreaterThanOrEqual(15)
   expect(lastFocus.slot).toBeLessThanOrEqual(16)
 
-  await expect(page.locator('main button[title="최근복원-테스트"]:visible').first()).toBeVisible()
+  await expect(page.locator('main [title="최근복원-테스트"]:visible').first()).toBeVisible()
 })

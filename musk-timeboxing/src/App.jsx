@@ -13,15 +13,19 @@ import DataTransferModal from './features/data-transfer'
 import FloatingActionDock from './features/floating'
 import Header from './features/header'
 import PatchNotesModal from './features/patch-notes'
+import TemplateManagerModal from './features/template'
 import Timeline, { RescheduleAssistantModal } from './features/timeline'
-import { useCategoryMeta, useDailyData, useToast } from './app/hooks'
+import QuickAddModal from './features/timeline/ui/QuickAddModal'
+import { useCategoryMeta, useDailyData, useTemplateMeta, useToast } from './app/hooks'
 import {
   buildMonthCalendarSnapshot,
   buildWeekCalendarSnapshot,
+  getPlannerPersistenceStatus,
   hasOverlap,
   loadDay,
   saveDay,
   slotDurationMinutes,
+  subscribePlannerPersistenceStatus,
   TOTAL_SLOTS,
 } from './entities/planner'
 
@@ -49,6 +53,12 @@ const shiftDate = (dateStr, offset) => {
   date.setDate(date.getDate() + offset)
   return formatDate(date)
 }
+const formatShortDateLabel = (dateStr) =>
+  new Intl.DateTimeFormat('ko-KR', {
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  }).format(new Date(`${dateStr}T00:00:00`))
 
 const startOfWeekMonday = (dateStr) => {
   const date = parseDate(dateStr)
@@ -463,8 +473,10 @@ function App() {
     reloadCurrentDay,
   } = useDailyData()
   const { categories, addCategory, updateCategory, removeCategory, reloadCategories } = useCategoryMeta()
+  const { templates, addTemplate, updateTemplate, removeTemplate, reloadTemplates } = useTemplateMeta()
 
   const { showToast, ToastContainer } = useToast()
+  const [persistenceStatus, setPersistenceStatus] = useState(() => getPlannerPersistenceStatus())
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') {
       return THEME_DARK
@@ -485,8 +497,11 @@ function App() {
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false)
   const [isDataModalOpen, setIsDataModalOpen] = useState(false)
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false)
+  const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false)
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false)
+  const [quickAddContext, setQuickAddContext] = useState(null)
   const [isTimelineInsightsLoading, setIsTimelineInsightsLoading] = useState(true)
+  const [crossDateRevision, setCrossDateRevision] = useState(0)
   const [activeDragPreview, setActiveDragPreview] = useState(null)
   const [dropPreviewSlot, setDropPreviewSlot] = useState(null)
   const [movingTimeBoxPreview, setMovingTimeBoxPreview] = useState(null)
@@ -532,6 +547,14 @@ function App() {
 
     window.sessionStorage.setItem(BOOTSTRAP_NOTICE_KEY, 'true')
   }, [showToast])
+
+  useEffect(() => {
+    const unsubscribe = subscribePlannerPersistenceStatus((status) => {
+      setPersistenceStatus(status)
+    })
+
+    return unsubscribe
+  }, [])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -602,7 +625,7 @@ function App() {
     setDailySuggestion(null)
   }
 
-  const weekStrip = useMemo(() => {
+  const weekStrip = (() => {
     const startDate = startOfWeekMonday(currentDate)
     startDate.setDate(startDate.getDate() - 7)
 
@@ -622,40 +645,25 @@ function App() {
         isCurrent: dateStr === currentDate,
       }
     })
-  }, [currentDate, data])
-  const weeklyReport = useMemo(
-    () =>
-      buildWeeklyReport({
-        currentDate,
-        currentDayData: data,
-      }),
-    [currentDate, data],
-  )
-  const weeklyPlanningPreview = useMemo(
-    () =>
-      buildWeeklyPlanningPreview({
-        currentDate,
-        currentDayData: data,
-      }),
-    [currentDate, data],
-  )
-  const weekCalendar = useMemo(
-    () =>
-      buildWeekCalendarSnapshot({
-        currentDate,
-        currentDayData: data,
-      }),
-    [currentDate, data],
-  )
-  const monthCalendar = useMemo(
-    () =>
-      buildMonthCalendarSnapshot({
-        currentDate,
-        currentDayData: data,
-        categories,
-      }),
-    [categories, currentDate, data],
-  )
+  })()
+  void crossDateRevision
+  const weeklyReport = buildWeeklyReport({
+    currentDate,
+    currentDayData: data,
+  })
+  const weeklyPlanningPreview = buildWeeklyPlanningPreview({
+    currentDate,
+    currentDayData: data,
+  })
+  const weekCalendar = buildWeekCalendarSnapshot({
+    currentDate,
+    currentDayData: data,
+  })
+  const monthCalendar = buildMonthCalendarSnapshot({
+    currentDate,
+    currentDayData: data,
+    categories,
+  })
   const bigThreeProgress = useMemo(() => {
     const statuses = [0, 1, 2].map((index) => {
       const item = data.bigThree[index]
@@ -826,6 +834,7 @@ function App() {
     }
 
     saveDay(plan.targetDate, merged)
+    setCrossDateRevision((prev) => prev + 1)
     showToast(`다음 날(${plan.targetDate})로 ${deduped.length}건 재배치했습니다`, 2600)
     setIsRescheduleModalOpen(false)
   }
@@ -1077,7 +1086,36 @@ function App() {
 
   const handleImported = () => {
     reloadCategories()
+    reloadTemplates()
     reloadCurrentDay()
+    setCrossDateRevision((prev) => prev + 1)
+  }
+
+  const handleAddTemplate = (payload) => {
+    const result = addTemplate(payload)
+    if (!result.ok) {
+      showToast(result.error)
+      return result
+    }
+
+    showToast('템플릿을 추가했습니다')
+    return result
+  }
+
+  const handleUpdateTemplate = (id, payload) => {
+    const result = updateTemplate(id, payload)
+    if (!result.ok) {
+      showToast(result.error)
+      return result
+    }
+
+    showToast('템플릿을 저장했습니다')
+    return result
+  }
+
+  const handleDeleteTemplate = (id) => {
+    removeTemplate(id)
+    showToast('템플릿을 삭제했습니다')
   }
 
   const handleUpdateTimeBox = (id, changes) => {
@@ -1179,6 +1217,88 @@ function App() {
     return true
   }
 
+  const createTimeBoxOnDate = ({
+    dateStr,
+    content,
+    durationSlots = 1,
+    startSlot = null,
+    categoryId = null,
+    sourceId = null,
+  }) => {
+    if (typeof dateStr !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return false
+    }
+
+    const trimmedContent = String(content || '').trim()
+    if (!trimmedContent) {
+      showToast('일정 내용을 입력해 주세요')
+      return false
+    }
+
+    const safeDuration = Math.max(1, Math.min(TOTAL_SLOTS, Number(durationSlots) || 1))
+    const targetDay = dateStr === currentDate ? data : loadDay(dateStr)
+    const requestedStart = Number.isInteger(startSlot)
+      ? clamp(Number(startSlot), 0, TOTAL_SLOTS - safeDuration)
+      : null
+    const resolvedStart =
+      requestedStart != null
+        ? requestedStart
+        : findAvailableStartSlot(targetDay.timeBoxes, 0, safeDuration)
+
+    if (resolvedStart == null) {
+      showToast('배치할 빈 시간이 없습니다')
+      return false
+    }
+
+    const newBox = {
+      content: trimmedContent,
+      sourceId,
+      startSlot: resolvedStart,
+      endSlot: Math.min(TOTAL_SLOTS, resolvedStart + safeDuration),
+      categoryId: categoryId || null,
+    }
+
+    if (hasOverlap(targetDay.timeBoxes, newBox)) {
+      showToast('해당 시간에 이미 일정이 있습니다')
+      return false
+    }
+
+    if (dateStr === currentDate) {
+      addTimeBox(newBox)
+    } else {
+      saveDay(dateStr, {
+        ...targetDay,
+        timeBoxes: [
+          ...targetDay.timeBoxes,
+          {
+            id: crypto.randomUUID(),
+            ...newBox,
+            status: 'PLANNED',
+            actualMinutes: null,
+            category: null,
+            skipReason: null,
+            timerStartedAt: null,
+            elapsedSeconds: 0,
+            carryOverFromDate: null,
+            carryOverFromBoxId: null,
+          },
+        ],
+      })
+      setCrossDateRevision((prev) => prev + 1)
+    }
+
+    showToast(`${formatShortDateLabel(dateStr)}에 일정을 추가했습니다`)
+    return true
+  }
+
+  const openQuickAdd = (dateStr, options = {}) => {
+    setQuickAddContext({
+      dateStr,
+      dateLabel: options.dateLabel || formatShortDateLabel(dateStr),
+      initialTemplateId: options.templateId || '',
+    })
+  }
+
   const dumpSection = (
     <BrainDump
       items={data.brainDump}
@@ -1204,6 +1324,7 @@ function App() {
       data={data}
       currentDate={currentDate}
       categories={categories}
+      templates={templates}
       weeklyReport={weeklyReport}
       weeklyPlanningPreview={weeklyPlanningPreview}
       weekCalendar={weekCalendar}
@@ -1229,6 +1350,14 @@ function App() {
       onTimerComplete={handleTimerComplete}
       removeTimeBox={handleRemoveTimeBox}
       onDuplicateTimeBox={handleDuplicateTimeBox}
+      onOpenTemplateManager={() => setIsTemplateManagerOpen(true)}
+      onOpenQuickAdd={(dateStr, options = {}) => openQuickAdd(dateStr, options)}
+      onApplyTemplate={(templateId, dateStr = currentDate) =>
+        openQuickAdd(dateStr, {
+          dateLabel: formatShortDateLabel(dateStr),
+          templateId,
+        })
+      }
       showToast={showToast}
       showDropGuide={
         activeDragPreview?.type === 'BRAIN_DUMP' || activeDragPreview?.type === 'BIG_THREE'
@@ -1254,6 +1383,7 @@ function App() {
             goToDate={goToDate}
             bigThreeProgress={bigThreeProgress}
             theme={theme}
+            persistenceStatus={persistenceStatus}
             onOpenReschedule={() => setIsRescheduleModalOpen(true)}
             onToggleTheme={() =>
               setTheme((prev) => (prev === THEME_DARK ? THEME_LIGHT : THEME_DARK))
@@ -1318,6 +1448,7 @@ function App() {
           onOpenPatchNotes={() => setIsPatchNotesOpen(true)}
           onOpenCategory={() => setIsCategoryManagerOpen(true)}
           onOpenData={() => setIsDataModalOpen(true)}
+          onOpenTemplate={() => setIsTemplateManagerOpen(true)}
         />
         {isPatchNotesOpen ? <PatchNotesModal onClose={() => setIsPatchNotesOpen(false)} /> : null}
         {isDataModalOpen ? (
@@ -1335,6 +1466,27 @@ function App() {
             onAddCategory={handleAddCategory}
             onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}
+          />
+        ) : null}
+        {isTemplateManagerOpen ? (
+          <TemplateManagerModal
+            templates={templates}
+            categories={categories}
+            onClose={() => setIsTemplateManagerOpen(false)}
+            onAddTemplate={handleAddTemplate}
+            onUpdateTemplate={handleUpdateTemplate}
+            onDeleteTemplate={handleDeleteTemplate}
+          />
+        ) : null}
+        {quickAddContext ? (
+          <QuickAddModal
+            dateStr={quickAddContext.dateStr}
+            dateLabel={quickAddContext.dateLabel}
+            categories={categories}
+            templates={templates}
+            initialTemplateId={quickAddContext.initialTemplateId}
+            onClose={() => setQuickAddContext(null)}
+            onSubmit={(payload) => createTimeBoxOnDate(payload)}
           />
         ) : null}
         {isRescheduleModalOpen ? (

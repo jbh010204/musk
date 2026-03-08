@@ -1,4 +1,4 @@
-import { Badge, Card } from '../../../shared/ui'
+import { Badge, Button, Card } from '../../../shared/ui'
 import { hexToRgba, slotToTime } from '../../../entities/planner'
 
 const WEEK_HEADER_LABELS = ['월', '화', '수', '목', '금', '토', '일']
@@ -39,6 +39,7 @@ function MonthlyCalendarView({
   averageCompletionRate = 0,
   busiestDay = null,
   onOpenDate = () => {},
+  onQuickAdd = () => {},
 }) {
   return (
     <Card className="mb-6 p-6" data-testid="calendar-view-month">
@@ -98,10 +99,17 @@ function MonthlyCalendarView({
 
       <div className="grid grid-cols-7 gap-3">
         {cells.map((cell) => (
-          <button
+          <div
             key={cell.dateStr}
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={() => onOpenDate(cell.dateStr)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onOpenDate(cell.dateStr)
+              }
+            }}
             data-testid={`month-calendar-day-${cell.dateStr}`}
             data-heat-intensity={cell.heatLevel}
             data-dominant-category={cell.dominantCategory?.label || 'none'}
@@ -136,9 +144,24 @@ function MonthlyCalendarView({
                 >
                   {cell.dayNumber}
                 </p>
-                <span className="rounded-xl bg-slate-200/80 px-2 py-0.5 text-[11px] text-slate-700 dark:bg-slate-800/70 dark:text-slate-200">
-                  {cell.total}건
-                </span>
+                <div className="flex items-center gap-1">
+                  <span className="rounded-xl bg-slate-200/80 px-2 py-0.5 text-[11px] text-slate-700 dark:bg-slate-800/70 dark:text-slate-200">
+                    {cell.total}건
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`${cell.dateStr} 빠른 일정 추가`}
+                    data-testid={`month-calendar-quick-add-${cell.dateStr}`}
+                    className="rounded-xl text-slate-500 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onQuickAdd(cell.dateStr, `${cell.dayNumber}일 빠른 일정 추가`)
+                    }}
+                  >
+                    +
+                  </Button>
+                </div>
               </div>
 
               <div className="mt-2 flex items-center justify-between gap-2">
@@ -204,7 +227,7 @@ function MonthlyCalendarView({
                 </div>
               </div>
             </div>
-          </button>
+          </div>
         ))}
       </div>
     </Card>

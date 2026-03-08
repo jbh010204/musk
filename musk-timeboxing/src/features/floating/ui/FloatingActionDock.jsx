@@ -2,6 +2,12 @@ import { useState } from 'react'
 
 const ACTIONS = [
   {
+    id: 'template',
+    label: '퀵 템플릿',
+    color: '#14b8a6',
+    short: 'T',
+  },
+  {
     id: 'patch-notes',
     label: '패치노트',
     color: '#0ea5e9',
@@ -21,7 +27,7 @@ const ACTIONS = [
   },
 ]
 
-function FloatingActionDock({ onOpenPatchNotes, onOpenCategory, onOpenData }) {
+function FloatingActionDock({ onOpenPatchNotes, onOpenCategory, onOpenData, onOpenTemplate }) {
   const [open, setOpen] = useState(false)
 
   const handleAction = (actionId) => {
@@ -29,6 +35,11 @@ function FloatingActionDock({ onOpenPatchNotes, onOpenCategory, onOpenData }) {
 
     if (actionId === 'category') {
       onOpenCategory()
+      return
+    }
+
+    if (actionId === 'template') {
+      onOpenTemplate()
       return
     }
 

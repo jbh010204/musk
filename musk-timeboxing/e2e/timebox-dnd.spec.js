@@ -48,7 +48,7 @@ test('timebox drag interaction keeps persisted timebox data valid', async ({ pag
   await input.fill('E2E-드래그-검증')
   await input.press('Enter')
 
-  const box = page.locator('button[title="E2E-드래그-검증"]:visible').first()
+  const box = page.locator('[title="E2E-드래그-검증"]:visible').first()
   await expect(box).toBeVisible()
 
   const before = await getStorageState(page)

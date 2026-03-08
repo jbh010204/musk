@@ -12,7 +12,7 @@ test('duration preset creates multi-slot timebox', async ({ page }) => {
   await page.getByRole('button', { name: '90분 프리셋' }).click()
   await input.press('Enter')
 
-  await expect(page.locator('button[title="프리셋-90분"]:visible').first()).toBeVisible()
+  await expect(page.locator('[title="프리셋-90분"]:visible').first()).toBeVisible()
 
   const saved = await page.evaluate(() => {
     const dayKey = Object.keys(window.localStorage).find((key) =>

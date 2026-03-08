@@ -78,7 +78,7 @@ test('brain dump long text uses two-line clamp with compact battery width', asyn
   await page.getByPlaceholder('할 일을 입력하고 엔터...').press('Enter')
 
   const item = getBrainDumpItem(page, longText)
-  const contentStyle = await item.locator(`button[title="${longText}"]`).evaluate((node) => {
+  const contentStyle = await item.locator(`[title="${longText}"]`).evaluate((node) => {
     const text = node.querySelector('span')
     const styles = window.getComputedStyle(text)
 

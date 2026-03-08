@@ -9,7 +9,7 @@ test('weekly report reflects completion and skip metrics', async ({ page }) => {
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('주간완료')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')
 
-  const doneBox = page.locator('main button[title="주간완료"]:visible').first()
+  const doneBox = page.locator('main [title="주간완료"]:visible').first()
   await doneBox.dispatchEvent('click')
   await page.getByRole('button', { name: '완료 ✓' }).click()
   await page.locator('#actual-minutes').fill('45')
@@ -19,7 +19,7 @@ test('weekly report reflects completion and skip metrics', async ({ page }) => {
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('주간스킵')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')
 
-  const skippedBox = page.locator('main button[title="주간스킵"]:visible').first()
+  const skippedBox = page.locator('main [title="주간스킵"]:visible').first()
   await skippedBox.dispatchEvent('click')
   await page.getByRole('button', { name: '건너뜀 ✗' }).click()
   await page.selectOption('#skip-reason', { label: '외부 일정/방해' })

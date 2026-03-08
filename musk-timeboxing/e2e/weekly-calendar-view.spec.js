@@ -64,5 +64,5 @@ test('weekly calendar view summarizes the week and can jump to a selected date',
   await page.locator(`[data-testid="week-calendar-day-${setup.targetDate}"]:visible`).first().click()
 
   await expect(page.locator('[data-testid="timeline-day-view"]:visible').first()).toBeVisible()
-  await expect(page.locator('button[title="주간캘린더-테스트"]:visible').first()).toBeVisible()
+  await expect(page.locator('[title="주간캘린더-테스트"]:visible').first()).toBeVisible()
 })

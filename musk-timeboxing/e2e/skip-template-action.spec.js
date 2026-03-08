@@ -9,7 +9,7 @@ test('skip suggestion action inserts recommended block on next day', async ({ pa
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('스킵-템플릿-원본')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')
 
-  const box = page.locator('main button[title="스킵-템플릿-원본"]:visible').first()
+  const box = page.locator('main [title="스킵-템플릿-원본"]:visible').first()
   await box.click()
   await page.getByRole('button', { name: '건너뜀 ✗' }).click()
   await page.selectOption('#skip-reason', { label: '외부 일정/방해' })
@@ -20,5 +20,5 @@ test('skip suggestion action inserts recommended block on next day', async ({ pa
   await expect(panel).toContainText('버퍼 30분 블록')
   await panel.getByRole('button', { name: '버퍼 30분 블록 추가' }).click()
 
-  await expect(page.locator('main button[title="버퍼 블록"]:visible').first()).toBeVisible()
+  await expect(page.locator('main [title="버퍼 블록"]:visible').first()).toBeVisible()
 })

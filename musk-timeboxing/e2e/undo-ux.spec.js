@@ -9,16 +9,16 @@ test('brain dump delete supports undo action', async ({ page }) => {
   await input.fill('UNDO-브레인덤프')
   await input.press('Enter')
 
-  const itemButton = page.locator('button[title="UNDO-브레인덤프"]').first()
+  const itemButton = page.locator('[title="UNDO-브레인덤프"]').first()
   await expect(itemButton).toBeVisible()
 
   const itemRow = page.locator('div[data-removing]').filter({ has: itemButton }).first()
   await itemRow.hover()
   await itemRow.getByRole('button', { name: '삭제' }).click()
 
-  await expect(page.locator('button[title="UNDO-브레인덤프"]')).toHaveCount(0)
+  await expect(page.locator('[title="UNDO-브레인덤프"]')).toHaveCount(0)
   await page.getByRole('button', { name: '되돌리기' }).first().click()
-  await expect(page.locator('button[title="UNDO-브레인덤프"]').first()).toBeVisible()
+  await expect(page.locator('[title="UNDO-브레인덤프"]').first()).toBeVisible()
 })
 
 test('status update in completion modal supports undo action', async ({ page }) => {
@@ -30,16 +30,16 @@ test('status update in completion modal supports undo action', async ({ page }) 
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('UNDO-상태변경')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')
 
-  const box = page.locator('button[title="UNDO-상태변경"]:visible').first()
+  const box = page.locator('[title="UNDO-상태변경"]:visible').first()
   await box.click()
 
   await page.getByRole('button', { name: '완료 ✓' }).click()
   await page.locator('#actual-minutes').fill('45')
   await page.getByRole('button', { name: '저장' }).click()
 
-  await expect(page.locator('button[title="UNDO-상태변경"]:visible').first()).toContainText('완료')
+  await expect(page.locator('[title="UNDO-상태변경"]:visible').first()).toContainText('완료')
   await page.getByRole('button', { name: '되돌리기' }).first().click()
-  await expect(page.locator('button[title="UNDO-상태변경"]:visible').first()).toContainText('예정')
+  await expect(page.locator('[title="UNDO-상태변경"]:visible').first()).toContainText('예정')
 
   const status = await page.evaluate(() => {
     const dayKey = Object.keys(window.localStorage).find((key) =>
@@ -66,7 +66,7 @@ test('timebox delete supports undo action', async ({ page }) => {
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('UNDO-일정삭제')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')
 
-  const box = page.locator('button[title="UNDO-일정삭제"]:visible').first()
+  const box = page.locator('[title="UNDO-일정삭제"]:visible').first()
   await box.click()
 
   page.once('dialog', async (dialog) => {
@@ -77,7 +77,7 @@ test('timebox delete supports undo action', async ({ page }) => {
     .getByRole('button', { name: '삭제', exact: true })
     .click({ force: true })
 
-  await expect(page.locator('button[title="UNDO-일정삭제"]:visible')).toHaveCount(0)
+  await expect(page.locator('[title="UNDO-일정삭제"]:visible')).toHaveCount(0)
   await page.getByRole('button', { name: '되돌리기' }).first().click()
-  await expect(page.locator('button[title="UNDO-일정삭제"]:visible').first()).toBeVisible()
+  await expect(page.locator('[title="UNDO-일정삭제"]:visible').first()).toBeVisible()
 })

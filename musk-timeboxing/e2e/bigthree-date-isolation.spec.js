@@ -8,10 +8,10 @@ test('big three stays isolated by date when navigating days', async ({ page }) =
   await page.getByRole('button', { name: '빅3 빈 슬롯' }).first().click()
   await page.getByPlaceholder('빅3 입력 후 엔터').fill('빅3-날짜독립')
   await page.getByPlaceholder('빅3 입력 후 엔터').press('Enter')
-  await expect(page.locator('button[title="빅3-날짜독립"]:visible').first()).toBeVisible()
+  await expect(page.locator('[title="빅3-날짜독립"]:visible').first()).toBeVisible()
 
   await page.locator('button[aria-label="다음 날짜"]').click()
-  await expect(page.locator('button[title="빅3-날짜독립"]:visible')).toHaveCount(0)
+  await expect(page.locator('[title="빅3-날짜독립"]:visible')).toHaveCount(0)
 
   const nextDayBigThreeCount = await page.evaluate(() => {
     const dayKeys = Object.keys(window.localStorage)
@@ -30,5 +30,5 @@ test('big three stays isolated by date when navigating days', async ({ page }) =
   expect(nextDayBigThreeCount).toBe(0)
 
   await page.locator('button[aria-label="이전 날짜"]').click()
-  await expect(page.locator('button[title="빅3-날짜독립"]:visible').first()).toBeVisible()
+  await expect(page.locator('[title="빅3-날짜독립"]:visible').first()).toBeVisible()
 })

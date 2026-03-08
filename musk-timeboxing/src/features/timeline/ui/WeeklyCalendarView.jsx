@@ -1,7 +1,7 @@
-import { Badge, Card } from '../../../shared/ui'
+import { Badge, Button, Card } from '../../../shared/ui'
 import { slotToTime } from '../../../entities/planner'
 
-function WeeklyCalendarView({ rangeLabel, days = [], onOpenDate = () => {} }) {
+function WeeklyCalendarView({ rangeLabel, days = [], onOpenDate = () => {}, onQuickAdd = () => {} }) {
   return (
     <Card className="mb-6 p-6" data-testid="calendar-view-week">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -16,10 +16,17 @@ function WeeklyCalendarView({ rangeLabel, days = [], onOpenDate = () => {} }) {
 
       <div className="grid gap-4 xl:grid-cols-7">
         {days.map((day) => (
-          <button
+          <div
             key={day.dateStr}
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={() => onOpenDate(day.dateStr)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onOpenDate(day.dateStr)
+              }
+            }}
             data-testid={`week-calendar-day-${day.dateStr}`}
             className={`rounded-2xl p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
               day.isCurrent
@@ -36,7 +43,22 @@ function WeeklyCalendarView({ rangeLabel, days = [], onOpenDate = () => {} }) {
                   {day.dayNumber}
                 </p>
               </div>
-              <Badge tone="neutral">{day.total}건</Badge>
+              <div className="flex items-center gap-2">
+                <Badge tone="neutral">{day.total}건</Badge>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`${day.dateStr} 빠른 일정 추가`}
+                  data-testid={`week-calendar-quick-add-${day.dateStr}`}
+                  className="rounded-xl text-slate-500 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onQuickAdd(day.dateStr, `${day.dayLabel} ${day.dayNumber} 빠른 일정 추가`)
+                  }}
+                >
+                  +
+                </Button>
+              </div>
             </div>
 
             <div className="mt-3 h-1.5 rounded-full bg-slate-200/80 dark:bg-slate-700/70">
@@ -62,7 +84,7 @@ function WeeklyCalendarView({ rangeLabel, days = [], onOpenDate = () => {} }) {
                 ))
               )}
             </div>
-          </button>
+          </div>
         ))}
       </div>
     </Card>

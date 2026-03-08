@@ -15,7 +15,7 @@ test('daily recap updates after completion', async ({ page }) => {
   await expect(recapCard.getByText('총 일정 1개').first()).toBeVisible()
   await expect(recapCard.getByText('완료율 0%').first()).toBeVisible()
 
-  const box = page.locator('button[title="리캡-테스트"]:visible').first()
+  const box = page.locator('[title="리캡-테스트"]:visible').first()
   await box.focus()
   await page.keyboard.press('Enter')
 

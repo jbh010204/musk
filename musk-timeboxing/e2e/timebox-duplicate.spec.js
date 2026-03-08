@@ -9,10 +9,10 @@ test('timebox can be duplicated from completion modal', async ({ page }) => {
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('복제-원본-일정')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')
 
-  await page.locator('button[title="복제-원본-일정"]:visible').first().click()
+  await page.locator('[title="복제-원본-일정"]:visible').first().click()
   await page.locator('.ui-modal-card').getByRole('button', { name: '복제', exact: true }).click()
 
-  await expect(page.locator('button[title="복제-원본-일정 (복제)"]:visible').first()).toBeVisible()
+  await expect(page.locator('[title="복제-원본-일정 (복제)"]:visible').first()).toBeVisible()
 
   const counts = await page.evaluate(() => {
     const dayKey = Object.keys(window.localStorage).find((key) =>

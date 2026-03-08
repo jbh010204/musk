@@ -66,7 +66,9 @@ function TimelineInsightsSkeleton() {
 
 function Timeline({
   data,
+  currentDate,
   categories,
+  templates = [],
   weeklyReport,
   weeklyPlanningPreview = [],
   weekCalendar = { rangeLabel: '', days: [] },
@@ -94,6 +96,9 @@ function Timeline({
   focusMode = false,
   onToggleFocusMode = () => {},
   onDuplicateTimeBox = () => false,
+  onOpenTemplateManager = () => {},
+  onOpenQuickAdd = () => {},
+  onApplyTemplate = () => {},
 }) {
   const sectionRef = useRef(null)
   const [pendingInput, setPendingInput] = useState(null)
@@ -327,6 +332,13 @@ function Timeline({
             <>
               <button
                 type="button"
+                onClick={() => onOpenQuickAdd(currentDate, { dateLabel: '오늘 빠른 일정 추가' })}
+                className="rounded-xl px-2.5 py-1.5 text-xs text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+              >
+                빠른 추가
+              </button>
+              <button
+                type="button"
                 data-testid="timeline-focus-toggle"
                 onClick={onToggleFocusMode}
                 className={`rounded-xl px-2.5 py-1.5 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
@@ -422,6 +434,53 @@ function Timeline({
         </div>
       ) : null}
 
+      {isDayView ? (
+        <div className="mb-6 rounded-3xl bg-slate-100/80 p-4 dark:bg-slate-800/35">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                퀵 템플릿
+              </p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                자주 쓰는 블록을 오늘 일정으로 바로 넣습니다.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenTemplateManager}
+              className="rounded-xl px-2.5 py-1.5 text-xs text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            >
+              관리
+            </button>
+          </div>
+
+          {templates.length === 0 ? (
+            <div className="mt-4 rounded-2xl bg-white/70 px-4 py-3 text-sm text-slate-500 shadow-sm dark:bg-slate-900/55 dark:text-slate-400">
+              아직 템플릿이 없습니다. 관리에서 자주 쓰는 블록을 먼저 저장하세요.
+            </div>
+          ) : (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {templates.map((template) => (
+                <button
+                  key={template.id}
+                  type="button"
+                  data-testid={`timeline-template-${template.id}`}
+                  onClick={() => onApplyTemplate(template.id, currentDate)}
+                  className="rounded-2xl bg-white px-3 py-2 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-900 dark:hover:bg-slate-800"
+                >
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {template.name}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {template.content} · {template.durationSlots * 30}분
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
+
       {isDayView && suggestionMessage ? (
         <div
           data-testid="daily-suggestion-panel"
@@ -482,6 +541,7 @@ function Timeline({
           rangeLabel={weekCalendar.rangeLabel}
           days={weekCalendar.days}
           onOpenDate={handleOpenCalendarDate}
+          onQuickAdd={(dateStr, dateLabel) => onOpenQuickAdd(dateStr, { dateLabel })}
         />
       ) : null}
 
@@ -494,6 +554,7 @@ function Timeline({
           averageCompletionRate={monthCalendar.averageCompletionRate}
           busiestDay={monthCalendar.busiestDay}
           onOpenDate={handleOpenCalendarDate}
+          onQuickAdd={(dateStr, dateLabel) => onOpenQuickAdd(dateStr, { dateLabel })}
         />
       ) : null}
 

@@ -17,7 +17,7 @@ test('timeline can filter by status and category', async ({ page }) => {
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('필터-완료-일정')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')
 
-  await page.locator('button[title="필터-완료-일정"]:visible').first().click()
+  await page.locator('[title="필터-완료-일정"]:visible').first().click()
   await page.selectOption('#timebox-category', { label: '필터A' })
   await page.getByRole('button', { name: '완료 ✓' }).click()
   await page.locator('#actual-minutes').fill('30')
@@ -27,16 +27,16 @@ test('timeline can filter by status and category', async ({ page }) => {
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('필터-예정-일정')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')
 
-  await page.locator('button[title="필터-예정-일정"]:visible').first().click()
+  await page.locator('[title="필터-예정-일정"]:visible').first().click()
   await page.selectOption('#timebox-category', { label: '필터B' })
   await page.getByRole('button', { name: '저장' }).click()
 
   await page.selectOption('[data-testid="timeline-status-filter"]', 'COMPLETED')
-  await expect(page.locator('button[title="필터-완료-일정"]:visible').first()).toBeVisible()
-  await expect(page.locator('button[title="필터-예정-일정"]:visible')).toHaveCount(0)
+  await expect(page.locator('[title="필터-완료-일정"]:visible').first()).toBeVisible()
+  await expect(page.locator('[title="필터-예정-일정"]:visible')).toHaveCount(0)
 
   await page.selectOption('[data-testid="timeline-status-filter"]', 'ALL')
   await page.selectOption('[data-testid="timeline-category-filter"]', { label: '필터B' })
-  await expect(page.locator('button[title="필터-예정-일정"]:visible').first()).toBeVisible()
-  await expect(page.locator('button[title="필터-완료-일정"]:visible')).toHaveCount(0)
+  await expect(page.locator('[title="필터-예정-일정"]:visible').first()).toBeVisible()
+  await expect(page.locator('[title="필터-완료-일정"]:visible')).toHaveCount(0)
 })

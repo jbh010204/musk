@@ -69,5 +69,5 @@ test('data transfer supports export download and file import', async ({ page }) 
   await expect(page.getByTestId('data-import-text')).toContainText('파일가져오기-일정')
   await page.getByRole('button', { name: '가져오기 실행' }).click()
 
-  await expect(page.locator('button[title="파일가져오기-일정"]:visible').first()).toBeVisible()
+  await expect(page.locator('[title="파일가져오기-일정"]:visible').first()).toBeVisible()
 })
