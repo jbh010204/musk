@@ -43,7 +43,10 @@ function TimeBoxCard({
   const categoryColor = getCategoryColor(categoryMeta, timeBox)
   const visual = getTimeBoxVisual(categoryColor, timeBox.status)
   const canUseTimer = timeBox.status !== 'COMPLETED' && timeBox.status !== 'SKIPPED'
-  const layout = resolveTimeBoxLayout({ boxHeight, canUseTimer })
+  const layout = useMemo(
+    () => resolveTimeBoxLayout({ boxHeight, canUseTimer }),
+    [boxHeight, canUseTimer],
+  )
   const [isResizing, setIsResizing] = useState(false)
   const isRunning = Number.isFinite(timeBox.timerStartedAt)
   const runningSeconds =
@@ -65,32 +68,45 @@ function TimeBoxCard({
     const sign = diff > 0 ? '+' : ''
 
     return {
-      text: `계획 ${slotDurationMinutes(timeBox.startSlot, timeBox.endSlot)}분 → 실제 ${timeBox.actualMinutes}분 (${sign}${diff}분)`,
+      text:
+        diff === 0
+          ? `실제 ${timeBox.actualMinutes}분 · 차이 0분`
+          : `실제 ${timeBox.actualMinutes}분 · 차이 ${sign}${diff}분`,
+      prefixText: `실제 ${timeBox.actualMinutes}분`,
+      diffText: diff === 0 ? '차이 0분' : `차이 ${sign}${diff}분`,
       className: diff > 0 ? 'text-orange-200' : diff < 0 ? 'text-green-200' : 'text-gray-200',
     }
   }, [timeBox])
 
-  const summaryLine = useMemo(() => {
+  const primaryTimeLine = useMemo(() => {
     if (timeBox.status === 'COMPLETED' && actualDiff) {
-      return actualDiff
+      return {
+        text:
+          layout.timeVariant === 'short'
+            ? `${timeBox.actualMinutes}분`
+            : actualDiff.text,
+        prefixText: layout.timeVariant === 'short' ? null : actualDiff.prefixText,
+        diffText: layout.timeVariant === 'short' ? null : actualDiff.diffText,
+        className: actualDiff.className,
+      }
+    }
+
+    if (timeBox.status === 'SKIPPED') {
+      return {
+        text: layout.timeVariant === 'short' ? `${plannedMinutes}분` : `계획 ${plannedMinutes}분`,
+        className: 'text-white/80',
+      }
     }
 
     if (timeBox.status === 'PLANNED') {
       return {
-        text: `계획 ${plannedMinutes}분`,
+        text: layout.timeVariant === 'short' ? `${plannedMinutes}분` : `계획 ${plannedMinutes}분`,
         className: 'text-white/85',
       }
     }
 
-    if (timeBox.status === 'SKIPPED' && timeBox.skipReason) {
-      return {
-        text: `사유: ${timeBox.skipReason}`,
-        className: 'text-amber-100',
-      }
-    }
-
     return null
-  }, [actualDiff, plannedMinutes, timeBox.skipReason, timeBox.status])
+  }, [actualDiff, layout.timeVariant, plannedMinutes, timeBox.actualMinutes, timeBox.status])
 
   const runtimeLine =
     canUseTimer && elapsedSeconds > 0 && layout.showInlineRuntimeLabel
@@ -100,9 +116,18 @@ function TimeBoxCard({
         }
       : null
 
-  const infoLines = layout.showSecondaryMeta
-    ? [runtimeLine, summaryLine].filter(Boolean)
-    : [summaryLine || runtimeLine].filter(Boolean)
+  const detailMetaLine = useMemo(() => {
+    if (timeBox.status === 'SKIPPED' && timeBox.skipReason) {
+      return {
+        text: `사유: ${timeBox.skipReason}`,
+        className: 'text-amber-100',
+      }
+    }
+
+    return null
+  }, [timeBox.skipReason, timeBox.status])
+
+  const metaLines = layout.showMeta ? [runtimeLine, detailMetaLine].filter(Boolean) : []
 
   const resizingRef = useRef({
     startY: 0,
@@ -272,36 +297,59 @@ function TimeBoxCard({
           ) : null}
         </div>
 
-        {layout.showCompactRow ? (
+        {layout.contentLayout === 'inline' ? (
           <div
-            data-testid="timebox-compact-row"
-            className={`${layout.compactRowClass} ${layout.contentInsetClass}`}
+            data-testid="timebox-content"
+            className={`${layout.contentContainerClass} ${layout.contentInsetClass}`}
           >
-            {timeBox.status === 'SKIPPED' && timeBox.skipReason ? (
-              <span className="max-w-[48%] shrink-0 truncate rounded border border-amber-300/40 bg-amber-500/15 px-1 py-0.5 text-[10px] text-amber-100">
-                사유: {timeBox.skipReason}
-              </span>
-            ) : categoryLabel ? (
-              <span
-                data-testid="timebox-compact-tag"
-                className="max-w-[40%] shrink-0 truncate rounded border px-1 py-0.5 text-[10px] text-white/95"
-                style={{
-                  backgroundColor: visual.categoryBadgeBackground,
-                  borderColor: visual.categoryBadgeBorder,
-                }}
-              >
-                #{categoryLabel}
+            {layout.showTag
+              ? timeBox.status === 'SKIPPED' && timeBox.skipReason
+                ? (
+                    <span
+                      data-testid="timebox-tag"
+                      className={`${layout.tagClass} border-amber-300/40 bg-amber-500/15 text-amber-100`}
+                    >
+                      사유: {timeBox.skipReason}
+                    </span>
+                  )
+                : categoryLabel
+                  ? (
+                      <span
+                        data-testid="timebox-tag"
+                        className={layout.tagClass}
+                        style={{
+                          backgroundColor: visual.categoryBadgeBackground,
+                          borderColor: visual.categoryBadgeBorder,
+                        }}
+                      >
+                        #{categoryLabel}
+                      </span>
+                    )
+                  : null
+              : null}
+            <span
+              data-testid="timebox-title"
+              className={`${layout.titleClass} ${layout.titleClampClass}`}
+            >
+              {timeBox.content}
+            </span>
+            {layout.showTime && primaryTimeLine ? (
+              <span data-testid="timebox-time" className={layout.timeClass}>
+                {primaryTimeLine.text}
               </span>
             ) : null}
-            <span className="min-w-0 flex-1 truncate font-medium leading-tight">{timeBox.content}</span>
           </div>
         ) : null}
 
-        {!layout.showCompactRow ? (
-          <div className={`${layout.detailBodyClass} ${layout.contentInsetClass}`}>
-            {categoryLabel ? (
+        {layout.contentLayout === 'stack-centered' ? (
+          <div
+            data-testid="timebox-content"
+            className={`${layout.contentContainerClass} ${layout.contentInsetClass}`}
+          >
+            {layout.showTag && categoryLabel ? (
               <div
-                className="mb-1 inline-flex max-w-[80%] rounded border px-1.5 py-0.5 text-[10px] text-white"
+                data-testid="timebox-tag"
+                className={layout.tagClass}
                 style={{
                   backgroundColor: visual.categoryBadgeBackground,
                   borderColor: visual.categoryBadgeBorder,
@@ -310,11 +358,33 @@ function TimeBoxCard({
                 <span className="truncate">#{categoryLabel}</span>
               </div>
             ) : null}
-            <div className="truncate pr-11 font-medium leading-tight">{timeBox.content}</div>
-            {infoLines.map((line, index) => (
+            <div
+              data-testid="timebox-title"
+              className={`${layout.titleClass} ${layout.titleClampClass}`}
+            >
+              {timeBox.content}
+            </div>
+            {layout.showTime && primaryTimeLine ? (
+              <div
+                data-testid="timebox-time"
+                className={layout.timeClass}
+              >
+                {primaryTimeLine.prefixText && primaryTimeLine.diffText ? (
+                  <>
+                    <span className="text-white/90">{primaryTimeLine.prefixText}</span>
+                    <span className="text-white/60"> · </span>
+                    <span className={primaryTimeLine.className}>{primaryTimeLine.diffText}</span>
+                  </>
+                ) : (
+                  <span className={primaryTimeLine.className}>{primaryTimeLine.text}</span>
+                )}
+              </div>
+            ) : null}
+            {metaLines.map((line, index) => (
               <div
                 key={`${line.text}-${index}`}
-                className={`mt-1 truncate text-[11px] ${line.className}`}
+                data-testid="timebox-meta"
+                className={`${layout.metaClass} ${layout.metaClampClass} ${line.className}`}
               >
                 {line.text}
               </div>
