@@ -1,5 +1,71 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.20.5',
+    date: '2026-03-09',
+    title: '타임박스 중앙 정렬 유지 + 좌측 기준선 통일(T62)',
+    summary:
+      '중앙에 묶인 content group은 유지하되, 태그/제목/시간 요소를 카드 안에서 같은 왼쪽 기준선으로 읽히게 정리하고 완료 상태의 `차이 N분`을 시간 줄로 흡수해 텍스트 잘림을 줄였습니다.',
+    focus: [
+      '수직 중앙 정렬은 유지하면서 stack 내부는 `items-start`와 `text-left` 기준으로 통일',
+      '완료 카드의 `차이 N분`을 별도 메타 라인이 아니라 시간 라인에 합쳐 medium/spacious 높이에서 줄 수를 안정화',
+      '회귀 테스트도 중앙 정렬뿐 아니라 태그/제목/시간의 좌측 기준선 정렬을 함께 확인하도록 강화',
+    ],
+    improvements: [
+      '`timeBoxLayout.js`에서 medium/spacious content container를 왼쪽 정렬 기반으로 재정의하고 compact row도 좌측 흐름으로 조정',
+      '`TimeBoxCard.jsx`에서 완료 상태 시간 문구를 `실제 N분 · 차이 +/-N분` 형태로 통합하고 불필요한 완료 메타 라인을 제거',
+      '`ui-layout-regression.spec.js`와 `TIMEBOX_LAYOUT_MATRIX.md`를 왼쪽 기준선/시간 라인 통합 계약에 맞게 갱신',
+    ],
+    validation: [
+      'lint/build 통과',
+      'ui-layout-regression 좌측 기준선 회귀 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
+    version: 'v0.20.4',
+    date: '2026-03-09',
+    title: '타임박스 중앙 정렬 콘텐츠 스택 재구성(T61)',
+    summary:
+      '타임박스가 커져도 태그/제목/시간이 따로 놀던 문제를, 높이 밴드별 중앙 정렬 content group 전략으로 재구성해 카드 중심에서 같은 읽기 흐름을 유지하도록 정리했습니다.',
+    focus: [
+      'compact는 `태그 -> 제목 -> 시간` 인라인 row를 카드 중앙에 유지하고, medium/spacious는 같은 요소를 중앙 stack으로 확장',
+      'medium에서도 카테고리 태그와 시간 라벨이 빠지지 않도록 하고, spacious만 추가 메타를 확장해 정보량과 정렬을 분리',
+      'Playwright 회귀 테스트에서 typography뿐 아니라 content group의 중심점이 카드 중심과 충분히 가까운지도 함께 검증',
+    ],
+    improvements: [
+      '`timeBoxLayout.js`를 content layout strategy(`inline` / `stack-centered`) 중심으로 재정의',
+      '`TimeBoxCard.jsx`에서 `timebox-content`, `timebox-time` 테스트 포인트를 추가하고 중앙 content group 렌더 구조로 단순화',
+      '`TIMEBOX_LAYOUT_MATRIX.md`와 `ui-layout-regression.spec.js`를 태그/제목/시간 중심 정렬 계약에 맞게 갱신',
+    ],
+    validation: [
+      'lint/build 통과',
+      'ui-layout-regression 중앙 정렬 회귀 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
+    version: 'v0.20.3',
+    date: '2026-03-09',
+    title: '타임박스 높이별 타이포그래피 전략 재정의(T60)',
+    summary:
+      '30분 카드만 정렬이 맞고 60분 이상 카드에서는 텍스트 스케일이 거의 반응하지 않던 문제를, 높이 밴드별 layout strategy를 명시적으로 분리하는 방식으로 정리했습니다.',
+    focus: [
+      'compact/medium/spacious 모두 하나의 resolver가 선택하고, JSX는 선택된 profile만 소비하도록 구조를 단순화',
+      'medium 카드는 제목 확대 + 메타 1줄 중심으로, spacious 카드는 제목/메타를 더 여유 있게 노출하도록 정보 밀도를 단계화',
+      'Docker bootstrap 환경에서도 깨지지 않도록 ui-layout-regression 회귀 테스트를 서버 snapshot 기준으로 재작성',
+    ],
+    improvements: [
+      '`timeBoxLayout.js`에 title/meta/tag typography token과 line-clamp 전략을 추가하고 `useMemo`로 resolver 호출을 캐싱',
+      '`TimeBoxCard.jsx`에 `timebox-title`, `timebox-meta`, `timebox-tag` test id를 추가하고 category badge 노출을 밴드별 규칙으로 분리',
+      '`TIMEBOX_LAYOUT_MATRIX.md` 문서와 `ui-layout-regression.spec.js`를 medium/spacious 타이포그래피 기준에 맞게 갱신',
+    ],
+    validation: [
+      'lint/build 통과',
+      'ui-layout-regression에서 compact/medium/spacious typography 회귀 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.20.2',
     date: '2026-03-08',
     title: '헤더 액션 hierarchy + 사이드바 density 정리(T57~T59)',
