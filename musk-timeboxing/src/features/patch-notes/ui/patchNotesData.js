@@ -1,5 +1,29 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.20.6',
+    date: '2026-03-10',
+    title: '월간 캘린더 날짜 상세 시트 추가(T63~T67)',
+    summary:
+      '월간 캘린더에서 날짜를 누르면 곧바로 일간 뷰로 튀지 않고, 월간 맥락을 유지한 채 오른쪽 상세 시트에서 그날의 일정과 요약을 먼저 확인할 수 있게 바꿨습니다.',
+    focus: [
+      '데스크톱에서는 월간 캘린더 옆 고정 상세 시트로, 좁은 폭에서는 아래로 자연스럽게 이어지는 상세 카드로 동작',
+      '월간 셀은 이제 선택 상태를 유지하고, 상세 시트에서만 `이 날짜 열기`로 일간 편집 화면으로 진입',
+      '상세 시트 안에서 일정 목록, 완료율, 대표 카테고리, 빠른 추가까지 바로 확인하도록 월간 탐색 흐름을 보강',
+    ],
+    improvements: [
+      '`calendarViewData.js` month snapshot에 detailItems를 추가해 월간 상세 시트가 별도 재조회 없이 바로 일정을 렌더링하도록 확장',
+      '`MonthlyCalendarView.jsx`에 날짜 선택 상태와 강조 ring을 추가하고, 클릭/키보드 동작을 `상세 시트 열기`로 변경',
+      '`MonthDayDetailSheet.jsx`를 새로 추가해 날짜 요약, 일정 목록, 빠른 추가, 일간 뷰 이동 액션을 한 곳에 묶음',
+      '`Timeline/index.jsx`에서 월간 레이아웃을 `캘린더 + 상세 시트` 2열 구조로 재구성하고 모바일에서는 단일 컬럼으로 자연스럽게 접히게 조정',
+      '`monthly-calendar-view.spec.js`, `calendar-quick-add.spec.js`를 월간 상세 시트 기준으로 갱신',
+    ],
+    validation: [
+      'lint/build 통과',
+      'monthly-calendar-view, monthly-calendar-heatmap, calendar-quick-add 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.20.5',
     date: '2026-03-09',
     title: '타임박스 중앙 정렬 유지 + 좌측 기준선 통일(T62)',

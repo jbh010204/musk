@@ -71,5 +71,9 @@ test('monthly calendar quick add creates a timebox on the selected date', async 
   )
 
   await page.locator(`[data-testid="month-calendar-day-${setup.targetDate}"]:visible`).first().click()
+  await expect(page.locator('[data-testid="month-day-detail-sheet"]:visible').first()).toContainText(
+    '월간 퀵 추가',
+  )
+  await page.locator('[data-testid="month-day-detail-open-date"]:visible').first().click()
   await expect(page.locator('[title="월간 퀵 추가"]:visible').first()).toBeVisible()
 })

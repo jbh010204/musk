@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { getCategoryColor, getCategoryLabel, hasOverlap, slotToTime, TOTAL_SLOTS } from '../../../entities/planner'
 import CompletionModal from './CompletionModal'
 import DailyRecapCard from './DailyRecapCard'
+import MonthDayDetailSheet from './MonthDayDetailSheet'
 import MonthlyCalendarView from './MonthlyCalendarView'
 import TimeBoxCard from './TimeBoxCard'
 import TimeSlotGrid from './TimeSlotGrid'
@@ -109,6 +110,7 @@ function Timeline({
   const [viewMode, setViewMode] = useState('DAY')
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [categoryFilter, setCategoryFilter] = useState('ALL')
+  const [selectedMonthDate, setSelectedMonthDate] = useState(null)
   const isDayView = viewMode === 'DAY'
 
   const sortedBoxes = useMemo(
@@ -122,6 +124,13 @@ function Timeline({
   const selectedBox = useMemo(
     () => data.timeBoxes.find((box) => box.id === selectedBoxId) || null,
     [data.timeBoxes, selectedBoxId],
+  )
+  const selectedMonthCell = useMemo(
+    () =>
+      selectedMonthDate
+        ? monthCalendar.cells.find((cell) => cell.dateStr === selectedMonthDate) || null
+        : null,
+    [monthCalendar.cells, selectedMonthDate],
   )
   const hasRunningTimer = useMemo(
     () => data.timeBoxes.some((box) => Number.isFinite(box.timerStartedAt)),
@@ -300,6 +309,10 @@ function Timeline({
   const handleOpenCalendarDate = (dateStr) => {
     onJumpToDate(dateStr)
     setViewMode('DAY')
+  }
+
+  const handleSelectMonthDate = (dateStr) => {
+    setSelectedMonthDate(dateStr)
   }
 
   return (
@@ -554,16 +567,25 @@ function Timeline({
       ) : null}
 
       {!isDayView && viewMode === 'MONTH' ? (
-        <MonthlyCalendarView
-          monthLabel={monthCalendar.monthLabel}
-          cells={monthCalendar.cells}
-          legend={monthCalendar.legend}
-          scheduledDays={monthCalendar.scheduledDays}
-          averageCompletionRate={monthCalendar.averageCompletionRate}
-          busiestDay={monthCalendar.busiestDay}
-          onOpenDate={handleOpenCalendarDate}
-          onQuickAdd={(dateStr, dateLabel) => onOpenQuickAdd(dateStr, { dateLabel })}
-        />
+        <div className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <MonthlyCalendarView
+            monthLabel={monthCalendar.monthLabel}
+            cells={monthCalendar.cells}
+            legend={monthCalendar.legend}
+            scheduledDays={monthCalendar.scheduledDays}
+            averageCompletionRate={monthCalendar.averageCompletionRate}
+            busiestDay={monthCalendar.busiestDay}
+            selectedDateStr={selectedMonthDate}
+            onSelectDate={handleSelectMonthDate}
+            onQuickAdd={(dateStr, dateLabel) => onOpenQuickAdd(dateStr, { dateLabel })}
+          />
+          <MonthDayDetailSheet
+            day={selectedMonthCell}
+            onOpenDate={handleOpenCalendarDate}
+            onQuickAdd={(dateStr, dateLabel) => onOpenQuickAdd(dateStr, { dateLabel })}
+            onClose={() => setSelectedMonthDate(null)}
+          />
+        </div>
       ) : null}
 
       {isDayView ? (

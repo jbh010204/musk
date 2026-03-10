@@ -38,7 +38,8 @@ function MonthlyCalendarView({
   scheduledDays = 0,
   averageCompletionRate = 0,
   busiestDay = null,
-  onOpenDate = () => {},
+  selectedDateStr = null,
+  onSelectDate = () => {},
   onQuickAdd = () => {},
 }) {
   return (
@@ -103,24 +104,33 @@ function MonthlyCalendarView({
             key={cell.dateStr}
             role="button"
             tabIndex={0}
-            onClick={() => onOpenDate(cell.dateStr)}
+            aria-pressed={selectedDateStr === cell.dateStr}
+            onClick={() => onSelectDate(cell.dateStr)}
             onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault()
-                onOpenDate(cell.dateStr)
+                onSelectDate(cell.dateStr)
               }
             }}
             data-testid={`month-calendar-day-${cell.dateStr}`}
             data-heat-intensity={cell.heatLevel}
             data-dominant-category={cell.dominantCategory?.label || 'none'}
             className={`group/day relative min-h-[156px] overflow-hidden rounded-2xl p-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-              cell.isCurrent
+              selectedDateStr === cell.dateStr
+                ? 'ring-2 ring-indigo-400 shadow-sm'
+                : cell.isCurrent
                 ? 'ring-1 ring-indigo-300/60 shadow-sm'
                 : cell.inCurrentMonth
                   ? 'bg-slate-50/80 hover:bg-slate-100 dark:bg-slate-800/35 dark:hover:bg-slate-800/50'
                   : 'bg-slate-100/60 text-slate-400 hover:bg-slate-100 dark:bg-slate-900/35 dark:text-slate-500 dark:hover:bg-slate-900/50'
             }`}
           >
+            {selectedDateStr === cell.dateStr ? (
+              <span
+                aria-hidden
+                className="absolute inset-0 rounded-2xl ring-1 ring-indigo-300/60"
+              />
+            ) : null}
             {cell.isCurrent ? (
               <span
                 aria-hidden

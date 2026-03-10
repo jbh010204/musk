@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('monthly calendar view summarizes the month and can jump to a selected date', async ({ page }) => {
+test('monthly calendar view opens a detail sheet and can jump to a selected date', async ({ page }) => {
   await page.goto('/')
 
   const setup = await page.evaluate(() => {
@@ -62,6 +62,13 @@ test('monthly calendar view summarizes the month and can jump to a selected date
   ).toContainText('월간캘린더-테스트')
 
   await page.locator(`[data-testid="month-calendar-day-${setup.targetDate}"]:visible`).first().click()
+
+  const detailSheet = page.locator('[data-testid="month-day-detail-sheet"]:visible').first()
+  await expect(detailSheet).toBeVisible()
+  await expect(detailSheet).toContainText('월간캘린더-테스트')
+  await expect(page.locator('[data-testid="timeline-day-view"]:visible')).toHaveCount(0)
+
+  await page.locator('[data-testid="month-day-detail-open-date"]:visible').first().click()
 
   await expect(page.locator('[data-testid="timeline-day-view"]:visible').first()).toBeVisible()
   await expect(page.locator('[title="월간캘린더-테스트"]:visible').first()).toBeVisible()

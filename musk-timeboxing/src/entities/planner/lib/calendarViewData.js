@@ -145,6 +145,23 @@ const summarizeCalendarDay = (
       startSlot: box.startSlot,
       status: box.status,
     })),
+    detailItems: sortedBoxes.map((box) => {
+      const meta = box.categoryId ? categoryMap.get(box.categoryId) : null
+      const label = getCategoryLabel(meta, box)
+
+      return {
+        id: box.id,
+        content: box.content,
+        startSlot: box.startSlot,
+        endSlot: box.endSlot,
+        status: box.status,
+        plannedMinutes: slotDurationMinutes(box.startSlot, box.endSlot),
+        actualMinutes: Number.isFinite(box.actualMinutes) ? Number(box.actualMinutes) : null,
+        skipReason: typeof box.skipReason === 'string' ? box.skipReason.trim() : '',
+        categoryLabel: label,
+        categoryColor: label ? getCategoryColor(meta, box) : null,
+      }
+    }),
     isCurrent: dateStr === currentDate,
     inCurrentMonth: currentMonthIndex == null ? true : date.getMonth() === currentMonthIndex,
   }
