@@ -455,9 +455,13 @@ function App() {
     goPrevDay: goPrevDayRaw,
     goToDate: goToDateRaw,
     addBrainDumpItem,
+    addBoardCard,
     removeBrainDumpItem,
     restoreBrainDumpItem,
     cycleBrainDumpItemPriority,
+    updateBrainDumpItem,
+    applyBrainDumpBoardLayout,
+    clearBrainDumpCategory,
     sendToBigThree,
     fillBigThreeFromBrainDump,
     addBigThreeItem,
@@ -1081,6 +1085,7 @@ function App() {
   const handleDeleteCategory = (id) => {
     removeCategory(id)
     clearTimeBoxCategory(id)
+    clearBrainDumpCategory(id)
     showToast('카테고리를 삭제했습니다')
   }
 
@@ -1324,6 +1329,7 @@ function App() {
       data={data}
       currentDate={currentDate}
       categories={categories}
+      brainDumpItems={data.brainDump}
       templates={templates}
       weeklyReport={weeklyReport}
       weeklyPlanningPreview={weeklyPlanningPreview}
@@ -1344,6 +1350,9 @@ function App() {
       focusMode={isTimelineFocusMode}
       onToggleFocusMode={() => setIsTimelineFocusMode((prev) => !prev)}
       addTimeBox={addTimeBox}
+      addBoardCard={addBoardCard}
+      updateBrainDumpItem={updateBrainDumpItem}
+      applyBrainDumpBoardLayout={applyBrainDumpBoardLayout}
       updateTimeBox={handleUpdateTimeBox}
       onTimerStart={startTimeBoxTimer}
       onTimerPause={pauseTimeBoxTimer}
@@ -1351,6 +1360,7 @@ function App() {
       removeTimeBox={handleRemoveTimeBox}
       onDuplicateTimeBox={handleDuplicateTimeBox}
       onOpenTemplateManager={() => setIsTemplateManagerOpen(true)}
+      onOpenCategoryManager={() => setIsCategoryManagerOpen(true)}
       onOpenQuickAdd={(dateStr, options = {}) => openQuickAdd(dateStr, options)}
       onApplyTemplate={(templateId, dateStr = currentDate) =>
         openQuickAdd(dateStr, {

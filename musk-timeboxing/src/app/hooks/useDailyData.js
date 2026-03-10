@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react'
 import {
+  DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
   cycleBrainDumpPriority,
+  getNextBoardStackOrder,
   getMostRecentStoredDate,
   hasOverlap,
   loadDay,
   loadLastActiveDate,
   loadLastFocus,
+  normalizeBoardCard,
+  normalizeBoardCategoryId,
+  normalizeBoardEstimatedSlots,
+  normalizeBoardLinkedTimeBoxIds,
+  normalizeBoardNote,
   normalizeBrainDumpPriority,
   saveDay,
   saveLastActiveDate,
@@ -28,19 +35,15 @@ const shiftDate = (dateStr, offset) => {
 }
 
 const createId = () => crypto.randomUUID()
-const normalizeBrainDumpItem = (item) => {
-  const content = typeof item?.content === 'string' ? item.content.trim() : ''
-  if (!content) {
-    return null
-  }
-
-  return {
-    id: typeof item?.id === 'string' ? item.id : createId(),
-    content,
-    isDone: Boolean(item?.isDone),
-    priority: normalizeBrainDumpPriority(item?.priority),
-  }
-}
+const normalizeBrainDumpItem = (item, fallbackIndex = 0) =>
+  normalizeBoardCard(
+    {
+      ...item,
+      id: typeof item?.id === 'string' ? item.id : createId(),
+      priority: normalizeBrainDumpPriority(item?.priority),
+    },
+    fallbackIndex,
+  )
 const normalizeCategory = (value) => {
   if (typeof value !== 'string') {
     return null
@@ -244,8 +247,50 @@ export const useDailyData = () => {
 
     setData((prev) => ({
       ...prev,
-      brainDump: [...prev.brainDump, { id: createId(), content: trimmed, isDone: false, priority: 0 }],
+      brainDump: [
+        ...prev.brainDump,
+        {
+          id: createId(),
+          content: trimmed,
+          isDone: false,
+          priority: 0,
+          categoryId: null,
+          stackOrder: getNextBoardStackOrder(prev.brainDump),
+          estimatedSlots: DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
+          linkedTimeBoxIds: [],
+          note: '',
+          createdFrom: 'list',
+        },
+      ],
     }))
+  }
+
+  const addBoardCard = ({ content, categoryId = null, estimatedSlots = 1, note = '' }) => {
+    const trimmed = String(content || '').trim()
+    if (!trimmed) {
+      return false
+    }
+
+    setData((prev) => ({
+      ...prev,
+      brainDump: [
+        ...prev.brainDump,
+        {
+          id: createId(),
+          content: trimmed,
+          isDone: false,
+          priority: 0,
+          categoryId: normalizeBoardCategoryId(categoryId),
+          stackOrder: getNextBoardStackOrder(prev.brainDump),
+          estimatedSlots: normalizeBoardEstimatedSlots(estimatedSlots),
+          linkedTimeBoxIds: [],
+          note: normalizeBoardNote(note),
+          createdFrom: 'board',
+        },
+      ],
+    }))
+
+    return true
   }
 
   const removeBrainDumpItem = (id) => {
@@ -312,6 +357,91 @@ export const useDailyData = () => {
     })
 
     return nextPriority
+  }
+
+  const updateBrainDumpItem = (id, changes = {}) => {
+    setData((prev) => ({
+      ...prev,
+      brainDump: prev.brainDump.map((item, index) => {
+        if (item.id !== id) {
+          return item
+        }
+
+        const next = normalizeBrainDumpItem(
+          {
+            ...item,
+            ...changes,
+            content:
+              typeof changes?.content === 'string' && changes.content.trim().length > 0
+                ? changes.content
+                : item.content,
+            categoryId:
+              Object.prototype.hasOwnProperty.call(changes ?? {}, 'categoryId')
+                ? normalizeBoardCategoryId(changes?.categoryId)
+                : item.categoryId ?? null,
+            estimatedSlots:
+              Object.prototype.hasOwnProperty.call(changes ?? {}, 'estimatedSlots')
+                ? normalizeBoardEstimatedSlots(changes?.estimatedSlots)
+                : item.estimatedSlots ?? DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
+            note:
+              Object.prototype.hasOwnProperty.call(changes ?? {}, 'note')
+                ? normalizeBoardNote(changes?.note)
+                : item.note ?? '',
+            linkedTimeBoxIds:
+              Object.prototype.hasOwnProperty.call(changes ?? {}, 'linkedTimeBoxIds')
+                ? normalizeBoardLinkedTimeBoxIds(changes?.linkedTimeBoxIds)
+                : item.linkedTimeBoxIds ?? [],
+          },
+          index,
+        )
+
+        return next ?? item
+      }),
+    }))
+  }
+
+  const applyBrainDumpBoardLayout = (layoutEntries = []) => {
+    const layoutMap = new Map(
+      layoutEntries
+        .filter((entry) => typeof entry?.id === 'string')
+        .map((entry) => [
+          entry.id,
+          {
+            categoryId: normalizeBoardCategoryId(entry.categoryId),
+            stackOrder: Number.isInteger(entry.stackOrder) ? entry.stackOrder : 0,
+          },
+        ]),
+    )
+
+    setData((prev) => ({
+      ...prev,
+      brainDump: prev.brainDump.map((item, index) => {
+        const layout = layoutMap.get(item.id)
+        if (!layout) {
+          return item
+        }
+
+        return (
+          normalizeBrainDumpItem(
+            {
+              ...item,
+              categoryId: layout.categoryId,
+              stackOrder: layout.stackOrder,
+            },
+            index,
+          ) ?? item
+        )
+      }),
+    }))
+  }
+
+  const clearBrainDumpCategory = (categoryId) => {
+    setData((prev) => ({
+      ...prev,
+      brainDump: prev.brainDump.map((item) =>
+        item.categoryId === categoryId ? { ...item, categoryId: null } : item,
+      ),
+    }))
   }
 
   const sendToBigThree = (brainDumpId) => {
@@ -641,9 +771,13 @@ export const useDailyData = () => {
     goPrevDay,
     goToDate,
     addBrainDumpItem,
+    addBoardCard,
     removeBrainDumpItem,
     restoreBrainDumpItem,
     cycleBrainDumpItemPriority,
+    updateBrainDumpItem,
+    applyBrainDumpBoardLayout,
+    clearBrainDumpCategory,
     sendToBigThree,
     fillBigThreeFromBrainDump,
     addBigThreeItem,

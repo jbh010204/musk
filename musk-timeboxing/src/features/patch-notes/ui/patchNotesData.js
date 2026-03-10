@@ -1,5 +1,29 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.21.0',
+    date: '2026-03-11',
+    title: 'Planning Board 1차 MVP 도입(T71~T76)',
+    summary:
+      '브레인 덤프를 리스트만으로 다루지 않고, Excalidraw처럼 느껴지는 카테고리 스택 보드에서 카드 생성/수정/이동을 먼저 정리한 뒤 나중에 편성기로 넘기는 2단 플로우를 깔았습니다.',
+    focus: [
+      'brainDump에 categoryId, stackOrder, estimatedSlots, linkedTimeBoxIds, note, createdFrom을 추가해 보드용 데이터 계약을 확장',
+      'BOARD / COMPOSER 뷰 모드를 타임라인 상단에 추가하고, Planning Board는 별도 nested DnD context로 분리',
+      '카테고리 원형 노드는 anchor이고 실제 카드는 아래 stack lane에 쌓이는 구조로, 자유 캔버스처럼 보이되 저장은 구조화된 lane 기반으로 유지',
+    ],
+    improvements: [
+      '`PLANNING_BOARD_MVP.md`에 보드/편성기/타임라인 책임, 데이터 계약, 제외 범위를 명시',
+      '`storage.js`, `useDailyData.js`, `App.jsx`에서 brainDump raw order 보존 + 보드용 액션(add/update/layout/category clear) 추가',
+      '`PlanningBoard` feature를 신설해 카드 생성/수정 모달, 카테고리 노드, stack lane, 카드 드래그/재정렬을 구현',
+      '`ScheduleComposer` placeholder를 추가해 이후 time-grid 배치 작업의 진입점을 고정',
+      '`planning-board.spec.js`로 카드 생성 persistence와 카테고리 노드 드롭 회귀를 추가',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planning-board E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.20.7',
     date: '2026-03-10',
     title: '월간 캘린더 overview-first 리팩토링(T68~T70)',

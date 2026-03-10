@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getCategoryColor, getCategoryLabel, hasOverlap, slotToTime, TOTAL_SLOTS } from '../../../entities/planner'
+import PlanningBoard from '../../planning-board'
+import ScheduleComposer from '../../schedule-composer'
 import CompletionModal from './CompletionModal'
 import DailyRecapCard from './DailyRecapCard'
 import MonthDayDetailSheet from './MonthDayDetailSheet'
@@ -14,6 +16,8 @@ const DEFAULT_SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
 const DURATION_PRESETS = [1, 2, 3, 4]
 const VIEW_MODE_OPTIONS = [
+  { value: 'BOARD', label: '보드' },
+  { value: 'COMPOSER', label: '편성기' },
   { value: 'DAY', label: '일간' },
   { value: 'WEEK', label: '주간' },
   { value: 'MONTH', label: '월간' },
@@ -69,6 +73,7 @@ function Timeline({
   data,
   currentDate,
   categories,
+  brainDumpItems = [],
   templates = [],
   weeklyReport,
   weeklyPlanningPreview = [],
@@ -87,6 +92,9 @@ function Timeline({
   timelineScale = '30',
   onTimelineScaleChange = () => {},
   addTimeBox,
+  addBoardCard = () => false,
+  updateBrainDumpItem = () => {},
+  applyBrainDumpBoardLayout = () => {},
   updateTimeBox,
   onTimerStart = () => {},
   onTimerPause = () => {},
@@ -98,6 +106,7 @@ function Timeline({
   onToggleFocusMode = () => {},
   onDuplicateTimeBox = () => false,
   onOpenTemplateManager = () => {},
+  onOpenCategoryManager = () => {},
   onOpenQuickAdd = () => {},
   onApplyTemplate = () => {},
 }) {
@@ -112,6 +121,9 @@ function Timeline({
   const [categoryFilter, setCategoryFilter] = useState('ALL')
   const [selectedMonthDate, setSelectedMonthDate] = useState(null)
   const isDayView = viewMode === 'DAY'
+  const isBoardView = viewMode === 'BOARD'
+  const isComposerView = viewMode === 'COMPOSER'
+  const sectionTitle = isBoardView ? '🧩 플래닝 보드' : isComposerView ? '🗓 편성기' : '⏱ 타임라인'
 
   const sortedBoxes = useMemo(
     () => [...data.timeBoxes].sort((a, b) => a.startSlot - b.startSlot),
@@ -321,7 +333,7 @@ function Timeline({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              ⏱ 타임라인
+              {sectionTitle}
             </h2>
             <div className="ui-panel-subtle inline-flex items-center p-1 text-[11px]">
               {VIEW_MODE_OPTIONS.map((option) => (
@@ -402,11 +414,23 @@ function Timeline({
         ) : null}
       </div>
 
-      {!isDayView ? (
+      {!isDayView && !isBoardView && !isComposerView ? (
         <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
           {viewMode === 'WEEK'
             ? `${weekCalendar.rangeLabel} 구간의 주간 계획을 한 번에 확인합니다.`
             : `${monthCalendar.monthLabel} 전체 일정을 캘린더 그리드로 확인합니다.`}
+        </div>
+      ) : null}
+
+      {isBoardView ? (
+        <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
+          보드는 브레인 덤프를 카테고리 스택으로 정리하는 단계입니다. 카드 생성/수정/이동만 여기서 하고 실제 시간 배치는 편성기에서 처리합니다.
+        </div>
+      ) : null}
+
+      {isComposerView ? (
+        <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
+          편성기는 보드 카드를 시간표로 넘기는 단계입니다. 현재는 뷰 계약만 먼저 고정하고, 다음 작업에서 카드 드롭과 벌크 배치를 연결합니다.
         </div>
       ) : null}
 
@@ -587,6 +611,19 @@ function Timeline({
           />
         </div>
       ) : null}
+
+      {isBoardView ? (
+        <PlanningBoard
+          items={brainDumpItems}
+          categories={categories}
+          onCreateCard={addBoardCard}
+          onUpdateCard={updateBrainDumpItem}
+          onApplyLayout={applyBrainDumpBoardLayout}
+          onOpenCategoryManager={onOpenCategoryManager}
+        />
+      ) : null}
+
+      {isComposerView ? <ScheduleComposer onJumpToDay={() => setViewMode('DAY')} /> : null}
 
       {isDayView ? (
         <div data-testid="timeline-day-view">

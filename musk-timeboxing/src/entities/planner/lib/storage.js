@@ -1,4 +1,5 @@
-import { normalizeBrainDumpPriority, sortBrainDumpItems } from './brainDumpPriority'
+import { normalizeBoardCard } from './boardCard'
+import { sortBrainDumpItems } from './brainDumpPriority'
 import { TOTAL_SLOTS } from './timeSlot'
 import {
   bootstrapServerStorage,
@@ -12,7 +13,7 @@ import {
   syncSnapshotToServer,
 } from './storageServer'
 
-const SCHEMA_VERSION = 2
+const SCHEMA_VERSION = 3
 const META_KEY = 'musk-planner-meta'
 const DAY_KEY_PREFIX = 'musk-planner-'
 const DAY_KEY_PATTERN = /^musk-planner-\d{4}-\d{2}-\d{2}$/
@@ -79,20 +80,7 @@ const hasMeaningfulDayData = (dayData) => {
   )
 }
 
-const normalizeBrainDumpItem = (item) => {
-  const content = typeof item?.content === 'string' ? item.content.trim() : ''
-
-  if (!content) {
-    return null
-  }
-
-  return {
-    id: typeof item?.id === 'string' ? item.id : crypto.randomUUID(),
-    content,
-    isDone: Boolean(item?.isDone),
-    priority: normalizeBrainDumpPriority(item?.priority),
-  }
-}
+const normalizeBrainDumpItem = (item, index = 0) => normalizeBoardCard(item, index)
 
 const normalizeTimeBox = (box) => ({
   id: box?.id ?? crypto.randomUUID(),
@@ -121,7 +109,9 @@ const migrateDayData = (dateStr, rawData) => {
     schemaVersion: SCHEMA_VERSION,
     date: dateStr,
     brainDump: Array.isArray(safeData.brainDump)
-      ? sortBrainDumpItems(safeData.brainDump.map(normalizeBrainDumpItem).filter(Boolean))
+      ? sortBrainDumpItems(
+          safeData.brainDump.map((item, index) => normalizeBrainDumpItem(item, index)).filter(Boolean),
+        )
       : [],
     bigThree: Array.isArray(safeData.bigThree) ? safeData.bigThree : [],
     timeBoxes: Array.isArray(safeData.timeBoxes) ? safeData.timeBoxes.map(normalizeTimeBox) : [],
