@@ -57,9 +57,10 @@ test('monthly calendar view opens a detail sheet and can jump to a selected date
 
   await page.locator('[data-testid="timeline-view-month"]:visible').first().click()
   await expect(page.locator('[data-testid="calendar-view-month"]:visible').first()).toBeVisible()
+  await expect(page.locator('[data-testid="month-day-detail-sheet-empty"]:visible').first()).toBeVisible()
   await expect(
     page.locator(`[data-testid="month-calendar-day-${setup.targetDate}"]:visible`).first(),
-  ).toContainText('월간캘린더-테스트')
+  ).toContainText('1건')
 
   await page.locator(`[data-testid="month-calendar-day-${setup.targetDate}"]:visible`).first().click()
 

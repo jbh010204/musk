@@ -1,6 +1,14 @@
 import { Badge, Button, Card } from '../../../shared/ui'
 import { getStatusVisual, hexToRgba, slotToTime } from '../../../entities/planner'
 
+const HEAT_LEVEL_LABELS = {
+  0: '비어 있음',
+  1: '낮은 밀도',
+  2: '보통 밀도',
+  3: '높은 밀도',
+  4: '집중일',
+}
+
 const formatDateLabel = (dateStr) =>
   new Intl.DateTimeFormat('ko-KR', {
     year: 'numeric',
@@ -61,6 +69,7 @@ function MonthDayDetailSheet({
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
+        <Badge tone="neutral">{HEAT_LEVEL_LABELS[day.heatLevel] || HEAT_LEVEL_LABELS[0]}</Badge>
         <Badge tone="neutral">완료 {day.completed}/{day.total}</Badge>
         <Badge tone="neutral">계획 {day.plannedMinutes}분</Badge>
         {day.dominantCategory ? (
@@ -79,6 +88,33 @@ function MonthDayDetailSheet({
           </span>
         ) : null}
       </div>
+
+      {day.categoryMix?.length ? (
+        <div className="mt-4 rounded-2xl bg-slate-50/80 p-4 dark:bg-slate-800/35">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            주요 카테고리
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {day.categoryMix.map((category) => (
+              <span
+                key={category.key}
+                className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs text-slate-800 shadow-sm dark:text-slate-100"
+                style={{
+                  backgroundColor: hexToRgba(category.color, 0.16),
+                  border: `1px solid ${hexToRgba(category.color, 0.4)}`,
+                }}
+              >
+                <span
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: category.color }}
+                />
+                {category.label}
+                <span className="text-slate-500 dark:text-slate-400">{category.count}건</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-5 flex flex-wrap items-center gap-2">
         <Button

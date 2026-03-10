@@ -1,4 +1,4 @@
-# Musk Planner Task Execution Board (67 Tasks)
+# Musk Planner Task Execution Board (70 Tasks)
 
 이 문서는 현재 합의된 작업을 한 번에 처리하지 않고,
 작업 단위를 쪼개서 순차 실행하기 위한 운영 보드다.
@@ -96,6 +96,9 @@
   - `T65` 월간 상세 시트 일정 요약/리스트/빠른 추가 연결
   - `T66` 월간 상세 시트 반응형 레이아웃 대응
   - `T67` 월간 상세 시트 E2E/문서/패치노트 동기화
+  - `T68` 월간 셀 overview-first 정보 압축
+  - `T69` 월간 상세 시트 요약 재배치
+  - `T70` 월간 overview-first 회귀/문서/패치노트 동기화
 
 ## 3. Prioritized Task List
 

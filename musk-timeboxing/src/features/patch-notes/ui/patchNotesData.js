@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.20.7',
+    date: '2026-03-10',
+    title: '월간 캘린더 overview-first 리팩토링(T68~T70)',
+    summary:
+      '월간 셀 하나에 개요와 상세가 함께 섞여 목적이 흐리던 문제를 줄이기 위해, 셀은 날짜 선택용 개요 카드로 단순화하고 세부 읽기는 우측 상세 시트가 전담하도록 정리했습니다.',
+    focus: [
+      '월간 셀은 이제 날짜, 일정 수, 핵심 상태, 완료 정도만 남기고 일정 제목/계획 시간/카테고리 mix bar는 제거',
+      '상세 시트는 주요 카테고리와 일정 목록을 더 풍부하게 받아 월간 선택 이후의 읽기 흐름을 맡음',
+      '월간 뷰의 1차 목적을 `한 달 스캔 -> 날짜 선택 -> 상세 확인`으로 명확히 고정',
+    ],
+    improvements: [
+      '`MonthlyCalendarView.jsx`에서 셀 정보를 overview 중심으로 압축하고 empty day 반복 텍스트를 줄여 시각적 소음을 축소',
+      '`MonthDayDetailSheet.jsx`에 밀도 배지와 주요 카테고리 요약을 추가해 셀에서 제거한 정보를 상세 시트로 재배치',
+      '`monthly-calendar-view.spec.js`, `calendar-quick-add.spec.js`를 overview-first 계약에 맞게 갱신',
+    ],
+    validation: [
+      'lint/build 통과',
+      'monthly-calendar-view, monthly-calendar-heatmap, calendar-quick-add 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.20.6',
     date: '2026-03-10',
     title: '월간 캘린더 날짜 상세 시트 추가(T63~T67)',

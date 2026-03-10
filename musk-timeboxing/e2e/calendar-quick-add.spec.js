@@ -67,7 +67,7 @@ test('monthly calendar quick add creates a timebox on the selected date', async 
   await page.locator('.ui-modal-card').last().getByRole('button', { name: '추가', exact: true }).click()
 
   await expect(page.locator(`[data-testid="month-calendar-day-${setup.targetDate}"]:visible`).first()).toContainText(
-    '월간 퀵 추가',
+    '1건',
   )
 
   await page.locator(`[data-testid="month-calendar-day-${setup.targetDate}"]:visible`).first().click()

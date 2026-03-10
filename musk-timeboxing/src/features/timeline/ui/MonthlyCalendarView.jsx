@@ -1,5 +1,5 @@
 import { Badge, Button, Card } from '../../../shared/ui'
-import { hexToRgba, slotToTime } from '../../../entities/planner'
+import { hexToRgba } from '../../../entities/planner'
 
 const WEEK_HEADER_LABELS = ['월', '화', '수', '목', '금', '토', '일']
 const HEAT_LEVEL_LABELS = {
@@ -8,6 +8,18 @@ const HEAT_LEVEL_LABELS = {
   2: '보통 밀도',
   3: '높은 밀도',
   4: '집중 밀도',
+}
+
+const getOverviewLabel = (cell) => {
+  if (cell.total <= 0) {
+    return null
+  }
+
+  if (cell.heatLevel >= 4) {
+    return '집중일'
+  }
+
+  return HEAT_LEVEL_LABELS[cell.heatLevel] || '보통 밀도'
 }
 
 const getHeatOverlayStyle = (cell) => {
@@ -51,7 +63,7 @@ function MonthlyCalendarView({
           </h3>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{monthLabel}</p>
           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            대표 카테고리 색이 깔리고, 셀이 진할수록 일정 밀도와 완료율이 높습니다.
+            한 달을 훑고 날짜를 선택해 상세 시트에서 그날의 일정과 빠른 추가를 확인합니다.
           </p>
         </div>
 
@@ -115,7 +127,7 @@ function MonthlyCalendarView({
             data-testid={`month-calendar-day-${cell.dateStr}`}
             data-heat-intensity={cell.heatLevel}
             data-dominant-category={cell.dominantCategory?.label || 'none'}
-            className={`group/day relative min-h-[156px] overflow-hidden rounded-2xl p-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+            className={`group/day relative min-h-[148px] overflow-hidden rounded-2xl p-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
               selectedDateStr === cell.dateStr
                 ? 'ring-2 ring-indigo-400 shadow-sm'
                 : cell.isCurrent
@@ -155,9 +167,11 @@ function MonthlyCalendarView({
                   {cell.dayNumber}
                 </p>
                 <div className="flex items-center gap-1">
-                  <span className="rounded-xl bg-slate-200/55 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800/55 dark:text-slate-300">
-                    {cell.total}건
-                  </span>
+                  {cell.total > 0 ? (
+                    <span className="rounded-xl bg-slate-200/55 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800/55 dark:text-slate-300">
+                      {cell.total}건
+                    </span>
+                  ) : null}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -174,67 +188,51 @@ function MonthlyCalendarView({
                 </div>
               </div>
 
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {HEAT_LEVEL_LABELS[cell.heatLevel] || HEAT_LEVEL_LABELS[0]}
-                </span>
-                {cell.dominantCategory ? (
-                  <span
-                    className="inline-flex max-w-[92px] items-center gap-1 truncate rounded-xl px-2 py-0.5 text-[11px] text-slate-800 shadow-sm dark:text-slate-100"
-                    style={{
-                      backgroundColor: hexToRgba(cell.dominantCategory.color, 0.22),
-                      border: `1px solid ${hexToRgba(cell.dominantCategory.color, 0.45)}`,
-                    }}
-                  >
-                    <span
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: cell.dominantCategory.color }}
-                    />
-                    <span className="truncate">{cell.dominantCategory.label}</span>
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="mt-2 h-1.5 rounded-full bg-slate-200/80 dark:bg-slate-700/70">
-                <div
-                  className="h-1.5 rounded-full bg-emerald-500"
-                  style={{ width: `${cell.completionRate}%` }}
-                />
-              </div>
-
-              <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                완료 {cell.completed}/{cell.total} · 계획 {cell.plannedMinutes}분
-              </div>
-
-              <div className="mt-2 min-h-[38px] space-y-1">
-                {cell.previewItems.length === 0 ? (
-                  <p className="text-xs text-slate-500 dark:text-slate-400">비어 있음</p>
-                ) : (
-                  cell.previewItems.slice(0, 2).map((item) => (
-                    <p key={item.id} className="truncate text-xs text-slate-700 dark:text-slate-200">
-                      {slotToTime(item.startSlot)} {item.content}
-                    </p>
-                  ))
-                )}
-              </div>
-
-              <div className="mt-auto pt-3">
-                <div className="h-1.5 overflow-hidden rounded-full bg-slate-200/85 dark:bg-slate-800/75">
-                  {cell.categoryMix.length === 0 ? (
-                    <span className="block h-full w-full bg-slate-300/70 dark:bg-slate-700/70" />
+              <div className="mt-4 flex flex-1 flex-col justify-between">
+                <div>
+                  {getOverviewLabel(cell) ? (
+                    <>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {getOverviewLabel(cell)}
+                      </p>
+                      <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        완료율 {cell.completionRate}%
+                      </p>
+                    </>
                   ) : (
-                    cell.categoryMix.map((category) => (
-                      <span
-                        key={category.key}
-                        className="inline-block h-full"
-                        style={{
-                          width: `${category.share}%`,
-                          backgroundColor: category.color,
-                        }}
-                      />
-                    ))
+                    <p className="text-xs text-slate-400 dark:text-slate-500">선택해 상세 보기</p>
                   )}
+
+                  {cell.dominantCategory ? (
+                    <span
+                      className="mt-3 inline-flex max-w-full items-center gap-1.5 rounded-xl px-2.5 py-1 text-[11px] text-slate-800 shadow-sm dark:text-slate-100"
+                      style={{
+                        backgroundColor: hexToRgba(cell.dominantCategory.color, 0.2),
+                        border: `1px solid ${hexToRgba(cell.dominantCategory.color, 0.42)}`,
+                      }}
+                    >
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: cell.dominantCategory.color }}
+                      />
+                      <span className="truncate">{cell.dominantCategory.label}</span>
+                    </span>
+                  ) : null}
                 </div>
+
+                {cell.total > 0 ? (
+                  <div className="pt-3">
+                    <div className="h-1.5 rounded-full bg-slate-200/80 dark:bg-slate-700/70">
+                      <div
+                        className="h-1.5 rounded-full bg-emerald-500"
+                        style={{ width: `${cell.completionRate}%` }}
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                      <span>완료 {cell.completed}/{cell.total}</span>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
