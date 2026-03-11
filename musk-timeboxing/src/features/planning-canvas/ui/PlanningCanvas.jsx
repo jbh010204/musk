@@ -32,6 +32,7 @@ function PlanningCanvas({
   onOpenBoard = () => {},
   onOpenCategoryManager = () => {},
   onOpenComposer = () => {},
+  embedded = false,
 }) {
   const editorRef = useRef(null)
   const saveTimerRef = useRef(null)
@@ -321,18 +322,18 @@ function PlanningCanvas({
   }
 
   return (
-    <section data-testid="planning-canvas-view" className="space-y-6">
-      <Card className="p-5">
+    <section data-testid="planning-canvas-view" className={embedded ? 'space-y-4' : 'space-y-6'}>
+      <Card className={embedded ? 'p-4' : 'p-5'}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               Planning Canvas
             </h3>
-            <p className="mt-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
-              무한 캔버스에서 카드와 카테고리 배치를 먼저 잡고 편성기로 넘깁니다.
+            <p className={`mt-2 font-semibold text-slate-900 dark:text-slate-100 ${embedded ? 'text-base' : 'text-lg'}`}>
+              무한 캔버스에서 카드와 카테고리 배치를 잡습니다.
             </p>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              현재 날짜: {currentDate}. 카드/카테고리는 custom shape로 렌더링되고, 편집은 오른쪽 inspector에서 원본 brain dump 카드에 반영됩니다.
+            <p className={`mt-2 text-slate-500 dark:text-slate-400 ${embedded ? 'text-xs' : 'text-sm'}`}>
+              현재 날짜: {currentDate}. 카드/카테고리는 custom shape로 렌더링되고, 편집은 inspector에서 원본 brain dump 카드에 반영됩니다.
             </p>
           </div>
 
@@ -343,20 +344,24 @@ function PlanningCanvas({
             <Button variant="secondary" onClick={handleAutoLayout}>
               자동 배치
             </Button>
-            <Button variant="secondary" onClick={onOpenBoard}>
-              보드에서 카드 만들기
-            </Button>
-            <Button variant="primary" onClick={onOpenComposer}>
-              편성기로 보내기
-            </Button>
+            {!embedded ? (
+              <>
+                <Button variant="secondary" onClick={onOpenBoard}>
+                  보드에서 카드 만들기
+                </Button>
+                <Button variant="primary" onClick={onOpenComposer}>
+                  편성기로 보내기
+                </Button>
+              </>
+            ) : null}
           </div>
         </div>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className={`grid gap-6 ${embedded ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1fr)_320px]'}`}>
         <Card className="overflow-hidden p-0">
           <div
-            className="relative h-[72vh] min-h-[560px]"
+            className={`relative ${embedded ? 'h-[56vh] min-h-[440px]' : 'h-[72vh] min-h-[560px]'}`}
             data-testid="planning-canvas-surface"
             onPointerUpCapture={handleCanvasPointerUpCapture}
             onClickCapture={handleCanvasClickCapture}

@@ -30,6 +30,7 @@ function ScheduleComposer({
   onScheduleCard = () => false,
   onJumpToDay = () => {},
   onJumpToBoard = () => {},
+  embedded = false,
 }) {
   const [selectedCardId, setSelectedCardId] = useState(null)
   const [activeCardId, setActiveCardId] = useState(null)
@@ -93,25 +94,27 @@ function ScheduleComposer({
   }
 
   return (
-    <section data-testid="schedule-composer-view" className="space-y-6">
-      <Card className="p-6">
+    <section data-testid="schedule-composer-view" className={embedded ? 'space-y-4' : 'space-y-6'}>
+      <Card className={embedded ? 'p-4' : 'p-6'}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               Schedule Composer
             </h3>
-            <p className="mt-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
-              카드를 시간표에 끼워 넣어 오늘 타임라인으로 넘깁니다.
+            <p className={`mt-2 font-semibold text-slate-900 dark:text-slate-100 ${embedded ? 'text-base' : 'text-lg'}`}>
+              카드를 시간표에 배치합니다.
             </p>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            <p className={`mt-2 text-slate-500 dark:text-slate-400 ${embedded ? 'text-xs' : 'text-sm'}`}>
               카드를 선택한 뒤 원하는 슬롯을 누르거나, 카드 자체를 시간표로 드래그해 배치합니다.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={onJumpToBoard}>
-              보드로 돌아가기
-            </Button>
+            {!embedded ? (
+              <Button variant="secondary" onClick={onJumpToBoard}>
+                보드로 돌아가기
+              </Button>
+            ) : null}
             <Button variant="primary" onClick={onJumpToDay}>
               일간 타임라인 보기
             </Button>
@@ -128,7 +131,7 @@ function ScheduleComposer({
         onDragCancel={() => setActiveCardId(null)}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]">
+        <div className={`grid gap-6 ${embedded ? 'grid-cols-1' : 'xl:grid-cols-[20rem_minmax(0,1fr)]'}`}>
           <Card className="p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -195,7 +198,8 @@ function ScheduleComposer({
               ) : null}
             </div>
 
-            <div className="relative min-w-[520px]">
+            <div className="overflow-x-auto">
+              <div className={`relative ${embedded ? 'min-w-[420px]' : 'min-w-[520px]'}`}>
               <ComposerTimeGrid
                 onSlotClick={(slotIndex) => {
                   if (!selectedCardId) {
@@ -237,6 +241,7 @@ function ScheduleComposer({
                     </div>
                   )
                 })}
+              </div>
               </div>
             </div>
           </Card>

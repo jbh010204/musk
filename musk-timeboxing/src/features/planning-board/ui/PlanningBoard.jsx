@@ -50,6 +50,7 @@ function PlanningBoard({
   onUpdateCard = () => {},
   onApplyLayout = () => {},
   onOpenCategoryManager = () => {},
+  embedded = false,
 }) {
   const [editingCard, setEditingCard] = useState(null)
   const [activeCardId, setActiveCardId] = useState(null)
@@ -214,13 +215,14 @@ function PlanningBoard({
   }
 
   return (
-    <section data-testid="planning-board-view" className="space-y-6">
+    <section data-testid="planning-board-view" className={embedded ? 'space-y-4' : 'space-y-6'}>
       <BoardToolbar
         totalCards={items.length}
         scheduledCards={scheduledCards}
         uncategorizedCount={uncategorizedCount}
         onCreateCard={() => setEditingCard({})}
         onOpenCategoryManager={onOpenCategoryManager}
+        embedded={embedded}
       />
 
       <DndContext
@@ -230,11 +232,11 @@ function PlanningBoard({
         onDragCancel={handleDragCancel}
         onDragEnd={handleDragEnd}
       >
-        <Card className="overflow-hidden p-6">
+        <Card className={`overflow-hidden ${embedded ? 'p-4' : 'p-6'}`}>
           <div
-            className="rounded-[28px] bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.25)_1px,transparent_0)] bg-[length:22px_22px] p-5 dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.35)_1px,transparent_0)]"
+            className={`rounded-[28px] bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.25)_1px,transparent_0)] bg-[length:22px_22px] ${embedded ? 'p-4' : 'p-5'} dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.35)_1px,transparent_0)]`}
           >
-            <div className="grid gap-5 xl:grid-cols-3">
+            <div className={`grid gap-5 ${embedded ? 'grid-cols-1' : 'xl:grid-cols-3'}`}>
               {visualLanes.map((lane) => (
                 <CategoryStackLane
                   key={lane.id}

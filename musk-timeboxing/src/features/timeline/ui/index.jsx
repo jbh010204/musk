@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { getCategoryColor, getCategoryLabel, hasOverlap, slotToTime, TOTAL_SLOTS } from '../../../entities/planner'
 import PlanningBoard from '../../planning-board'
 import PlanningCanvas from '../../planning-canvas'
+import PlannerWorkspace from '../../planner-workspace'
 import ScheduleComposer from '../../schedule-composer'
 import CompletionModal from './CompletionModal'
 import DailyRecapCard from './DailyRecapCard'
@@ -17,6 +18,7 @@ const DEFAULT_SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
 const DURATION_PRESETS = [1, 2, 3, 4]
 const VIEW_MODE_OPTIONS = [
+  { value: 'WORKSPACE', label: '워크스페이스' },
   { value: 'BOARD', label: '보드' },
   { value: 'CANVAS', label: '캔버스' },
   { value: 'COMPOSER', label: '편성기' },
@@ -124,10 +126,13 @@ function Timeline({
   const [categoryFilter, setCategoryFilter] = useState('ALL')
   const [selectedMonthDate, setSelectedMonthDate] = useState(null)
   const isDayView = viewMode === 'DAY'
+  const isWorkspaceView = viewMode === 'WORKSPACE'
   const isBoardView = viewMode === 'BOARD'
   const isCanvasView = viewMode === 'CANVAS'
   const isComposerView = viewMode === 'COMPOSER'
-  const sectionTitle = isBoardView
+  const sectionTitle = isWorkspaceView
+    ? '🧠 플래너 워크스페이스'
+    : isBoardView
     ? '🧩 플래닝 보드'
     : isCanvasView
       ? '🪄 플래닝 캔버스'
@@ -452,7 +457,7 @@ function Timeline({
         ) : null}
       </div>
 
-      {!isDayView && !isBoardView && !isCanvasView && !isComposerView ? (
+      {!isDayView && !isWorkspaceView && !isBoardView && !isCanvasView && !isComposerView ? (
         <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
           {viewMode === 'WEEK'
             ? `${weekCalendar.rangeLabel} 구간의 주간 계획을 한 번에 확인합니다.`
@@ -470,6 +475,22 @@ function Timeline({
         <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
           편성기는 보드 카드를 시간표로 넘기는 단계입니다. 현재는 뷰 계약만 먼저 고정하고, 다음 작업에서 카드 드롭과 벌크 배치를 연결합니다.
         </div>
+      ) : null}
+
+      {isWorkspaceView ? (
+        <PlannerWorkspace
+          currentDate={currentDate}
+          data={data}
+          categories={categories}
+          brainDumpItems={brainDumpItems}
+          addBoardCard={addBoardCard}
+          updateBrainDumpItem={updateBrainDumpItem}
+          applyBrainDumpBoardLayout={applyBrainDumpBoardLayout}
+          updateBoardCanvas={updateBoardCanvas}
+          onOpenCategoryManager={onOpenCategoryManager}
+          onScheduleBoardCard={handleScheduleBoardCard}
+          onJumpToDay={() => setViewMode('DAY')}
+        />
       ) : null}
 
       {isDayView ? (
