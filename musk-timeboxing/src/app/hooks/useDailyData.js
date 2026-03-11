@@ -1,26 +1,25 @@
 import { useEffect, useState } from 'react'
 import {
   DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
-  cycleBrainDumpPriority,
-  getNextBoardStackOrder,
+  addTaskCardRecord,
+  applyTaskCardBoardLayout,
+  clearTaskCardCategory,
+  cycleTaskCardPriority,
   getMostRecentStoredDate,
   hasOverlap,
   loadDay,
   loadLastActiveDate,
   loadLastFocus,
-  normalizeBoardCard,
-  normalizeBoardCategoryId,
   normalizeBoardCanvas,
-  normalizeBoardEstimatedSlots,
-  normalizeBoardLinkedTimeBoxIds,
-  normalizeBoardNote,
-  syncBoardCardsWithTimeBoxes,
-  normalizeBrainDumpPriority,
+  removeTaskCardRecord,
+  restoreTaskCardRecord,
   saveDay,
   saveLastActiveDate,
   saveLastFocus,
   sortBrainDumpItems,
+  syncTaskCardLinksWithTimeBoxes,
   TOTAL_SLOTS,
+  updateTaskCardRecord,
 } from '../../entities/planner'
 
 const formatDate = (date) => {
@@ -37,15 +36,6 @@ const shiftDate = (dateStr, offset) => {
 }
 
 const createId = () => crypto.randomUUID()
-const normalizeBrainDumpItem = (item, fallbackIndex = 0) =>
-  normalizeBoardCard(
-    {
-      ...item,
-      id: typeof item?.id === 'string' ? item.id : createId(),
-      priority: normalizeBrainDumpPriority(item?.priority),
-    },
-    fallbackIndex,
-  )
 const normalizeCategory = (value) => {
   if (typeof value !== 'string') {
     return null
@@ -132,7 +122,7 @@ const findAvailableStartSlot = (timeBoxes, preferredStart, duration) => {
   return findFrom(safePreferred) ?? findFrom(0)
 }
 
-const syncBrainDumpLinks = (brainDump, timeBoxes) => syncBoardCardsWithTimeBoxes(brainDump, timeBoxes)
+const syncBrainDumpLinks = (brainDump, timeBoxes) => syncTaskCardLinksWithTimeBoxes(brainDump, timeBoxes)
 
 export const useDailyData = () => {
   const today = formatDate(new Date())
@@ -251,21 +241,16 @@ export const useDailyData = () => {
 
     setData((prev) => ({
       ...prev,
-      brainDump: [
-        ...prev.brainDump,
-        {
-          id: createId(),
-          content: trimmed,
-          isDone: false,
-          priority: 0,
-          categoryId: null,
-          stackOrder: getNextBoardStackOrder(prev.brainDump),
-          estimatedSlots: DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
-          linkedTimeBoxIds: [],
-          note: '',
-          createdFrom: 'list',
-        },
-      ],
+      brainDump: addTaskCardRecord(prev.brainDump, {
+        content: trimmed,
+        isDone: false,
+        priority: 0,
+        categoryId: null,
+        estimatedSlots: DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
+        linkedTimeBoxIds: [],
+        note: '',
+        createdFrom: 'list',
+      }),
     }))
   }
 
@@ -277,21 +262,16 @@ export const useDailyData = () => {
 
     setData((prev) => ({
       ...prev,
-      brainDump: [
-        ...prev.brainDump,
-        {
-          id: createId(),
-          content: trimmed,
-          isDone: false,
-          priority: 0,
-          categoryId: normalizeBoardCategoryId(categoryId),
-          stackOrder: getNextBoardStackOrder(prev.brainDump),
-          estimatedSlots: normalizeBoardEstimatedSlots(estimatedSlots),
-          linkedTimeBoxIds: [],
-          note: normalizeBoardNote(note),
-          createdFrom: 'board',
-        },
-      ],
+      brainDump: addTaskCardRecord(prev.brainDump, {
+        content: trimmed,
+        isDone: false,
+        priority: 0,
+        categoryId,
+        estimatedSlots,
+        linkedTimeBoxIds: [],
+        note,
+        createdFrom: 'board',
+      }),
     }))
 
     return true
@@ -300,32 +280,19 @@ export const useDailyData = () => {
   const removeBrainDumpItem = (id) => {
     setData((prev) => ({
       ...prev,
-      brainDump: prev.brainDump.filter((item) => item.id !== id),
+      brainDump: removeTaskCardRecord(prev.brainDump, id),
     }))
   }
 
   const restoreBrainDumpItem = (item, index = null) => {
-    const normalized = normalizeBrainDumpItem(item)
-    if (!normalized) {
-      return false
-    }
-
     let restored = false
     setData((prev) => {
-      if (prev.brainDump.some((existing) => existing.id === normalized.id)) {
-        return prev
-      }
-
-      const next = [...prev.brainDump]
-      const insertAt = Number.isInteger(index)
-        ? Math.max(0, Math.min(next.length, Number(index)))
-        : next.length
-      next.splice(insertAt, 0, normalized)
-      restored = true
+      const nextBrainDump = restoreTaskCardRecord(prev.brainDump, item, index)
+      restored = nextBrainDump.length !== prev.brainDump.length
 
       return {
         ...prev,
-        brainDump: next,
+        brainDump: nextBrainDump,
       }
     })
 
@@ -336,27 +303,15 @@ export const useDailyData = () => {
     let nextPriority = null
 
     setData((prev) => {
-      const hasTarget = prev.brainDump.some((item) => item.id === id)
-      if (!hasTarget) {
+      const { nextTaskCards, nextPriority: resolvedPriority } = cycleTaskCardPriority(prev.brainDump, id)
+      if (nextTaskCards === prev.brainDump) {
         return prev
       }
-
-      const nextBrainDump = prev.brainDump.map((item) => {
-        if (item.id !== id) {
-          return item
-        }
-
-        nextPriority = cycleBrainDumpPriority(item.priority)
-
-        return {
-          ...item,
-          priority: nextPriority,
-        }
-      })
+      nextPriority = resolvedPriority
 
       return {
         ...prev,
-        brainDump: nextBrainDump,
+        brainDump: nextTaskCards,
       }
     })
 
@@ -365,41 +320,7 @@ export const useDailyData = () => {
 
   const updateBrainDumpItem = (id, changes = {}) => {
     setData((prev) => {
-      const nextBrainDump = prev.brainDump.map((item, index) => {
-        if (item.id !== id) {
-          return item
-        }
-
-        const next = normalizeBrainDumpItem(
-          {
-            ...item,
-            ...changes,
-            content:
-              typeof changes?.content === 'string' && changes.content.trim().length > 0
-                ? changes.content
-                : item.content,
-            categoryId:
-              Object.prototype.hasOwnProperty.call(changes ?? {}, 'categoryId')
-                ? normalizeBoardCategoryId(changes?.categoryId)
-                : item.categoryId ?? null,
-            estimatedSlots:
-              Object.prototype.hasOwnProperty.call(changes ?? {}, 'estimatedSlots')
-                ? normalizeBoardEstimatedSlots(changes?.estimatedSlots)
-                : item.estimatedSlots ?? DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
-            note:
-              Object.prototype.hasOwnProperty.call(changes ?? {}, 'note')
-                ? normalizeBoardNote(changes?.note)
-                : item.note ?? '',
-            linkedTimeBoxIds:
-              Object.prototype.hasOwnProperty.call(changes ?? {}, 'linkedTimeBoxIds')
-                ? normalizeBoardLinkedTimeBoxIds(changes?.linkedTimeBoxIds)
-                : item.linkedTimeBoxIds ?? [],
-          },
-          index,
-        )
-
-        return next ?? item
-      })
+      const nextBrainDump = updateTaskCardRecord(prev.brainDump, id, changes)
 
       return {
         ...prev,
@@ -409,49 +330,16 @@ export const useDailyData = () => {
   }
 
   const applyBrainDumpBoardLayout = (layoutEntries = []) => {
-    const layoutMap = new Map(
-      layoutEntries
-        .filter((entry) => typeof entry?.id === 'string')
-        .map((entry) => [
-          entry.id,
-          {
-            categoryId: normalizeBoardCategoryId(entry.categoryId),
-            stackOrder: Number.isInteger(entry.stackOrder) ? entry.stackOrder : 0,
-          },
-        ]),
-    )
-
     setData((prev) => ({
       ...prev,
-      brainDump: prev.brainDump.map((item, index) => {
-        const layout = layoutMap.get(item.id)
-        if (!layout) {
-          return item
-        }
-
-        return (
-          normalizeBrainDumpItem(
-            {
-              ...item,
-              categoryId: layout.categoryId,
-              stackOrder: layout.stackOrder,
-            },
-            index,
-          ) ?? item
-        )
-      }),
+      brainDump: applyTaskCardBoardLayout(prev.brainDump, layoutEntries),
     }))
   }
 
   const clearBrainDumpCategory = (categoryId) => {
     setData((prev) => ({
       ...prev,
-      brainDump: syncBrainDumpLinks(
-        prev.brainDump.map((item) =>
-          item.categoryId === categoryId ? { ...item, categoryId: null } : item,
-        ),
-        prev.timeBoxes,
-      ),
+      brainDump: syncBrainDumpLinks(clearTaskCardCategory(prev.brainDump, categoryId), prev.timeBoxes),
     }))
   }
 

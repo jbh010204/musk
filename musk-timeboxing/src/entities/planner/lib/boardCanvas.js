@@ -1,5 +1,6 @@
 import { createShapeId } from 'tldraw'
 import { groupBoardCardsByCategory, UNCATEGORIZED_BOARD_LANE } from './boardCard'
+import { deriveTaskCardStatus } from '../model'
 
 export const BOARD_CANVAS_VERSION = 1
 export const PLANNER_CATEGORY_NODE_SHAPE = 'planner-category-node'
@@ -51,34 +52,7 @@ export const hasPlannerCanvasShapes = (boardCanvas) => {
   return Object.values(records).some((record) => isPlannerCanvasShape(record))
 }
 
-export const getBoardCardCanvasStatus = (item, timeBoxes = []) => {
-  const linkedIds = Array.isArray(item?.linkedTimeBoxIds) ? item.linkedTimeBoxIds : []
-  if (linkedIds.length === 0) {
-    return 'TODO'
-  }
-
-  const linkedStatuses = linkedIds
-    .map((id) => timeBoxes.find((box) => box.id === id)?.status)
-    .filter((status) => typeof status === 'string')
-
-  if (linkedStatuses.length === 0) {
-    return 'SCHEDULED'
-  }
-
-  const uniqueStatuses = new Set(linkedStatuses)
-  if (uniqueStatuses.size === 1) {
-    const [onlyStatus] = uniqueStatuses
-    if (onlyStatus === 'COMPLETED') {
-      return 'COMPLETED'
-    }
-    if (onlyStatus === 'SKIPPED') {
-      return 'SKIPPED'
-    }
-    return 'SCHEDULED'
-  }
-
-  return 'PARTIAL'
-}
+export const getBoardCardCanvasStatus = (item, timeBoxes = []) => deriveTaskCardStatus(item, timeBoxes)
 
 const getLaneDefaults = (laneIndex, itemIndex = 0) => ({
   nodeX: laneIndex * 340,
