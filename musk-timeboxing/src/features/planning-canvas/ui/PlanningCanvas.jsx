@@ -1,391 +1,401 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Tldraw } from 'tldraw'
-import 'tldraw/tldraw.css'
 import {
-  buildInitialBoardCanvasShapes,
-  createPlannerTaskShapeId,
-  hasBoardCanvasSnapshot,
-  hasPlannerCanvasShapes,
-  isPlannerCanvasShape,
-  PLANNER_CATEGORY_NODE_SHAPE,
-  PLANNER_TASK_CARD_SHAPE,
+  DndContext,
+  DragOverlay,
+  MouseSensor,
+  closestCorners,
+  pointerWithin,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  buildBoardLayoutEntries,
+  getCategoryColor,
+  getCategoryLabel,
+  getBoardCardCanvasStatus,
+  groupBoardCardsByCategory,
+  UNCATEGORIZED_BOARD_LANE,
 } from '../../../entities/planner'
-import { Button, Card } from '../../../shared/ui'
-import {
-  plannerCanvasShapeUtils,
-  PLANNER_CANVAS_SELECT_EVENT,
-} from '../lib/plannerCanvasShapes'
-import CanvasInspector from './CanvasInspector'
+import { Badge, Button, Card } from '../../../shared/ui'
+import BoardCardEditorModal from '../../planning-board/ui/BoardCardEditorModal'
+import CategoryStackLane from '../../planning-board/ui/CategoryStackLane'
 
-const SAVE_DEBOUNCE_MS = 400
+const resolveLaneIdFromOver = (overId, lanes) => {
+  if (typeof overId !== 'string') {
+    return null
+  }
 
-const arePropsEqual = (left, right) => JSON.stringify(left) === JSON.stringify(right)
+  if (overId.startsWith('lane:')) {
+    return overId.replace('lane:', '')
+  }
+
+  if (overId.startsWith('node:')) {
+    return overId.replace('node:', '')
+  }
+
+  return lanes.find((lane) => lane.items.some((item) => item.id === overId))?.id || null
+}
+
+const createLaneState = (lanes) =>
+  lanes.map((lane) => ({
+    id: lane.id,
+    items: lane.items.map((item) => item.id),
+  }))
 
 function PlanningCanvas({
-  currentDate,
   boardCanvas,
   brainDumpItems = [],
   categories = [],
   timeBoxes = [],
   onUpdateBoardCanvas = () => {},
+  onCreateCard = () => false,
   onUpdateCard = () => {},
-  onOpenBoard = () => {},
+  onApplyLayout = () => {},
   onOpenCategoryManager = () => {},
   onOpenComposer = () => {},
+  selectedCardId: controlledSelectedCardId = null,
+  onSelectCard = null,
   embedded = false,
 }) {
-  const editorRef = useRef(null)
-  const saveTimerRef = useRef(null)
-  const didInitializeRef = useRef(false)
-  const [selectedShape, setSelectedShape] = useState(null)
-  const hasCards = brainDumpItems.length > 0
-  const shapeUtils = useMemo(() => plannerCanvasShapeUtils, [])
-  const shapeSeed = useMemo(
-    () => buildInitialBoardCanvasShapes({ items: brainDumpItems, categories, timeBoxes }),
-    [brainDumpItems, categories, timeBoxes],
+  const [editingCard, setEditingCard] = useState(null)
+  const [activeCardId, setActiveCardId] = useState(null)
+  const [internalSelectedCardId, setInternalSelectedCardId] = useState(
+    controlledSelectedCardId ?? boardCanvas?.selectedCardId ?? null,
   )
-  const cardMap = useMemo(
-    () => new Map(brainDumpItems.map((item) => [item.id, item])),
-    [brainDumpItems],
+  const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
+  const lanes = useMemo(() => groupBoardCardsByCategory(brainDumpItems, categories), [brainDumpItems, categories])
+  const [laneState, setLaneState] = useState(() => createLaneState(lanes))
+  const cardMap = useMemo(() => new Map(brainDumpItems.map((item) => [item.id, item])), [brainDumpItems])
+  const laneMap = useMemo(() => new Map(lanes.map((lane) => [lane.id, lane])), [lanes])
+  const selectedCardId = controlledSelectedCardId ?? internalSelectedCardId
+
+  const visualLanes = useMemo(
+    () =>
+      laneState.map((lane) => {
+        const meta = laneMap.get(lane.id)
+
+        return {
+          ...(meta || {
+            id: lane.id,
+            label: lane.id,
+            color: '#94a3b8',
+            items: [],
+          }),
+          items: lane.items.map((itemId) => cardMap.get(itemId)).filter(Boolean),
+        }
+      }),
+    [cardMap, laneMap, laneState],
   )
 
+  const activeCard = activeCardId ? cardMap.get(activeCardId) || null : null
+  const selectedCard = selectedCardId ? cardMap.get(selectedCardId) || null : null
+  const scheduledCards = brainDumpItems.filter((item) => item.linkedTimeBoxIds?.length > 0).length
+  const completedCards = brainDumpItems.filter(
+    (item) => getBoardCardCanvasStatus(item, timeBoxes) === 'COMPLETED',
+  ).length
+  const uncategorizedCount =
+    visualLanes.find((lane) => lane.id === UNCATEGORIZED_BOARD_LANE)?.items.length || 0
+
   useEffect(() => {
-    return () => {
-      if (saveTimerRef.current) {
-        window.clearTimeout(saveTimerRef.current)
+    setLaneState(createLaneState(lanes))
+  }, [lanes])
+
+  useEffect(() => {
+    if (controlledSelectedCardId !== null) {
+      setInternalSelectedCardId(controlledSelectedCardId)
+    }
+  }, [controlledSelectedCardId])
+
+  useEffect(() => {
+    if (selectedCardId && !cardMap.has(selectedCardId)) {
+      if (onSelectCard) {
+        onSelectCard(null)
+      } else {
+        setInternalSelectedCardId(null)
       }
     }
-  }, [])
+  }, [cardMap, onSelectCard, selectedCardId])
 
-  useEffect(() => {
-    const handleShapeSelect = (event) => {
-      const shapeId = event?.detail?.shapeId
-      const editor = editorRef.current
-      if (!shapeId || !editor) {
+  const setSelectedCard = (itemOrId) => {
+    const nextId = typeof itemOrId === 'string' ? itemOrId : itemOrId?.id || null
+    const nextCard = nextId ? cardMap.get(nextId) || null : null
+
+    if (onSelectCard) {
+      onSelectCard(nextId)
+    } else {
+      setInternalSelectedCardId(nextId)
+    }
+
+    onUpdateBoardCanvas({
+      selectedCardId: nextId,
+      focusedLaneId: nextCard?.categoryId || UNCATEGORIZED_BOARD_LANE,
+    })
+  }
+
+  const commitLaneState = (nextLaneState) => {
+    setLaneState(nextLaneState)
+    onApplyLayout(buildBoardLayoutEntries(nextLaneState))
+  }
+
+  const moveCardToLane = (cardId, targetLaneId) => {
+    const nextLaneState = createLaneState(visualLanes)
+    const sourceLane = nextLaneState.find((lane) => lane.items.includes(cardId))
+    const targetLane = nextLaneState.find((lane) => lane.id === targetLaneId)
+
+    if (!sourceLane || !targetLane) {
+      return
+    }
+
+    sourceLane.items = sourceLane.items.filter((itemId) => itemId !== cardId)
+    targetLane.items = [...targetLane.items, cardId]
+    commitLaneState(nextLaneState)
+  }
+
+  const handleDragStart = ({ active }) => {
+    setActiveCardId(typeof active?.id === 'string' ? active.id : null)
+  }
+
+  const handleDragCancel = () => {
+    setActiveCardId(null)
+    setLaneState(createLaneState(lanes))
+  }
+
+  const handleDragEnd = ({ active, over }) => {
+    const activeId = typeof active?.id === 'string' ? active.id : null
+    const overId = typeof over?.id === 'string' ? over.id : null
+
+    setActiveCardId(null)
+
+    if (!activeId || !overId) {
+      setLaneState(createLaneState(lanes))
+      return
+    }
+
+    const nextLaneState = createLaneState(lanes)
+    const activeLaneId = resolveLaneIdFromOver(activeId, lanes)
+    const overLaneId = resolveLaneIdFromOver(overId, lanes)
+
+    if (!activeLaneId || !overLaneId) {
+      setLaneState(nextLaneState)
+      return
+    }
+
+    const activeLane = nextLaneState.find((lane) => lane.id === activeLaneId)
+    const overLane = nextLaneState.find((lane) => lane.id === overLaneId)
+
+    if (!activeLane || !overLane) {
+      setLaneState(nextLaneState)
+      return
+    }
+
+    const activeIndex = activeLane.items.indexOf(activeId)
+    if (activeIndex < 0) {
+      setLaneState(nextLaneState)
+      return
+    }
+
+    const removeFromSource = () => {
+      activeLane.items = activeLane.items.filter((itemId) => itemId !== activeId)
+    }
+
+    if (activeLaneId === overLaneId) {
+      const overIndex = overLane.items.indexOf(overId)
+      if (overIndex < 0) {
+        if (overId.startsWith('lane:') || overId.startsWith('node:')) {
+          activeLane.items = arrayMove(activeLane.items, activeIndex, activeLane.items.length - 1)
+          commitLaneState(nextLaneState)
+          return
+        }
+
+        setLaneState(nextLaneState)
         return
       }
 
-      const shape = editor.getShape(shapeId)
-      if (!shape || !isPlannerCanvasShape(shape)) {
-        return
-      }
-
-      setSelectedShape(shape)
+      activeLane.items = arrayMove(activeLane.items, activeIndex, overIndex)
+      commitLaneState(nextLaneState)
+      return
     }
 
-    window.addEventListener(PLANNER_CANVAS_SELECT_EVENT, handleShapeSelect)
-    return () => {
-      window.removeEventListener(PLANNER_CANVAS_SELECT_EVENT, handleShapeSelect)
+    removeFromSource()
+    const overIndex = overLane.items.indexOf(overId)
+    if (overIndex < 0 || overId.startsWith('lane:') || overId.startsWith('node:')) {
+      overLane.items = [...overLane.items, activeId]
+    } else {
+      overLane.items = [
+        ...overLane.items.slice(0, overIndex),
+        activeId,
+        ...overLane.items.slice(overIndex),
+      ]
     }
-  }, [])
 
-  useEffect(() => {
-    window.__plannerCanvasSelectCard = (cardId) => {
-      const editor = editorRef.current
-      if (!editor || typeof cardId !== 'string') {
-        return false
-      }
+    commitLaneState(nextLaneState)
+  }
 
-      const shapeId = createPlannerTaskShapeId(cardId)
-      const shape = editor.getShape(shapeId)
-      if (!shape || !isPlannerCanvasShape(shape)) {
-        return false
-      }
+  const handleSelectNode = (laneId) => {
+    if (!selectedCardId) {
+      return
+    }
 
-      editor.select(shapeId)
-      setSelectedShape(shape)
+    moveCardToLane(selectedCardId, laneId)
+    onUpdateBoardCanvas({
+      selectedCardId,
+      focusedLaneId: laneId,
+    })
+  }
+
+  const handleSubmitEditor = (payload) => {
+    if (editingCard?.id) {
+      onUpdateCard(editingCard.id, payload)
       return true
     }
 
-    return () => {
-      delete window.__plannerCanvasSelectCard
-    }
-  }, [])
-
-  const resolveSelection = useCallback((editor) => {
-    const shape = editor?.getOnlySelectedShape?.()
-    if (!shape || !isPlannerCanvasShape(shape)) {
-      setSelectedShape(null)
-      return
-    }
-
-    setSelectedShape(shape)
-  }, [])
-
-  const persistSnapshot = useCallback((editor, options = {}) => {
-    if (!editor) {
-      return
-    }
-
-    const snapshot = editor.getSnapshot()
-    onUpdateBoardCanvas({
-      document: snapshot.document,
-      session: snapshot.session,
-      migratedFromLegacyBoard:
-        options.migratedFromLegacyBoard ?? boardCanvas?.migratedFromLegacyBoard ?? false,
-    })
-  }, [boardCanvas?.migratedFromLegacyBoard, onUpdateBoardCanvas])
-
-  const schedulePersist = useCallback((editor, options = {}) => {
-    if (saveTimerRef.current) {
-      window.clearTimeout(saveTimerRef.current)
-    }
-
-    saveTimerRef.current = window.setTimeout(() => {
-      persistSnapshot(editor, options)
-    }, SAVE_DEBOUNCE_MS)
-  }, [persistSnapshot])
-
-  const syncProjection = useCallback((editor, options = {}) => {
-    if (!editor) {
-      return
-    }
-
-    const currentPlannerShapes = editor
-      .getCurrentPageShapes()
-      .filter((shape) => isPlannerCanvasShape(shape))
-    const positionsById = new Map(
-      currentPlannerShapes.map((shape) => [
-        shape.id,
-        {
-          x: shape.x,
-          y: shape.y,
-        },
-      ]),
-    )
-    const nextShapes = buildInitialBoardCanvasShapes({
-      items: brainDumpItems,
-      categories,
-      timeBoxes,
-      positionsById,
-    })
-    const currentShapeMap = new Map(currentPlannerShapes.map((shape) => [shape.id, shape]))
-    const nextShapeMap = new Map(nextShapes.map((shape) => [shape.id, shape]))
-
-    const toCreate = nextShapes.filter((shape) => !currentShapeMap.has(shape.id))
-    const toUpdate = nextShapes
-      .filter((shape) => {
-        const current = currentShapeMap.get(shape.id)
-        if (!current) {
-          return false
-        }
-
-        return !arePropsEqual(current.props, shape.props)
-      })
-      .map((shape) => ({
-        id: shape.id,
-        type: shape.type,
-        props: shape.props,
-      }))
-    const toDelete = currentPlannerShapes
-      .filter((shape) => !nextShapeMap.has(shape.id))
-      .map((shape) => shape.id)
-
-    if (toDelete.length > 0) {
-      editor.deleteShapes(toDelete)
-    }
-
-    if (toCreate.length > 0) {
-      editor.createShapes(toCreate)
-    }
-
-    if (toUpdate.length > 0) {
-      editor.updateShapes(toUpdate)
-    }
-
-    resolveSelection(editor)
-
-    if (toCreate.length > 0 || toUpdate.length > 0 || toDelete.length > 0) {
-      persistSnapshot(editor, options)
-    }
-  }, [brainDumpItems, categories, persistSnapshot, resolveSelection, timeBoxes])
-
-  const handleAutoLayout = () => {
-    const editor = editorRef.current
-    if (!editor) {
-      return
-    }
-
-    const currentIds = [...editor.getCurrentPageShapeIds()]
-    if (currentIds.length > 0) {
-      editor.deleteShapes(currentIds)
-    }
-
-    if (shapeSeed.length > 0) {
-      editor.createShapes(shapeSeed)
-      editor.zoomToFit({ animation: { duration: 0 } })
-    }
-
-    resolveSelection(editor)
-    persistSnapshot(editor, { migratedFromLegacyBoard: true })
+    return onCreateCard(payload)
   }
 
-  useEffect(() => {
-    if (!didInitializeRef.current || !editorRef.current) {
-      return
+  const collisionStrategy = (args) => {
+    const pointerCollisions = pointerWithin(args)
+    if (pointerCollisions.length > 0) {
+      return pointerCollisions
     }
 
-    syncProjection(editorRef.current, {
-      migratedFromLegacyBoard: boardCanvas?.migratedFromLegacyBoard ?? true,
-    })
-  }, [boardCanvas?.migratedFromLegacyBoard, syncProjection])
-
-  const handleMount = (editor) => {
-    editorRef.current = editor
-    editor.setCurrentTool('select')
-
-    if (!didInitializeRef.current) {
-      if (hasBoardCanvasSnapshot(boardCanvas) && hasPlannerCanvasShapes(boardCanvas)) {
-        editor.loadSnapshot({
-          document: boardCanvas.document,
-          session: boardCanvas.session ?? undefined,
-        })
-      } else if (shapeSeed.length > 0) {
-        editor.createShapes(shapeSeed)
-        editor.zoomToFit({ animation: { duration: 0 } })
-        persistSnapshot(editor, { migratedFromLegacyBoard: true })
-      } else {
-        persistSnapshot(editor, { migratedFromLegacyBoard: false })
-      }
-
-      didInitializeRef.current = true
-    }
-
-    resolveSelection(editor)
-
-    const removeListener = editor.store.listen(
-      () => {
-        resolveSelection(editor)
-        schedulePersist(editor)
-      },
-      { source: 'user', scope: 'all' },
-    )
-
-    return () => {
-      removeListener?.()
-      if (saveTimerRef.current) {
-        window.clearTimeout(saveTimerRef.current)
-      }
-    }
-  }
-
-  const selectedEntity = useMemo(() => {
-    if (!selectedShape) {
-      return null
-    }
-
-    if (selectedShape.type === PLANNER_TASK_CARD_SHAPE) {
-      const card = cardMap.get(selectedShape.props.cardId) || null
-      if (!card) {
-        return null
-      }
-
-      return {
-        kind: 'card',
-        shape: selectedShape,
-        card,
-      }
-    }
-
-    if (selectedShape.type === PLANNER_CATEGORY_NODE_SHAPE) {
-      return {
-        kind: 'category',
-        shape: selectedShape,
-      }
-    }
-
-    return null
-  }, [cardMap, selectedShape])
-
-  const handleCanvasPointerUpCapture = () => {
-    window.requestAnimationFrame(() => {
-      resolveSelection(editorRef.current)
-    })
-  }
-
-  const handleCanvasClickCapture = (event) => {
-    const shapeId = event.target
-      ?.closest?.('[data-planner-shape-id]')
-      ?.getAttribute?.('data-planner-shape-id')
-
-    if (!shapeId || !editorRef.current) {
-      return
-    }
-
-    const shape = editorRef.current.getShape(shapeId)
-    if (!shape || !isPlannerCanvasShape(shape)) {
-      return
-    }
-
-    editorRef.current.select(shapeId)
-    setSelectedShape(shape)
+    return closestCorners(args)
   }
 
   return (
     <section data-testid="planning-canvas-view" className={embedded ? 'space-y-4' : 'space-y-6'}>
-      <Card className={embedded ? 'p-4' : 'p-5'}>
+      <Card className={embedded ? 'p-4' : 'p-6'}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Planning Canvas
+              Stack Canvas
             </h3>
             <p className={`mt-2 font-semibold text-slate-900 dark:text-slate-100 ${embedded ? 'text-base' : 'text-lg'}`}>
-              무한 캔버스에서 카드와 카테고리 배치를 잡습니다.
+              캔버스 안에서 카드를 만들고 카테고리 스택으로 분류합니다.
             </p>
             <p className={`mt-2 text-slate-500 dark:text-slate-400 ${embedded ? 'text-xs' : 'text-sm'}`}>
-              현재 날짜: {currentDate}. 카드/카테고리는 custom shape로 렌더링되고, 편집은 inspector에서 원본 brain dump 카드에 반영됩니다.
+              브레인 덤프 원본을 카드로 다루고, 드래그로 카테고리 스택을 옮긴 뒤 선택한 카드를 우측 타임라인에 배치합니다.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" onClick={onOpenCategoryManager}>
+            <Button
+              variant="secondary"
+              className={embedded ? 'px-3 py-1.5 text-xs' : 'px-3 py-2 text-sm'}
+              onClick={onOpenCategoryManager}
+            >
               카테고리 관리
             </Button>
-            <Button variant="secondary" onClick={handleAutoLayout}>
-              자동 배치
-            </Button>
             {!embedded ? (
-              <>
-                <Button variant="secondary" onClick={onOpenBoard}>
-                  보드에서 카드 만들기
-                </Button>
-                <Button variant="primary" onClick={onOpenComposer}>
-                  편성기로 보내기
-                </Button>
-              </>
+              <Button variant="secondary" className="px-3 py-2 text-sm" onClick={onOpenComposer}>
+                우측 타임라인 보기
+              </Button>
             ) : null}
+            <Button
+              variant="primary"
+              className={embedded ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'}
+              data-testid="planning-canvas-open-create"
+              onClick={() => setEditingCard({})}
+            >
+              일정 카드 만들기
+            </Button>
           </div>
+        </div>
+
+        <div className={`${embedded ? 'mt-3' : 'mt-4'} flex flex-wrap items-center gap-2`}>
+          <Badge tone="neutral">전체 카드 {brainDumpItems.length}개</Badge>
+          <Badge tone="neutral">미분류 {uncategorizedCount}개</Badge>
+          <Badge tone="neutral">예정 연결 {scheduledCards}개</Badge>
+          <Badge tone="neutral">완료 {completedCards}개</Badge>
+        </div>
+
+        <div className="mt-4 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
+          {selectedCard ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold">선택됨:</span>
+              <span>{selectedCard.content}</span>
+              <span className="text-slate-400">·</span>
+              <span>{getCategoryLabel(categories.find((category) => category.id === selectedCard.categoryId), null) || '미분류'}</span>
+              <span className="text-slate-400">·</span>
+              <span>{selectedCard.estimatedSlots * 30}분</span>
+              <button
+                type="button"
+                className="rounded-xl px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                onClick={() => setSelectedCard(null)}
+              >
+                선택 해제
+              </button>
+            </div>
+          ) : (
+            '카드를 클릭해 선택하고, 같은 화면 오른쪽 시간표에서 원하는 슬롯을 눌러 일정으로 만듭니다.'
+          )}
         </div>
       </Card>
 
-      <div className={`grid gap-6 ${embedded ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1fr)_320px]'}`}>
-        <Card className="overflow-hidden p-0">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={collisionStrategy}
+        onDragStart={handleDragStart}
+        onDragCancel={handleDragCancel}
+        onDragEnd={handleDragEnd}
+      >
+        <Card className={`overflow-hidden ${embedded ? 'p-4' : 'p-6'}`}>
           <div
-            className={`relative ${embedded ? 'h-[56vh] min-h-[440px]' : 'h-[72vh] min-h-[560px]'}`}
             data-testid="planning-canvas-surface"
-            onPointerUpCapture={handleCanvasPointerUpCapture}
-            onClickCapture={handleCanvasClickCapture}
+            className={`rounded-[28px] bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.25)_1px,transparent_0)] bg-[length:24px_24px] ${embedded ? 'p-4' : 'p-5'} dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.35)_1px,transparent_0)]`}
           >
-            <Tldraw hideUi onMount={handleMount} shapeUtils={shapeUtils} />
-
-            {!hasCards ? (
-              <div
-                data-testid="planning-canvas-empty"
-                className="pointer-events-none absolute left-6 top-6 rounded-2xl bg-white/90 px-4 py-3 text-sm text-slate-500 shadow-sm dark:bg-slate-950/85 dark:text-slate-400"
-              >
-                카드가 아직 없습니다. `보드에서 카드 만들기`로 브레인 덤프 카드를 추가하면 캔버스 자동 배치로 시작할 수 있습니다.
-              </div>
-            ) : null}
+            <div className={`grid gap-5 ${embedded ? 'grid-cols-1' : 'xl:grid-cols-3'}`}>
+              {visualLanes.map((lane) => (
+                <CategoryStackLane
+                  key={lane.id}
+                  lane={lane}
+                  selectedCardId={selectedCardId}
+                  onEditCard={setEditingCard}
+                  onSelectCard={(item) => setSelectedCard(item)}
+                  onSelectNode={handleSelectNode}
+                />
+              ))}
+            </div>
           </div>
         </Card>
 
-        <CanvasInspector
-          selection={selectedEntity}
+        <DragOverlay>
+          {activeCard ? (
+            <div className="w-[280px]">
+              <div className="rounded-2xl bg-white/95 p-4 shadow-xl dark:bg-slate-900/95">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{
+                      backgroundColor: activeCard.categoryId
+                        ? getCategoryColor(
+                            categories.find((category) => category.id === activeCard.categoryId),
+                            null,
+                          )
+                        : '#94a3b8',
+                    }}
+                  />
+                  <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    이동 중
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {activeCard.content}
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+
+      {editingCard !== null ? (
+        <BoardCardEditorModal
           categories={categories}
-          onUpdateCard={onUpdateCard}
-          onOpenCategoryManager={onOpenCategoryManager}
+          initialCard={editingCard}
+          onClose={() => setEditingCard(null)}
+          onSubmit={handleSubmitEditor}
         />
-      </div>
+      ) : null}
     </section>
   )
 }

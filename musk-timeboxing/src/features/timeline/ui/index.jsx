@@ -683,19 +683,20 @@ function Timeline({
       ) : null}
 
       {isCanvasView ? (
-      <PlanningCanvas
-        key={currentDate}
-        currentDate={currentDate}
-        boardCanvas={data.boardCanvas}
-        brainDumpItems={brainDumpItems}
-        categories={categories}
-        timeBoxes={data.timeBoxes}
-        onUpdateBoardCanvas={updateBoardCanvas}
-        onUpdateCard={updateBrainDumpItem}
-        onOpenBoard={() => setViewMode('BOARD')}
-        onOpenCategoryManager={onOpenCategoryManager}
-        onOpenComposer={() => setViewMode('COMPOSER')}
-      />
+        <PlanningCanvas
+          key={currentDate}
+          currentDate={currentDate}
+          boardCanvas={data.boardCanvas}
+          brainDumpItems={brainDumpItems}
+          categories={categories}
+          timeBoxes={data.timeBoxes}
+          onUpdateBoardCanvas={updateBoardCanvas}
+          onCreateCard={addBoardCard}
+          onUpdateCard={updateBrainDumpItem}
+          onApplyLayout={applyBrainDumpBoardLayout}
+          onOpenCategoryManager={onOpenCategoryManager}
+          onOpenComposer={() => setViewMode('COMPOSER')}
+        />
       ) : null}
 
       {isComposerView ? (

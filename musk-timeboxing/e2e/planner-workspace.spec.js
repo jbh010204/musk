@@ -45,9 +45,10 @@ test('planner workspace composes board canvas and composer in one view', async (
         bigThree: [],
         timeBoxes: [],
         boardCanvas: {
-          version: 1,
-          document: null,
-          session: null,
+          version: 2,
+          layoutMode: 'stack',
+          selectedCardId: null,
+          focusedLaneId: 'cat-backend',
           migratedFromLegacyBoard: false,
           lastSyncedAt: null,
         },
@@ -61,21 +62,17 @@ test('planner workspace composes board canvas and composer in one view', async (
   await page.locator('[data-testid="timeline-view-workspace"]:visible').first().click()
 
   await expect(page.locator('[data-testid="planner-workspace-view"]:visible').first()).toBeVisible()
-  await expect(page.locator('[data-testid="planning-board-view"]:visible').first()).toBeVisible()
   await expect(page.locator('[data-testid="planning-canvas-view"]:visible').first()).toBeVisible()
   await expect(page.locator('[data-testid="schedule-composer-view"]:visible').first()).toBeVisible()
-  await expect(page.locator('[data-testid="canvas-task-card-workspace-card-001"]')).toBeVisible()
+  await expect(page.locator('[data-testid="planning-board-card-workspace-card-001"]:visible').first()).toBeVisible()
 
-  const queueCard = page.locator('[data-testid="composer-queue-card-workspace-card-001"]:visible').first()
-  await queueCard.click()
+  const canvasCard = page.locator('[data-testid="planning-board-card-workspace-card-001"]:visible').first()
+  await canvasCard.click()
   await page.locator('[data-testid="composer-slot-10"]:visible').first().click()
 
-  await expect(queueCard).toContainText('예정 1')
+  await expect(canvasCard).toContainText('예정 1')
   await expect(page.locator('[data-testid^="composer-block-"]').first()).toContainText(
     '워크스페이스 통합 배치 테스트',
-  )
-  await expect(page.locator('[data-testid="planning-board-card-workspace-card-001"]:visible').first()).toContainText(
-    '예정 1',
   )
 
   await page.waitForFunction((today) => {
@@ -88,7 +85,7 @@ test('planner workspace composes board canvas and composer in one view', async (
     return (
       parsed?.timeBoxes?.length === 1 &&
       parsed?.brainDump?.find((item) => item.id === 'workspace-card-001')?.linkedTimeBoxIds?.length === 1 &&
-      Boolean(parsed?.boardCanvas?.document && parsed?.boardCanvas?.session)
+      parsed?.boardCanvas?.selectedCardId === null
     )
   }, setup.today)
 })

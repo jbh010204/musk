@@ -30,9 +30,12 @@ function ScheduleComposer({
   onScheduleCard = () => false,
   onJumpToDay = () => {},
   onJumpToBoard = () => {},
+  selectedCardId: controlledSelectedCardId = null,
+  onSelectCard = null,
+  hideQueue = false,
   embedded = false,
 }) {
-  const [selectedCardId, setSelectedCardId] = useState(null)
+  const [internalSelectedCardId, setInternalSelectedCardId] = useState(null)
   const [activeCardId, setActiveCardId] = useState(null)
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
   const lanes = useMemo(
@@ -40,6 +43,7 @@ function ScheduleComposer({
     [categories, items],
   )
   const cardMap = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
+  const selectedCardId = controlledSelectedCardId ?? internalSelectedCardId
   const activeCard = activeCardId ? cardMap.get(activeCardId) || null : null
   const visibleTimeBoxes = useMemo(
     () => [...timeBoxes].sort((left, right) => left.startSlot - right.startSlot),
@@ -63,7 +67,11 @@ function ScheduleComposer({
 
     const success = onScheduleCard(card.id, startSlot)
     if (success) {
-      setSelectedCardId(null)
+      if (onSelectCard) {
+        onSelectCard(null)
+      } else {
+        setInternalSelectedCardId(null)
+      }
     }
     return success
   }
@@ -131,55 +139,64 @@ function ScheduleComposer({
         onDragCancel={() => setActiveCardId(null)}
         onDragEnd={handleDragEnd}
       >
-        <div className={`grid gap-6 ${embedded ? 'grid-cols-1' : 'xl:grid-cols-[20rem_minmax(0,1fr)]'}`}>
-          <Card className="p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  카드 큐
-                </p>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  카테고리별로 정리된 카드를 오늘 시간표로 보냅니다.
-                </p>
-              </div>
-              <span className="rounded-xl bg-slate-200/70 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800/70 dark:text-slate-300">
-                {items.length}개
-              </span>
-            </div>
-
-            <div className="mt-4 space-y-5">
-              {lanes.length === 0 ? (
-                <div className="rounded-2xl bg-slate-50/80 px-4 py-5 text-sm text-slate-500 dark:bg-slate-900/45 dark:text-slate-400">
-                  보드 카드가 아직 없습니다.
+        <div className={`grid gap-6 ${hideQueue ? 'grid-cols-1' : embedded ? 'grid-cols-1' : 'xl:grid-cols-[20rem_minmax(0,1fr)]'}`}>
+          {!hideQueue ? (
+            <Card className="p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    카드 큐
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    카테고리별로 정리된 카드를 오늘 시간표로 보냅니다.
+                  </p>
                 </div>
-              ) : (
-                lanes.map((lane) => (
-                  <div key={lane.id}>
-                    <div className="mb-2 flex items-center gap-2">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: lane.color }}
-                      />
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        {lane.label}
-                      </p>
-                    </div>
-                    <div className="space-y-3">
-                      {lane.items.map((item) => (
-                        <ComposerQueueCard
-                          key={item.id}
-                          item={item}
-                          color={lane.color}
-                          isSelected={selectedCardId === item.id}
-                          onSelect={setSelectedCardId}
-                        />
-                      ))}
-                    </div>
+                <span className="rounded-xl bg-slate-200/70 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800/70 dark:text-slate-300">
+                  {items.length}개
+                </span>
+              </div>
+
+              <div className="mt-4 space-y-5">
+                {lanes.length === 0 ? (
+                  <div className="rounded-2xl bg-slate-50/80 px-4 py-5 text-sm text-slate-500 dark:bg-slate-900/45 dark:text-slate-400">
+                    보드 카드가 아직 없습니다.
                   </div>
-                ))
-              )}
-            </div>
-          </Card>
+                ) : (
+                  lanes.map((lane) => (
+                    <div key={lane.id}>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span
+                          className="h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: lane.color }}
+                        />
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          {lane.label}
+                        </p>
+                      </div>
+                      <div className="space-y-3">
+                        {lane.items.map((item) => (
+                          <ComposerQueueCard
+                            key={item.id}
+                            item={item}
+                            color={lane.color}
+                            isSelected={selectedCardId === item.id}
+                            onSelect={(nextId) => {
+                              if (onSelectCard) {
+                                onSelectCard(nextId)
+                                return
+                              }
+
+                              setInternalSelectedCardId(nextId)
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+          ) : null}
 
           <Card className="overflow-hidden p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
@@ -188,12 +205,18 @@ function ScheduleComposer({
                   오늘 시간표
                 </p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  30분 스냅 기준으로 즉시 타임박스를 만듭니다.
+                  {hideQueue
+                    ? '캔버스에서 선택한 카드를 30분 스냅 기준으로 바로 일정에 넣습니다.'
+                    : '30분 스냅 기준으로 즉시 타임박스를 만듭니다.'}
                 </p>
               </div>
               {selectedCardId ? (
                 <span className="rounded-xl bg-indigo-500/15 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
                   선택됨: {cardMap.get(selectedCardId)?.content}
+                </span>
+              ) : hideQueue ? (
+                <span className="rounded-xl bg-slate-200/70 px-2.5 py-1 text-xs text-slate-500 dark:bg-slate-800/70 dark:text-slate-300">
+                  캔버스에서 카드를 선택하세요
                 </span>
               ) : null}
             </div>
