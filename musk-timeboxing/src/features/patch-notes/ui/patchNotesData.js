@@ -1,5 +1,73 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.21.6',
+    date: '2026-03-11',
+    title: 'Planner refactor 3차: unified workspace composition(R5)',
+    summary:
+      '분리되어 있던 Planning Board, Planning Canvas, Schedule Composer를 하나의 워크스페이스 화면으로 다시 조합해 카드 생성/분류/배치를 같은 메인 영역에서 연속적으로 처리할 수 있게 정리했습니다.',
+    focus: [
+      '새 `WORKSPACE` view를 추가해 보드, 캔버스, 편성기를 각각 별도 화면으로 왕복하지 않고 한 화면에서 나란히 볼 수 있게 구성',
+      'PlanningBoard, PlanningCanvas, ScheduleComposer에 embedded 모드를 도입해 같은 데이터 계약을 유지하면서 워크스페이스용 밀도와 액션 계층만 별도로 다듬음',
+      '워크스페이스 안에서도 보드 카드 배치가 실제 timeBox 생성과 linked badge 동기화까지 그대로 이어지도록 기존 composer 경로를 재사용',
+    ],
+    improvements: [
+      '`src/features/planner-workspace/ui/PlannerWorkspace.jsx`를 추가해 좌측 정리 영역, 중앙 canvas, 우측 time grid를 한 레이아웃으로 묶음',
+      '`Timeline/index.jsx`에 `WORKSPACE` view mode와 조합 렌더 분기를 추가하고 기존 DAY/BOARD/CANVAS/COMPOSER view는 fallback으로 유지',
+      '`PlanningBoard.jsx`, `BoardToolbar.jsx`, `PlanningCanvas.jsx`, `ScheduleComposer.jsx`에 embedded prop을 추가해 workspace 안에서도 과밀하지 않게 동작하도록 조정',
+      '`planner-workspace.spec.js`를 추가해 unified workspace에서 board/canvas/composer가 함께 렌더되고 배치까지 이어지는 회귀를 고정',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planner-workspace 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
+    version: 'v0.21.5',
+    date: '2026-03-11',
+    title: 'Planner refactor 2차: category tree model + leaf-only guard(R4)',
+    summary:
+      '카테고리 메타를 flat list에서 tree-capable model로 올리고, parent/child 이동 규칙과 leaf-only 선택 guard를 category manager, board/canvas/timebox/template 선택 UI까지 반영했습니다.',
+    focus: [
+      'category meta에 `parentId`, `order`를 정규화하고 parent-child 트리, path label, leaf 판정을 model 계층으로 이동',
+      '카테고리 관리 모달에서 부모 선택, 하위 카테고리 삭제 차단, 현재 사용 중인 카테고리의 parent 잠금 흐름을 추가',
+      'task/timebox/template/category 선택 UI는 이제 leaf category만 선택지로 노출하고 경로 라벨을 함께 보여줌',
+    ],
+    improvements: [
+      '`src/entities/planner/model/categoryTree.js`를 추가해 tree normalize/build/move/assign/delete guard 유틸을 도입',
+      '`storage/migrations.js`가 persisted meta categories를 `parentId`, `order`를 포함한 최신 카테고리 레코드로 보정하도록 확장',
+      '`useCategoryMeta.js`를 tree-aware CRUD 훅으로 바꾸고 `App.jsx`에서 category view model과 parent lock 정책을 조합해 manager에 전달',
+      '`CategoryManagerModal.jsx`, `BoardCardEditorModal.jsx`, `CanvasInspector.jsx`, `CompletionModal.jsx`, `QuickAddModal.jsx`, `TemplateManagerModal.jsx`에서 leaf-only 옵션과 path label을 반영',
+      '`category-manager.spec.js`에 parent-child 생성과 parent delete guard 회귀를 추가',
+    ],
+    validation: [
+      'lint/build 통과',
+      'category-manager 타깃 E2E 통과',
+    ],
+  },
+  {
+    version: 'v0.21.4',
+    date: '2026-03-11',
+    title: 'Planner refactor 1차: storage boundary + task card model(R1~R3)',
+    summary:
+      '리팩토링 문서에 맞춰 persisted storage 경계를 `schema/migrations/adapters`로 분리하고, task card 관련 생성/수정/복원/링크 동기화 규칙을 별도 model helper로 추출해 `useDailyData`의 직접 normalize 책임을 줄였습니다.',
+    focus: [
+      '기존 `loadDay/saveDay/loadMeta/saveMeta` API는 유지하면서 내부 책임만 `storage/index.js`에서 `schema`, `migrations`, `adapters`로 분리',
+      'task card 생성/업데이트/복원/보드 레이아웃 적용/링크 동기화를 `model/taskCards.js`로 올려 hook이 raw array surgery를 덜 하도록 정리',
+      'card status 파생 로직을 `model/selectors.js`로 분리하고 canvas projection에서도 같은 selector를 재사용',
+    ],
+    improvements: [
+      '`src/entities/planner/lib/storage/`에 `schema.js`, `migrations.js`, `adapters.js`, `index.js`를 추가하고 기존 `storage.js`는 호환용 re-export 레이어로 축소',
+      '`src/entities/planner/model/taskCards.js`, `src/entities/planner/model/selectors.js`를 추가해 task card command/selector 기반의 초기 internal model 계층을 도입',
+      '`useDailyData.js`에서 brainDump add/update/remove/restore/layout/category clear 흐름을 새 task card helper 호출로 치환',
+      '`CATEGORY_TREE_TS_REFACTOR_PLAN.md`, `TASK_EXECUTION_BOARD.md`에 R1~R5 세부 실행 태스크를 문서화',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planning-board, planning-canvas 포함 E2E 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.21.3',
     date: '2026-03-11',
     title: 'Planning Canvas custom shape + inspector 연결(T87~T90)',

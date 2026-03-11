@@ -119,6 +119,26 @@
 
 ## 3. Prioritized Task List
 
+## 3A. Refactor Track (R1~R5)
+
+- `R1` storage boundary 분리
+  - `schema`, `migrations`, `adapters`, `index`로 persisted 경계를 분해
+- `R2` task card domain helper / selector 도입
+  - task card 생성/수정/복원/링크 동기화 규칙을 model helper로 이동
+- `R3` `useDailyData` 축소 1차
+  - task card 관련 직접 normalize / array surgery 제거
+- `R4` category tree model + leaf-only 정책
+  - parent/child 이동 규칙과 attach guard를 model에서 고정
+- `R5` unified workspace 재구성
+  - 좌측 rail / 중앙 canvas / 우측 time grid 계약으로 화면 통합
+
+완료:
+- `R1` storage boundary 분리(1차)
+- `R2` task card domain helper / selector 도입(1차)
+- `R3` `useDailyData` 축소 1차
+- `R4` category tree model + leaf-only selection guard(1차)
+- `R5` unified workspace 재구성(1차)
+
 ### T1. FSD 전환 1단계 (폴더 구조 개편 기반)
 목표: 현재 구조를 깨지 않으면서 `features/shared/entities/app` 방향으로 이동 시작
 
