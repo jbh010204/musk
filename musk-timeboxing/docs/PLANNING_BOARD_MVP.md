@@ -45,17 +45,17 @@ Planning Board는 기존 브레인 덤프를 시각적으로 정리하는 단계
 2. 카드 생성/수정
 3. 카테고리 노드 드롭
 4. lane 내 스택 재정렬
-5. `COMPOSER` 뷰 모드 골격 추가
-6. storage migration 및 reload 보존
+5. `COMPOSER` 카드 큐 + 30분 시간표 그리드
+6. 카드 선택/드래그 -> 슬롯 배치로 `timeBox` 생성
+7. `linkedTimeBoxIds` 자동 동기화 및 reload 보존
 
 제외:
 
-1. 보드 카드 -> 시간표 드롭
-2. linkedTimeBoxIds 동기화
-3. 벌크 배치
-4. Big3 연동
-5. 자유 캔버스 위치 저장
-6. 모바일 전용 보드 최적화
+1. 벌크 배치
+2. Big3 연동
+3. 자유 캔버스 위치 저장
+4. 모바일 전용 보드 최적화
+5. 보드 카드 상태의 완료/스킵 세분화
 
 ## UI 책임
 
@@ -67,8 +67,9 @@ Planning Board는 기존 브레인 덤프를 시각적으로 정리하는 단계
 
 ### Schedule Composer
 
-- 현재 단계에서는 placeholder만 제공
-- 다음 단계에서 카드 큐 + 시간표 그리드로 확장
+- 좌측 카드 큐에서 카드를 선택하거나 드래그해 우측 시간표 슬롯으로 보낸다.
+- 시간표 슬롯에 배치되면 `sourceId = boardCard.id` 기반으로 실제 `timeBox`가 생성된다.
+- 카드 자체는 남아 있고, `linkedTimeBoxIds` badge로 예정 연결 수를 표시한다.
 
 ## 회귀 금지 규칙
 

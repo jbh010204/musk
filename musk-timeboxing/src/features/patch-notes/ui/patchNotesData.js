@@ -1,5 +1,28 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.21.1',
+    date: '2026-03-11',
+    title: 'Schedule Composer 실배치 + 보드 카드 링크 동기화(T77~T80)',
+    summary:
+      'Planning Board 1차 MVP 위에 실제 편성기를 붙여, 보드 카드를 30분 시간표 슬롯에 끼워 넣으면 곧바로 일간 타임라인의 timeBox가 생성되고 카드 쪽 `linkedTimeBoxIds` badge도 함께 맞춰지도록 연결했습니다.',
+    focus: [
+      '편성기는 이제 placeholder가 아니라 좌측 카드 큐와 우측 30분 시간표 그리드로 동작하며, 카드 선택 후 슬롯 클릭 또는 드래그로 바로 배치 가능',
+      '`sourceId = boardCard.id`와 `categoryId`를 그대로 timeBox에 내려 보내 보드 카드와 실제 일정이 같은 원본을 공유',
+      'timeBox 생성/수정/삭제/복원 시마다 `linkedTimeBoxIds`를 자동 재계산해 보드/편성기 badge가 즉시 일관되게 바뀌도록 고정',
+    ],
+    improvements: [
+      '`ScheduleComposer.jsx`, `ComposerQueueCard.jsx`, `ComposerTimeGrid.jsx`를 추가해 카드 큐/시간표/배치된 블록 미리보기를 구현',
+      '`Timeline/index.jsx`에 composer 전용 schedule callback을 추가하고 보드 카드의 예상 길이(`estimatedSlots`)를 실제 배치 길이로 사용',
+      '`boardCard.js`, `storage.js`, `useDailyData.js`에서 `syncBoardCardsWithTimeBoxes`를 중심으로 current day와 reload 경로 모두 동일한 링크 계산을 쓰도록 정리',
+      '`schedule-composer.spec.js`로 카드 배치 -> 보드 badge 반영 -> 삭제 후 badge 복구까지 회귀를 추가',
+    ],
+    validation: [
+      'lint/build 통과',
+      'schedule-composer 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.21.0',
     date: '2026-03-11',
     title: 'Planning Board 1차 MVP 도입(T71~T76)',

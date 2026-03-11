@@ -64,6 +64,37 @@ export const normalizeBoardCard = (item, fallbackIndex = 0) => {
   }
 }
 
+const areLinkedIdsEqual = (left = [], right = []) =>
+  left.length === right.length && left.every((value, index) => value === right[index])
+
+export const syncBoardCardsWithTimeBoxes = (brainDump = [], timeBoxes = []) => {
+  const linkedMap = new Map()
+
+  ;[...timeBoxes]
+    .sort((left, right) => left.startSlot - right.startSlot)
+    .forEach((box) => {
+      if (typeof box?.sourceId !== 'string' || box.sourceId.trim().length === 0) {
+        return
+      }
+
+      const next = linkedMap.get(box.sourceId) || []
+      next.push(box.id)
+      linkedMap.set(box.sourceId, next)
+    })
+
+  return brainDump.map((item) => {
+    const linkedTimeBoxIds = linkedMap.get(item.id) || []
+    if (areLinkedIdsEqual(item.linkedTimeBoxIds || [], linkedTimeBoxIds)) {
+      return item
+    }
+
+    return {
+      ...item,
+      linkedTimeBoxIds,
+    }
+  })
+}
+
 export const sortBoardCardsByStackOrder = (items = []) =>
   [...items]
     .map((item, index) => ({ item, index }))

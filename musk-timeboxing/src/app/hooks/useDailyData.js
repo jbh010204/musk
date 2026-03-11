@@ -13,6 +13,7 @@ import {
   normalizeBoardEstimatedSlots,
   normalizeBoardLinkedTimeBoxIds,
   normalizeBoardNote,
+  syncBoardCardsWithTimeBoxes,
   normalizeBrainDumpPriority,
   saveDay,
   saveLastActiveDate,
@@ -129,6 +130,8 @@ const findAvailableStartSlot = (timeBoxes, preferredStart, duration) => {
 
   return findFrom(safePreferred) ?? findFrom(0)
 }
+
+const syncBrainDumpLinks = (brainDump, timeBoxes) => syncBoardCardsWithTimeBoxes(brainDump, timeBoxes)
 
 export const useDailyData = () => {
   const today = formatDate(new Date())
@@ -360,9 +363,8 @@ export const useDailyData = () => {
   }
 
   const updateBrainDumpItem = (id, changes = {}) => {
-    setData((prev) => ({
-      ...prev,
-      brainDump: prev.brainDump.map((item, index) => {
+    setData((prev) => {
+      const nextBrainDump = prev.brainDump.map((item, index) => {
         if (item.id !== id) {
           return item
         }
@@ -396,8 +398,13 @@ export const useDailyData = () => {
         )
 
         return next ?? item
-      }),
-    }))
+      })
+
+      return {
+        ...prev,
+        brainDump: syncBrainDumpLinks(nextBrainDump, prev.timeBoxes),
+      }
+    })
   }
 
   const applyBrainDumpBoardLayout = (layoutEntries = []) => {
@@ -438,8 +445,11 @@ export const useDailyData = () => {
   const clearBrainDumpCategory = (categoryId) => {
     setData((prev) => ({
       ...prev,
-      brainDump: prev.brainDump.map((item) =>
-        item.categoryId === categoryId ? { ...item, categoryId: null } : item,
+      brainDump: syncBrainDumpLinks(
+        prev.brainDump.map((item) =>
+          item.categoryId === categoryId ? { ...item, categoryId: null } : item,
+        ),
+        prev.timeBoxes,
       ),
     }))
   }
@@ -555,9 +565,8 @@ export const useDailyData = () => {
 
     const id = createId()
 
-    setData((prev) => ({
-      ...prev,
-      timeBoxes: [
+    setData((prev) => {
+      const nextTimeBoxes = [
         ...prev.timeBoxes,
         {
           id,
@@ -573,8 +582,14 @@ export const useDailyData = () => {
           timerStartedAt: null,
           elapsedSeconds: 0,
         },
-      ],
-    }))
+      ]
+
+      return {
+        ...prev,
+        brainDump: syncBrainDumpLinks(prev.brainDump, nextTimeBoxes),
+        timeBoxes: nextTimeBoxes,
+      }
+    })
 
     rememberFocus(normalizedStart)
 
@@ -586,9 +601,8 @@ export const useDailyData = () => {
       rememberFocus(changes.startSlot)
     }
 
-    setData((prev) => ({
-      ...prev,
-      timeBoxes: prev.timeBoxes.map((box) => {
+    setData((prev) => {
+      const nextTimeBoxes = prev.timeBoxes.map((box) => {
         if (box.id !== id) {
           return box
         }
@@ -621,16 +635,21 @@ export const useDailyData = () => {
               ? Number(changes?.elapsedSeconds) || 0
               : box.elapsedSeconds ?? 0,
         }
-      }),
-    }))
+      })
+
+      return {
+        ...prev,
+        brainDump: syncBrainDumpLinks(prev.brainDump, nextTimeBoxes),
+        timeBoxes: nextTimeBoxes,
+      }
+    })
   }
 
   const startTimeBoxTimer = (id) => {
     const now = Date.now()
 
-    setData((prev) => ({
-      ...prev,
-      timeBoxes: prev.timeBoxes.map((box) => {
+    setData((prev) => {
+      const nextTimeBoxes = prev.timeBoxes.map((box) => {
         if (box.id === id) {
           if (box.timerStartedAt) {
             return box
@@ -653,15 +672,20 @@ export const useDailyData = () => {
           elapsedSeconds:
             (Number(box.elapsedSeconds) || 0) + Math.max(0, Math.floor((now - box.timerStartedAt) / 1000)),
         }
-      }),
-    }))
+      })
+
+      return {
+        ...prev,
+        brainDump: syncBrainDumpLinks(prev.brainDump, nextTimeBoxes),
+        timeBoxes: nextTimeBoxes,
+      }
+    })
   }
 
   const pauseTimeBoxTimer = (id) => {
     const now = Date.now()
-    setData((prev) => ({
-      ...prev,
-      timeBoxes: prev.timeBoxes.map((box) => {
+    setData((prev) => {
+      const nextTimeBoxes = prev.timeBoxes.map((box) => {
         if (box.id !== id || !box.timerStartedAt) {
           return box
         }
@@ -672,15 +696,20 @@ export const useDailyData = () => {
           elapsedSeconds:
             (Number(box.elapsedSeconds) || 0) + Math.max(0, Math.floor((now - box.timerStartedAt) / 1000)),
         }
-      }),
-    }))
+      })
+
+      return {
+        ...prev,
+        brainDump: syncBrainDumpLinks(prev.brainDump, nextTimeBoxes),
+        timeBoxes: nextTimeBoxes,
+      }
+    })
   }
 
   const completeTimeBoxByTimer = (id) => {
     const now = Date.now()
-    setData((prev) => ({
-      ...prev,
-      timeBoxes: prev.timeBoxes.map((box) => {
+    setData((prev) => {
+      const nextTimeBoxes = prev.timeBoxes.map((box) => {
         if (box.id !== id) {
           return box
         }
@@ -699,8 +728,14 @@ export const useDailyData = () => {
           elapsedSeconds: totalSeconds,
           timerStartedAt: null,
         }
-      }),
-    }))
+      })
+
+      return {
+        ...prev,
+        brainDump: syncBrainDumpLinks(prev.brainDump, nextTimeBoxes),
+        timeBoxes: nextTimeBoxes,
+      }
+    })
   }
 
   const clearTimeBoxCategory = (categoryId) => {
@@ -715,6 +750,10 @@ export const useDailyData = () => {
   const removeTimeBox = (id) => {
     setData((prev) => ({
       ...prev,
+      brainDump: syncBrainDumpLinks(
+        prev.brainDump,
+        prev.timeBoxes.filter((box) => box.id !== id),
+      ),
       timeBoxes: prev.timeBoxes.filter((box) => box.id !== id),
     }))
   }
@@ -741,6 +780,7 @@ export const useDailyData = () => {
 
         return {
           ...prev,
+          brainDump: syncBrainDumpLinks(prev.brainDump, next),
           timeBoxes: next,
         }
       }
@@ -748,6 +788,7 @@ export const useDailyData = () => {
       restored = true
       return {
         ...prev,
+        brainDump: syncBrainDumpLinks(prev.brainDump, [...prev.timeBoxes, normalized]),
         timeBoxes: [...prev.timeBoxes, normalized],
       }
     })

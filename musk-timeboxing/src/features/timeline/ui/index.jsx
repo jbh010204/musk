@@ -237,7 +237,14 @@ function Timeline({
     [categoryFilter, categoryMap, sortedBoxes, statusFilter],
   )
 
-  const createBox = ({ content, sourceId = null, startSlot, durationSlots = DEFAULT_BOX_SLOTS }) => {
+  const createBox = ({
+    content,
+    sourceId = null,
+    startSlot,
+    durationSlots = DEFAULT_BOX_SLOTS,
+    category = null,
+    categoryId = null,
+  }) => {
     const duration = Math.max(1, Math.min(TOTAL_SLOTS, Number(durationSlots) || DEFAULT_BOX_SLOTS))
     const newBox = {
       content,
@@ -251,8 +258,29 @@ function Timeline({
       return false
     }
 
-    addTimeBox(newBox)
+    addTimeBox({
+      ...newBox,
+      category,
+      categoryId,
+    })
     return true
+  }
+
+  const handleScheduleBoardCard = (cardId, startSlot) => {
+    const card = brainDumpItems.find((item) => item.id === cardId)
+    if (!card) {
+      return false
+    }
+
+    const categoryMeta = card.categoryId ? categoryMap.get(card.categoryId) : null
+    return createBox({
+      content: card.content,
+      sourceId: card.id,
+      startSlot,
+      durationSlots: card.estimatedSlots || DEFAULT_BOX_SLOTS,
+      categoryId: card.categoryId ?? null,
+      category: categoryMeta?.name ?? null,
+    })
   }
 
   const handleSlotClick = (slotIndex) => {
@@ -623,7 +651,16 @@ function Timeline({
         />
       ) : null}
 
-      {isComposerView ? <ScheduleComposer onJumpToDay={() => setViewMode('DAY')} /> : null}
+      {isComposerView ? (
+        <ScheduleComposer
+          items={brainDumpItems}
+          categories={categories}
+          timeBoxes={sortedBoxes}
+          onScheduleCard={handleScheduleBoardCard}
+          onJumpToDay={() => setViewMode('DAY')}
+          onJumpToBoard={() => setViewMode('BOARD')}
+        />
+      ) : null}
 
       {isDayView ? (
         <div data-testid="timeline-day-view">

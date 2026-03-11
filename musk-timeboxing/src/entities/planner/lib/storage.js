@@ -1,4 +1,4 @@
-import { normalizeBoardCard } from './boardCard'
+import { normalizeBoardCard, syncBoardCardsWithTimeBoxes } from './boardCard'
 import { sortBrainDumpItems } from './brainDumpPriority'
 import { TOTAL_SLOTS } from './timeSlot'
 import {
@@ -104,17 +104,19 @@ const normalizeTimeBox = (box) => ({
 
 const migrateDayData = (dateStr, rawData) => {
   const safeData = rawData && typeof rawData === 'object' ? rawData : {}
+  const normalizedTimeBoxes = Array.isArray(safeData.timeBoxes) ? safeData.timeBoxes.map(normalizeTimeBox) : []
+  const normalizedBrainDump = Array.isArray(safeData.brainDump)
+    ? sortBrainDumpItems(
+        safeData.brainDump.map((item, index) => normalizeBrainDumpItem(item, index)).filter(Boolean),
+      )
+    : []
 
   return {
     schemaVersion: SCHEMA_VERSION,
     date: dateStr,
-    brainDump: Array.isArray(safeData.brainDump)
-      ? sortBrainDumpItems(
-          safeData.brainDump.map((item, index) => normalizeBrainDumpItem(item, index)).filter(Boolean),
-        )
-      : [],
+    brainDump: syncBoardCardsWithTimeBoxes(normalizedBrainDump, normalizedTimeBoxes),
     bigThree: Array.isArray(safeData.bigThree) ? safeData.bigThree : [],
-    timeBoxes: Array.isArray(safeData.timeBoxes) ? safeData.timeBoxes.map(normalizeTimeBox) : [],
+    timeBoxes: normalizedTimeBoxes,
   }
 }
 
