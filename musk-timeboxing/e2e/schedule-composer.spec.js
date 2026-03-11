@@ -78,7 +78,7 @@ test('schedule composer creates timeboxes from board cards and keeps links in sy
   expect(storedAfterCreate.timeBoxes[0].categoryId).toBe('cat-club')
   expect(storedAfterCreate.brainDump[0].linkedTimeBoxIds).toHaveLength(1)
 
-  await page.locator('[data-testid="timeline-view-board"]:visible').first().click()
+  await page.locator('[data-testid="timeline-view-canvas"]:visible').first().click()
   await expect(page.locator('[data-testid="planning-board-card-board-composer-card"]:visible').first()).toContainText(
     '예정 1',
   )

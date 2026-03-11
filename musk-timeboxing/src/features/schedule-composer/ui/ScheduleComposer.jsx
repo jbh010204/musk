@@ -120,7 +120,7 @@ function ScheduleComposer({
           <div className="flex flex-wrap gap-2">
             {!embedded ? (
               <Button variant="secondary" onClick={onJumpToBoard}>
-                보드로 돌아가기
+                캔버스로 돌아가기
               </Button>
             ) : null}
             <Button variant="primary" onClick={onJumpToDay}>
@@ -159,7 +159,7 @@ function ScheduleComposer({
               <div className="mt-4 space-y-5">
                 {lanes.length === 0 ? (
                   <div className="rounded-2xl bg-slate-50/80 px-4 py-5 text-sm text-slate-500 dark:bg-slate-900/45 dark:text-slate-400">
-                    보드 카드가 아직 없습니다.
+                    캔버스 카드가 아직 없습니다.
                   </div>
                 ) : (
                   lanes.map((lane) => (

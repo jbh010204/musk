@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getCategoryColor, getCategoryLabel, hasOverlap, slotToTime, TOTAL_SLOTS } from '../../../entities/planner'
-import PlanningBoard from '../../planning-board'
 import PlanningCanvas from '../../planning-canvas'
 import PlannerWorkspace from '../../planner-workspace'
 import ScheduleComposer from '../../schedule-composer'
@@ -19,7 +18,6 @@ const DEFAULT_BOX_SLOTS = 1
 const DURATION_PRESETS = [1, 2, 3, 4]
 const VIEW_MODE_OPTIONS = [
   { value: 'WORKSPACE', label: '워크스페이스' },
-  { value: 'BOARD', label: '보드' },
   { value: 'CANVAS', label: '캔버스' },
   { value: 'COMPOSER', label: '편성기' },
   { value: 'DAY', label: '일간' },
@@ -127,13 +125,10 @@ function Timeline({
   const [selectedMonthDate, setSelectedMonthDate] = useState(null)
   const isDayView = viewMode === 'DAY'
   const isWorkspaceView = viewMode === 'WORKSPACE'
-  const isBoardView = viewMode === 'BOARD'
   const isCanvasView = viewMode === 'CANVAS'
   const isComposerView = viewMode === 'COMPOSER'
   const sectionTitle = isWorkspaceView
     ? '🧠 플래너 워크스페이스'
-    : isBoardView
-    ? '🧩 플래닝 보드'
     : isCanvasView
       ? '🪄 플래닝 캔버스'
       : isComposerView
@@ -457,7 +452,7 @@ function Timeline({
         ) : null}
       </div>
 
-      {!isDayView && !isWorkspaceView && !isBoardView && !isCanvasView && !isComposerView ? (
+      {!isDayView && !isWorkspaceView && !isCanvasView && !isComposerView ? (
         <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
           {viewMode === 'WEEK'
             ? `${weekCalendar.rangeLabel} 구간의 주간 계획을 한 번에 확인합니다.`
@@ -465,9 +460,9 @@ function Timeline({
         </div>
       ) : null}
 
-      {isBoardView ? (
+      {isCanvasView ? (
         <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
-          보드는 브레인 덤프를 카테고리 스택으로 정리하는 단계입니다. 카드 생성/수정/이동만 여기서 하고 실제 시간 배치는 편성기에서 처리합니다.
+          캔버스는 카드 생성과 카테고리 스택 정리에 집중합니다. 시간표 배치는 편성기 또는 워크스페이스 우측 rail에서 처리합니다.
         </div>
       ) : null}
 
@@ -671,17 +666,6 @@ function Timeline({
         </div>
       ) : null}
 
-      {isBoardView ? (
-        <PlanningBoard
-          items={brainDumpItems}
-          categories={categories}
-          onCreateCard={addBoardCard}
-          onUpdateCard={updateBrainDumpItem}
-          onApplyLayout={applyBrainDumpBoardLayout}
-          onOpenCategoryManager={onOpenCategoryManager}
-        />
-      ) : null}
-
       {isCanvasView ? (
         <PlanningCanvas
           key={currentDate}
@@ -706,7 +690,7 @@ function Timeline({
           timeBoxes={sortedBoxes}
           onScheduleCard={handleScheduleBoardCard}
           onJumpToDay={() => setViewMode('DAY')}
-          onJumpToBoard={() => setViewMode('BOARD')}
+          onJumpToBoard={() => setViewMode('CANVAS')}
         />
       ) : null}
 

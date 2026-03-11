@@ -1,5 +1,26 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.21.8',
+    date: '2026-03-11',
+    title: 'Canvas simplification: BOARD view 제거',
+    summary:
+      '중복되던 BOARD 화면을 내리고 캔버스를 카드 생성/분류의 단일 정리 화면으로 승격했습니다. 이제 편성기와 워크스페이스도 모두 같은 캔버스 계약을 기준으로 동작합니다.',
+    focus: [
+      '타임라인 상단 view mode에서 BOARD를 제거하고, CANVAS를 카드 생성/카테고리 스택 정리의 기본 화면으로 고정',
+      '편성기의 복귀 액션도 이제 캔버스로 돌아가도록 바꿔 화면 간 책임을 단순화',
+      '중복되던 planning-board 전용 E2E를 제거하고 planning-canvas / planner-workspace 회귀로 contract를 재정렬',
+    ],
+    improvements: [
+      '`Timeline/index.jsx`에서 BOARD view 분기를 제거하고 CANVAS 안내 문구를 현재 stack-canvas 흐름 기준으로 정리',
+      '`ScheduleComposer.jsx`의 문구와 복귀 액션을 캔버스 기준으로 조정',
+      '`planning-board.spec.js`를 제거하고 `schedule-composer.spec.js`, `planning-canvas.spec.js`가 새 navigation contract를 검증',
+    ],
+    validation: [
+      'lint/build 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.21.7',
     date: '2026-03-11',
     title: 'Canvas pivot: tldraw 제거 후 Stack Canvas로 전환(P1~P6)',
