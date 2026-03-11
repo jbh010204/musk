@@ -1,5 +1,29 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.21.7',
+    date: '2026-03-11',
+    title: 'Canvas pivot: tldraw 제거 후 Stack Canvas로 전환(P1~P6)',
+    summary:
+      '자유 화이트보드 엔진이 플래너 UX와 맞지 않는다는 판단에 따라 tldraw 기반 Planning Canvas를 중단하고, 카드 생성/카테고리 스택 이동에 집중한 custom Stack Canvas와 우측 Timeline Rail 구조로 전환했습니다.',
+    focus: [
+      '캔버스 안에서는 카드 생성, 선택, 카테고리 스택 이동만 담당하고, 시간표 배치는 우측 Timeline Rail에서 계속 처리',
+      '`boardCanvas` persisted 상태는 이제 `selectedCardId`, `focusedLaneId` 같은 lightweight UI state만 저장하고 tldraw snapshot은 더 이상 쓰지 않음',
+      '워크스페이스도 `Stack Canvas + Timeline Rail` 2열 흐름으로 단순화해 실제 작업 경로를 줄임',
+    ],
+    improvements: [
+      '`PlanningCanvas.jsx`를 custom Stack Canvas로 재구성하고 `BoardCardEditorModal`, `CategoryStackLane`을 재사용해 카드 생성/분류를 canvas 안으로 이동',
+      '`ScheduleComposer.jsx`에 `hideQueue`, 외부 선택 카드 입력을 추가해 workspace에서 canvas 선택 카드만 바로 일정으로 배치할 수 있게 조정',
+      '`boardCanvas.js`를 lightweight UI state normalize 계층으로 교체하고 `docs/STACK_CANVAS_PIVOT_PLAN.md`를 추가',
+      '`CanvasInspector.jsx`, `plannerCanvasShapes.jsx`, `docs/TLDRAW_CANVAS_ARCHITECTURE.md`를 제거하고 `tldraw` dependency를 uninstall',
+      '`planning-canvas.spec.js`, `planner-workspace.spec.js`를 stack canvas 흐름 기준으로 갱신',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planning-canvas, planner-workspace 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.21.6',
     date: '2026-03-11',
     title: 'Planner refactor 3차: unified workspace composition(R5)',

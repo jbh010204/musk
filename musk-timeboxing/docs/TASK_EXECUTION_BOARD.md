@@ -131,6 +131,12 @@
   - parent/child 이동 규칙과 attach guard를 model에서 고정
 - `R5` unified workspace 재구성
   - 좌측 rail / 중앙 canvas / 우측 time grid 계약으로 화면 통합
+- `P1` StackCanvas pivot 문서화
+- `P2` lightweight boardCanvas 상태 계약 정의
+- `P3` StackCanvas shell 구현
+- `P4` StackCanvas 카드 생성/카테고리 DnD
+- `P5` StackCanvas -> Timeline Rail 연결
+- `P6` tldraw 제거 및 문서 교체
 
 완료:
 - `R1` storage boundary 분리(1차)
@@ -138,6 +144,12 @@
 - `R3` `useDailyData` 축소 1차
 - `R4` category tree model + leaf-only selection guard(1차)
 - `R5` unified workspace 재구성(1차)
+- `P1` StackCanvas pivot 문서화
+- `P2` lightweight boardCanvas 상태 계약 정의
+- `P3` StackCanvas shell 구현
+- `P4` StackCanvas 카드 생성/카테고리 DnD
+- `P5` StackCanvas -> Timeline Rail 연결
+- `P6` tldraw 제거 및 문서 교체
 
 ### T1. FSD 전환 1단계 (폴더 구조 개편 기반)
 목표: 현재 구조를 깨지 않으면서 `features/shared/entities/app` 방향으로 이동 시작

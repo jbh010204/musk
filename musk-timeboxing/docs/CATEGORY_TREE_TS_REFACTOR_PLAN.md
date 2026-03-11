@@ -1,5 +1,18 @@
 # Category Tree + Canvas + Scheduling Refactor Plan
 
+## 2026-03-11 Pivot Note
+
+`Planning Canvas`는 더 이상 `tldraw` 기반 자유 화이트보드로 확장하지 않는다.
+
+현재 기준의 active 방향은 다음과 같다.
+
+- 중앙 메인 작업면은 custom `StackCanvas`
+- 카드 생성과 카테고리 스택 이동은 canvas 안에서 처리
+- 시간표 배치는 canvas 밖 우측 `Timeline Rail`에서 처리
+- `boardCanvas`는 tldraw snapshot이 아니라 lightweight UI state만 유지
+
+상세 전환 계획은 [STACK_CANVAS_PIVOT_PLAN.md](/Users/bohyeong/Desktop/공부/project/musk/musk-timeboxing/docs/STACK_CANVAS_PIVOT_PLAN.md)에 별도 기록한다.
+
 ## 문서 목적
 
 이 문서는 `Planning Board / Planning Canvas / Schedule Composer / Timeline`을
@@ -8,7 +21,7 @@
 목표는 다음 3가지를 동시에 만족하는 것이다.
 
 1. 카테고리를 부모/자식 트리로 관리할 수 있어야 한다.
-2. 캔버스는 자유 배치 UI를 제공하되 도메인 원본을 오염시키지 않아야 한다.
+2. 캔버스는 planner 전용 `StackCanvas` UI를 제공하되 도메인 원본을 오염시키지 않아야 한다.
 3. 일정(TimeBox)과 카드(TaskCard) 연결이 리팩토링 이후에도 안정적으로 유지되어야 한다.
 
 이 문서는 구현 가이드이며, 한 번에 전부 바꾸는 것을 권장하지 않는다.
@@ -25,7 +38,7 @@
 권장 최종 형태:
 
 - 좌측 rail: `Brain Dump`, `Big 3`, 카드 스택
-- 중앙 main stage: `Planning Canvas`
+- 중앙 main stage: `Stack Canvas`
 - 우측 rail: `Schedule Composer / Time Grid`
 
 즉 사용자는 한 화면 안에서:
@@ -38,12 +51,11 @@
 중요:
 
 - 이것은 **한 화면의 통합 workspace**를 뜻한다.
-- `Brain Dump`, `Big 3`, `Time Grid`를 모두 tldraw scene 안의 shape로 저장하겠다는 뜻은 아니다.
-- tldraw는 계속 중앙 canvas engine으로 사용하고,
-  좌우 rail은 도메인 UI 레이어로 유지하는 것이 권장된다.
+- `Brain Dump`, `Big 3`, `Time Grid`를 모두 canvas 내부 오브젝트로 저장하겠다는 뜻은 아니다.
+- 중앙 stack canvas는 도메인 UI 작업면이고, 좌우 rail은 계속 일반 UI 레이어로 유지하는 것이 권장된다.
 
 즉 장기 목표는 `캔버스 중심 단일 화면`이지,
-모든 UI를 tldraw 내부 오브젝트로 바꾸는 것은 아니다.
+모든 UI를 자유 화이트보드 오브젝트로 바꾸는 것은 아니다.
 
 ## 현재 확인된 구조 문제
 
