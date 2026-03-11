@@ -72,35 +72,43 @@
 - 실제 스케줄 배치
 - 완료/스킵/실측
 
-## 1차 shell 범위 (T86)
+## 현재 범위 (T86~T90)
 
 포함:
 
 1. `CANVAS` view mode 추가
 2. tldraw mount + 기본 UI 숨김
 3. 날짜별 snapshot save / load
-4. legacy board 데이터를 canvas의 초기 geo shape 배치로 자동 투영
+4. legacy board 데이터를 canvas의 초기 custom shape 배치로 자동 투영
 5. toolbar에서 `보드로 이동`, `카테고리 관리`, `자동 배치`, `편성기 이동`
+6. category node / task card custom shape 렌더
+7. 우측 inspector에서 카드 제목/예상 길이/카테고리/메모 편집
 
 제외:
 
-1. custom category node shape
-2. custom task card shape
-3. canvas에서 직접 카드 수정
-4. canvas -> composer selection bridge
-5. 모바일 전용 canvas UX
+1. canvas 안에서 새 카드 직접 생성
+2. custom category node의 직접 편집
+3. canvas 선택 카드 다중 편집
+4. 모바일 전용 canvas UX
+5. canvas 선택 -> composer 다중 카드 브리지
 
 ## 초기 auto-layout 규칙
 
 1. lane 순서대로 좌 -> 우 컬럼 배치
-2. 각 lane 상단에 category node용 ellipse 배치
-3. lane 아래에 카드 rectangle stack 배치
+2. 각 lane 상단에 `planner-category-node` 원형 노드 배치
+3. lane 아래에 `planner-task-card` 카드 stack 배치
 4. 첫 mount 시 snapshot이 없을 때만 자동 배치
 5. 이후는 저장된 boardCanvas snapshot이 우선
 
+## 구현 메모
+
+- 카드/카테고리 shape id는 stable id(`planner-task-{cardId}`, `planner-category-{laneId}`)를 사용한다.
+- 카드 상태는 persisted field가 아니라 `brainDump.linkedTimeBoxIds + timeBoxes.status`에서 파생한다.
+- inspector 편집은 brainDump를 수정하고, canvas shape props는 projection sync로 갱신한다.
+- Playwright는 tldraw custom shape hit-test가 불안정해서 dev hook `window.__plannerCanvasSelectCard(cardId)`를 사용해 inspector 회귀를 고정한다.
+
 ## 다음 단계
 
-- `T87` custom category node shape
-- `T88` custom task card shape
-- `T89` brainDump/timeBoxes -> custom shape projection
-- `T90` inspector/edit flow
+- `T91` canvas selected card -> composer queue bridge
+- `T92` canvas card bulk selection / multi-schedule flow
+- `T93` canvas 삭제/연결 해제 정책 정리

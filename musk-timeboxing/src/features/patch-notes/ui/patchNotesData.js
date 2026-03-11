@@ -1,5 +1,28 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.21.3',
+    date: '2026-03-11',
+    title: 'Planning Canvas custom shape + inspector 연결(T87~T90)',
+    summary:
+      'CANVAS 뷰를 shell 수준에서 멈추지 않고, 카테고리 노드와 보드 카드를 custom shape로 바꾼 뒤 우측 inspector에서 원본 brain dump 카드를 직접 수정할 수 있도록 연결했습니다.',
+    focus: [
+      '카테고리 원형 노드와 일정 카드를 tldraw custom shape로 정의해 lane stack seed보다 도메인 의미가 더 직접 드러나게 정리',
+      '카드 shape는 제목, 카테고리, 예상 길이, 배치 수, 메모, 상태를 brainDump/timeBoxes projection으로 그려 source of truth를 유지',
+      '우측 inspector에서 선택된 카드의 제목/예상 길이/카테고리/메모를 저장하면 곧바로 원본 brainDump와 canvas snapshot이 함께 갱신',
+    ],
+    improvements: [
+      '`plannerCanvasShapes.jsx`를 추가해 `planner-category-node`, `planner-task-card` custom shape와 selection bridge를 도입',
+      '`boardCanvas.js`에서 stable shape id, custom shape projection, 카드 상태 파생(`TODO/SCHEDULED/PARTIAL/COMPLETED/SKIPPED`)을 담당하도록 확장',
+      '`PlanningCanvas.jsx`에 projection sync, legacy shell snapshot 보정, 우측 inspector 레이아웃, card update 연결을 추가',
+      '`CanvasInspector.jsx`를 신설하고 `planning-canvas.spec.js`를 확장해 snapshot 저장 + inspector 편집 회귀를 함께 고정',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planning-canvas 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.21.2',
     date: '2026-03-11',
     title: 'tldraw Planning Canvas shell 도입(T84~T86)',

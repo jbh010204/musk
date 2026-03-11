@@ -1,4 +1,4 @@
-# Musk Planner Task Execution Board (86 Tasks)
+# Musk Planner Task Execution Board (90 Tasks)
 
 이 문서는 현재 합의된 작업을 한 번에 처리하지 않고,
 작업 단위를 쪼개서 순차 실행하기 위한 운영 보드다.
@@ -112,6 +112,10 @@
   - `T84` tldraw Planning Canvas 아키텍처 문서화
   - `T85` boardCanvas 스키마 확장 및 migration 추가
   - `T86` CANVAS view와 PlanningCanvas shell 도입
+  - `T87` custom category node shape 구현
+  - `T88` custom task card shape 구현
+  - `T89` brainDump/timeBoxes -> custom shape projection 및 stable shape id 동기화
+  - `T90` Planning Canvas inspector/edit flow 연결
 
 ## 3. Prioritized Task List
 
