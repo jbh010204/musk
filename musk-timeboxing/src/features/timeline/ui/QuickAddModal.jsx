@@ -18,6 +18,10 @@ function QuickAddModal({
   onClose,
   onSubmit,
 }) {
+  const assignableCategories = useMemo(
+    () => categories.filter((category) => category?.isLeaf !== false),
+    [categories],
+  )
   const initialTemplate = useMemo(
     () => templates.find((template) => template.id === initialTemplateId) || null,
     [initialTemplateId, templates],
@@ -156,9 +160,9 @@ function QuickAddModal({
                 className="ui-select"
               >
                 <option value="">미분류</option>
-                {categories.map((category) => (
+                {assignableCategories.map((category) => (
                   <option key={category.id} value={category.id}>
-                    {category.name}
+                    {category.pathLabel || category.name}
                   </option>
                 ))}
               </select>

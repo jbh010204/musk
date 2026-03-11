@@ -1,89 +1,82 @@
-import { useEffect, useState } from 'react'
-import { loadMeta, saveMeta } from '../../entities/planner'
-
-const normalizeName = (value) => String(value || '').trim()
-const normalizeColor = (value) => {
-  const raw = String(value || '').trim()
-  const isHex = /^#[0-9a-fA-F]{6}$/.test(raw)
-  return isHex ? raw : '#6366f1'
-}
-
-const hasDuplicateName = (categories, name, excludeId = null) => {
-  return categories.some((category) => {
-    if (excludeId && category.id === excludeId) {
-      return false
-    }
-
-    return String(category.name || '').toLowerCase() === name.toLowerCase()
-  })
-}
+import { useEffect, useMemo, useState } from 'react'
+import {
+  addCategoryRecord,
+  getAssignableCategories,
+  getCategoryViewModels,
+  loadPlannerMetaModel,
+  removeCategoryRecord,
+  savePlannerMetaModel,
+  updateCategoryRecord,
+} from '../../entities/planner'
 
 export const useCategoryMeta = () => {
-  const [categories, setCategories] = useState(() => loadMeta().categories)
+  const [categories, setCategories] = useState(() => loadPlannerMetaModel().categories)
 
   useEffect(() => {
-    saveMeta({ categories })
+    const currentMeta = loadPlannerMetaModel()
+    savePlannerMetaModel({
+      ...currentMeta,
+      categories,
+    })
   }, [categories])
 
-  const addCategory = (name, color) => {
-    const normalizedName = normalizeName(name)
-    if (!normalizedName) {
-      return { ok: false, error: '카테고리 이름을 입력해 주세요' }
+  const categoryViewModels = useMemo(() => getCategoryViewModels(categories), [categories])
+  const assignableCategories = useMemo(() => getAssignableCategories(categories), [categories])
+
+  const addCategory = (name, color, parentId = null, options = {}) => {
+    if (Array.isArray(options.lockedParentIds) && options.lockedParentIds.includes(parentId)) {
+      return { ok: false, error: '일정이 연결된 카테고리 아래에는 하위 카테고리를 만들 수 없습니다' }
     }
 
-    if (hasDuplicateName(categories, normalizedName)) {
-      return { ok: false, error: '같은 이름의 카테고리가 이미 있습니다' }
+    const result = addCategoryRecord(categories, { name, color, parentId })
+    if (!result.ok) {
+      return result
     }
 
-    setCategories((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        name: normalizedName,
-        color: normalizeColor(color),
-      },
-    ])
-
-    return { ok: true }
+    setCategories(result.nextCategories)
+    return { ok: true, category: result.category }
   }
 
-  const updateCategory = (id, name, color) => {
-    const normalizedName = normalizeName(name)
-    if (!normalizedName) {
-      return { ok: false, error: '카테고리 이름을 입력해 주세요' }
+  const updateCategory = (id, name, color, parentId = null, options = {}) => {
+    const previous = categories.find((category) => category.id === id) || null
+    const normalizedParentId = typeof parentId === 'string' && parentId.trim().length > 0 ? parentId : null
+    const parentChanged = (previous?.parentId ?? null) !== normalizedParentId
+
+    if (parentChanged && Array.isArray(options.lockedParentIds) && options.lockedParentIds.includes(normalizedParentId)) {
+      return { ok: false, error: '일정이 연결된 카테고리 아래에는 하위 카테고리를 둘 수 없습니다' }
     }
 
-    if (hasDuplicateName(categories, normalizedName, id)) {
-      return { ok: false, error: '같은 이름의 카테고리가 이미 있습니다' }
+    const result = updateCategoryRecord(categories, id, {
+      name,
+      color,
+      parentId: normalizedParentId,
+    })
+    if (!result.ok) {
+      return result
     }
 
-    setCategories((prev) =>
-      prev.map((category) => {
-        if (category.id !== id) {
-          return category
-        }
-
-        return {
-          ...category,
-          name: normalizedName,
-          color: normalizeColor(color),
-        }
-      }),
-    )
-
+    setCategories(result.nextCategories)
     return { ok: true }
   }
 
   const removeCategory = (id) => {
-    setCategories((prev) => prev.filter((category) => category.id !== id))
+    const result = removeCategoryRecord(categories, id)
+    if (!result.ok) {
+      return result
+    }
+
+    setCategories(result.nextCategories)
+    return { ok: true }
   }
 
   const reloadCategories = () => {
-    setCategories(loadMeta().categories)
+    setCategories(loadPlannerMetaModel().categories)
   }
 
   return {
     categories,
+    categoryViewModels,
+    assignableCategories,
     addCategory,
     updateCategory,
     removeCategory,

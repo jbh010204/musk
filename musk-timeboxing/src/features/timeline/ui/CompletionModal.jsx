@@ -11,6 +11,10 @@ const SKIP_REASON_OPTIONS = [
 ]
 
 function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete, onDuplicate = () => {} }) {
+  const assignableCategories = useMemo(
+    () => categories.filter((category) => category?.isLeaf !== false),
+    [categories],
+  )
   const [content, setContent] = useState(timeBox.content)
   const [categoryId, setCategoryId] = useState(timeBox.categoryId ?? '')
   const [status, setStatus] = useState(
@@ -139,9 +143,9 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete, onD
             className="ui-select"
           >
             <option value="">미분류</option>
-            {categories.map((category) => (
+            {assignableCategories.map((category) => (
               <option key={category.id} value={category.id}>
-                {category.name}
+                {category.pathLabel || category.name}
               </option>
             ))}
           </select>

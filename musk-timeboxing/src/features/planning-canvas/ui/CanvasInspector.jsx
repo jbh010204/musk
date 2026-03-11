@@ -5,6 +5,10 @@ const inputClassName =
   'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-all focus:border-slate-300 focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-600'
 
 function CardInspector({ selection, categories, onUpdateCard }) {
+  const assignableCategories = useMemo(
+    () => categories.filter((category) => category?.isLeaf !== false),
+    [categories],
+  )
   const [draft, setDraft] = useState(() => ({
     content: selection.card.content,
     estimatedSlots: selection.card.estimatedSlots,
@@ -93,9 +97,9 @@ function CardInspector({ selection, categories, onUpdateCard }) {
             onChange={(event) => setDraft((prev) => ({ ...prev, categoryId: event.target.value }))}
           >
             <option value="">미분류</option>
-            {categories.map((category) => (
+            {assignableCategories.map((category) => (
               <option key={category.id} value={category.id}>
-                {category.name}
+                {category.pathLabel || category.name}
               </option>
             ))}
           </select>

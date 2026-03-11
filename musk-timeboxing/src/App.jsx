@@ -20,6 +20,7 @@ import { useCategoryMeta, useDailyData, useTemplateMeta, useToast } from './app/
 import {
   buildMonthCalendarSnapshot,
   buildWeekCalendarSnapshot,
+  getCategoryViewModels,
   getPlannerPersistenceStatus,
   hasOverlap,
   loadDay,
@@ -477,8 +478,44 @@ function App() {
     updateBoardCanvas,
     reloadCurrentDay,
   } = useDailyData()
-  const { categories, addCategory, updateCategory, removeCategory, reloadCategories } = useCategoryMeta()
-  const { templates, addTemplate, updateTemplate, removeTemplate, reloadTemplates } = useTemplateMeta()
+  const {
+    categories: rawCategories,
+    addCategory,
+    updateCategory,
+    removeCategory,
+    reloadCategories,
+  } = useCategoryMeta()
+  const { templates, addTemplate, updateTemplate, removeTemplate, clearTemplateCategory, reloadTemplates } =
+    useTemplateMeta()
+  const lockedParentIds = useMemo(() => {
+    const usedIds = new Set()
+
+    data.brainDump.forEach((item) => {
+      if (item.categoryId) {
+        usedIds.add(item.categoryId)
+      }
+    })
+    data.timeBoxes.forEach((box) => {
+      if (box.categoryId) {
+        usedIds.add(box.categoryId)
+      }
+    })
+    templates.forEach((template) => {
+      if (template.categoryId) {
+        usedIds.add(template.categoryId)
+      }
+    })
+
+    return usedIds
+  }, [data.brainDump, data.timeBoxes, templates])
+  const categories = useMemo(
+    () =>
+      getCategoryViewModels(rawCategories).map((category) => ({
+        ...category,
+        canAcceptChildren: !lockedParentIds.has(category.id),
+      })),
+    [lockedParentIds, rawCategories],
+  )
 
   const { showToast, ToastContainer } = useToast()
   const [persistenceStatus, setPersistenceStatus] = useState(() => getPlannerPersistenceStatus())
@@ -1061,8 +1098,10 @@ function App() {
     finalize()
   }
 
-  const handleAddCategory = (name, color) => {
-    const result = addCategory(name, color)
+  const handleAddCategory = (name, color, parentId = null) => {
+    const result = addCategory(name, color, parentId, {
+      lockedParentIds: [...lockedParentIds],
+    })
     if (!result.ok) {
       showToast(result.error)
     } else {
@@ -1072,8 +1111,10 @@ function App() {
     return result
   }
 
-  const handleUpdateCategory = (id, name, color) => {
-    const result = updateCategory(id, name, color)
+  const handleUpdateCategory = (id, name, color, parentId = null) => {
+    const result = updateCategory(id, name, color, parentId, {
+      lockedParentIds: [...lockedParentIds],
+    })
     if (!result.ok) {
       showToast(result.error)
     } else {
@@ -1084,10 +1125,17 @@ function App() {
   }
 
   const handleDeleteCategory = (id) => {
-    removeCategory(id)
+    const result = removeCategory(id)
+    if (!result.ok) {
+      showToast(result.error)
+      return result
+    }
+
     clearTimeBoxCategory(id)
     clearBrainDumpCategory(id)
+    clearTemplateCategory(id)
     showToast('카테고리를 삭제했습니다')
+    return result
   }
 
   const handleImported = () => {

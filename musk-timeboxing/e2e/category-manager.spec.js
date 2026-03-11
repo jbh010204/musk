@@ -50,3 +50,36 @@ test('category manager assigns managed category to timebox', async ({ page }) =>
   expect(timeBox).toBeTruthy()
   expect(timeBox.categoryId).toBe(category.id)
 })
+
+test('category manager supports parent-child categories and blocks deleting parents with children', async ({
+  page,
+}) => {
+  await page.goto('/')
+
+  await page.evaluate(() => window.localStorage.clear())
+  await page.reload()
+
+  await page.locator('button[aria-label="빠른 메뉴"]:visible').first().click()
+  await page.locator('button[aria-label="카테고리 관리"]:visible').first().click()
+
+  await page.getByPlaceholder('예: Deep Work').fill('Backend')
+  await page.getByRole('button', { name: '추가', exact: true }).click()
+
+  await page.getByPlaceholder('예: Deep Work').fill('Auth')
+  await page.getByLabel('새 카테고리 부모').selectOption({ label: 'Backend' })
+  await page.getByRole('button', { name: '추가', exact: true }).click()
+
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('button', { name: '삭제' }).first().click()
+
+  await expect(page.getByText('하위 카테고리가 있는 항목은 삭제할 수 없습니다').last()).toBeVisible()
+
+  const storage = await page.evaluate(() => JSON.parse(window.localStorage.getItem('musk-planner-meta') || '{}'))
+  const backend = storage.categories.find((item) => item.name === 'Backend')
+  const auth = storage.categories.find((item) => item.name === 'Auth')
+
+  expect(backend).toBeTruthy()
+  expect(auth).toBeTruthy()
+  expect(auth.parentId).toBe(backend.id)
+  expect(typeof auth.order).toBe('number')
+})

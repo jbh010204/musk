@@ -112,6 +112,7 @@ export const sortBoardCardsByStackOrder = (items = []) =>
 
 export const groupBoardCardsByCategory = (items = [], categories = []) => {
   const grouped = new Map()
+  const visibleCategories = categories.filter((category) => category?.isLeaf !== false)
 
   grouped.set(UNCATEGORIZED_BOARD_LANE, {
     id: UNCATEGORIZED_BOARD_LANE,
@@ -121,11 +122,11 @@ export const groupBoardCardsByCategory = (items = [], categories = []) => {
     items: [],
   })
 
-  categories.forEach((category) => {
+  visibleCategories.forEach((category) => {
     grouped.set(category.id, {
       id: category.id,
       categoryId: category.id,
-      label: category.name,
+      label: category.pathLabel || category.name,
       color: category.color,
       items: [],
     })
@@ -136,7 +137,7 @@ export const groupBoardCardsByCategory = (items = [], categories = []) => {
     grouped.get(laneKey).items.push(item)
   })
 
-  return [grouped.get(UNCATEGORIZED_BOARD_LANE), ...categories.map((category) => grouped.get(category.id))]
+  return [grouped.get(UNCATEGORIZED_BOARD_LANE), ...visibleCategories.map((category) => grouped.get(category.id))]
 }
 
 export const buildBoardLayoutEntries = (lanes = []) =>

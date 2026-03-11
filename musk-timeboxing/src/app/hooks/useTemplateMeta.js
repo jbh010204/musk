@@ -98,6 +98,19 @@ export const useTemplateMeta = () => {
     setTemplates((prev) => prev.filter((template) => template.id !== id))
   }
 
+  const clearTemplateCategory = (categoryId) => {
+    setTemplates((prev) =>
+      prev.map((template) =>
+        template.categoryId === categoryId
+          ? {
+              ...template,
+              categoryId: null,
+            }
+          : template,
+      ),
+    )
+  }
+
   const reloadTemplates = () => {
     setTemplates(loadMeta().templates || [])
   }
@@ -107,6 +120,7 @@ export const useTemplateMeta = () => {
     addTemplate,
     updateTemplate,
     removeTemplate,
+    clearTemplateCategory,
     reloadTemplates,
   }
 }

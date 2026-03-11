@@ -9,6 +9,10 @@ const DURATION_OPTIONS = [
 ]
 
 function TemplateRow({ template, categories, onUpdate, onDelete }) {
+  const assignableCategories = useMemo(
+    () => categories.filter((category) => category?.isLeaf !== false),
+    [categories],
+  )
   const [name, setName] = useState(template.name)
   const [content, setContent] = useState(template.content)
   const [durationSlots, setDurationSlots] = useState(String(template.durationSlots))
@@ -50,9 +54,9 @@ function TemplateRow({ template, categories, onUpdate, onDelete }) {
           aria-label={`${template.name} 기본 카테고리`}
         >
           <option value="">미분류</option>
-          {categories.map((category) => (
+          {assignableCategories.map((category) => (
             <option key={category.id} value={category.id}>
-              {category.name}
+              {category.pathLabel || category.name}
             </option>
           ))}
         </select>
@@ -97,6 +101,10 @@ function TemplateManagerModal({
   onUpdateTemplate,
   onDeleteTemplate,
 }) {
+  const assignableCategories = useMemo(
+    () => categories.filter((category) => category?.isLeaf !== false),
+    [categories],
+  )
   const [newName, setNewName] = useState('')
   const [newContent, setNewContent] = useState('')
   const [newDurationSlots, setNewDurationSlots] = useState('2')
@@ -176,9 +184,9 @@ function TemplateManagerModal({
               aria-label="새 템플릿 기본 카테고리"
             >
               <option value="">미분류</option>
-              {categories.map((category) => (
+              {assignableCategories.map((category) => (
                 <option key={category.id} value={category.id}>
-                  {category.name}
+                  {category.pathLabel || category.name}
                 </option>
               ))}
             </select>
@@ -199,7 +207,7 @@ function TemplateManagerModal({
                 <TemplateRow
                   key={template.id}
                   template={template}
-                  categories={categories}
+                  categories={assignableCategories}
                   onUpdate={onUpdateTemplate}
                   onDelete={onDeleteTemplate}
                 />
