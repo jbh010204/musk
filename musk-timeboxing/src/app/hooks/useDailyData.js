@@ -10,6 +10,7 @@ import {
   loadLastFocus,
   normalizeBoardCard,
   normalizeBoardCategoryId,
+  normalizeBoardCanvas,
   normalizeBoardEstimatedSlots,
   normalizeBoardLinkedTimeBoxIds,
   normalizeBoardNote,
@@ -804,6 +805,22 @@ export const useDailyData = () => {
     setData(loadDay(currentDate))
   }
 
+  const updateBoardCanvas = (nextBoardCanvas) => {
+    setData((prev) => {
+      const resolved =
+        typeof nextBoardCanvas === 'function' ? nextBoardCanvas(prev.boardCanvas) : nextBoardCanvas
+
+      return {
+        ...prev,
+        boardCanvas: normalizeBoardCanvas({
+          ...prev.boardCanvas,
+          ...resolved,
+          lastSyncedAt: Date.now(),
+        }),
+      }
+    })
+  }
+
   return {
     currentDate,
     data,
@@ -831,6 +848,7 @@ export const useDailyData = () => {
     removeTimeBox,
     restoreTimeBox,
     clearTimeBoxCategory,
+    updateBoardCanvas,
     reloadCurrentDay,
   }
 }

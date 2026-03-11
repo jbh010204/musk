@@ -1,4 +1,5 @@
 import { normalizeBoardCard, syncBoardCardsWithTimeBoxes } from './boardCard'
+import { createEmptyBoardCanvas, normalizeBoardCanvas } from './boardCanvas'
 import { sortBrainDumpItems } from './brainDumpPriority'
 import { TOTAL_SLOTS } from './timeSlot'
 import {
@@ -13,7 +14,7 @@ import {
   syncSnapshotToServer,
 } from './storageServer'
 
-const SCHEMA_VERSION = 3
+const SCHEMA_VERSION = 4
 const META_KEY = 'musk-planner-meta'
 const DAY_KEY_PREFIX = 'musk-planner-'
 const DAY_KEY_PATTERN = /^musk-planner-\d{4}-\d{2}-\d{2}$/
@@ -43,6 +44,7 @@ const createEmptyDay = (dateStr) => ({
   brainDump: [],
   bigThree: [],
   timeBoxes: [],
+  boardCanvas: createEmptyBoardCanvas(),
 })
 
 const createEmptyMeta = () => ({
@@ -76,7 +78,8 @@ const hasMeaningfulDayData = (dayData) => {
   return (
     (Array.isArray(safeDay.brainDump) && safeDay.brainDump.length > 0) ||
     (Array.isArray(safeDay.bigThree) && safeDay.bigThree.length > 0) ||
-    (Array.isArray(safeDay.timeBoxes) && safeDay.timeBoxes.length > 0)
+    (Array.isArray(safeDay.timeBoxes) && safeDay.timeBoxes.length > 0) ||
+    Boolean(safeDay.boardCanvas?.document)
   )
 }
 
@@ -117,6 +120,7 @@ const migrateDayData = (dateStr, rawData) => {
     brainDump: syncBoardCardsWithTimeBoxes(normalizedBrainDump, normalizedTimeBoxes),
     bigThree: Array.isArray(safeData.bigThree) ? safeData.bigThree : [],
     timeBoxes: normalizedTimeBoxes,
+    boardCanvas: normalizeBoardCanvas(safeData.boardCanvas),
   }
 }
 

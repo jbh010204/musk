@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getCategoryColor, getCategoryLabel, hasOverlap, slotToTime, TOTAL_SLOTS } from '../../../entities/planner'
 import PlanningBoard from '../../planning-board'
+import PlanningCanvas from '../../planning-canvas'
 import ScheduleComposer from '../../schedule-composer'
 import CompletionModal from './CompletionModal'
 import DailyRecapCard from './DailyRecapCard'
@@ -17,6 +18,7 @@ const DEFAULT_BOX_SLOTS = 1
 const DURATION_PRESETS = [1, 2, 3, 4]
 const VIEW_MODE_OPTIONS = [
   { value: 'BOARD', label: '보드' },
+  { value: 'CANVAS', label: '캔버스' },
   { value: 'COMPOSER', label: '편성기' },
   { value: 'DAY', label: '일간' },
   { value: 'WEEK', label: '주간' },
@@ -95,6 +97,7 @@ function Timeline({
   addBoardCard = () => false,
   updateBrainDumpItem = () => {},
   applyBrainDumpBoardLayout = () => {},
+  updateBoardCanvas = () => {},
   updateTimeBox,
   onTimerStart = () => {},
   onTimerPause = () => {},
@@ -122,8 +125,15 @@ function Timeline({
   const [selectedMonthDate, setSelectedMonthDate] = useState(null)
   const isDayView = viewMode === 'DAY'
   const isBoardView = viewMode === 'BOARD'
+  const isCanvasView = viewMode === 'CANVAS'
   const isComposerView = viewMode === 'COMPOSER'
-  const sectionTitle = isBoardView ? '🧩 플래닝 보드' : isComposerView ? '🗓 편성기' : '⏱ 타임라인'
+  const sectionTitle = isBoardView
+    ? '🧩 플래닝 보드'
+    : isCanvasView
+      ? '🪄 플래닝 캔버스'
+      : isComposerView
+        ? '🗓 편성기'
+        : '⏱ 타임라인'
 
   const sortedBoxes = useMemo(
     () => [...data.timeBoxes].sort((a, b) => a.startSlot - b.startSlot),
@@ -442,7 +452,7 @@ function Timeline({
         ) : null}
       </div>
 
-      {!isDayView && !isBoardView && !isComposerView ? (
+      {!isDayView && !isBoardView && !isCanvasView && !isComposerView ? (
         <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
           {viewMode === 'WEEK'
             ? `${weekCalendar.rangeLabel} 구간의 주간 계획을 한 번에 확인합니다.`
@@ -648,6 +658,20 @@ function Timeline({
           onUpdateCard={updateBrainDumpItem}
           onApplyLayout={applyBrainDumpBoardLayout}
           onOpenCategoryManager={onOpenCategoryManager}
+        />
+      ) : null}
+
+      {isCanvasView ? (
+        <PlanningCanvas
+          key={currentDate}
+          currentDate={currentDate}
+          boardCanvas={data.boardCanvas}
+          brainDumpItems={brainDumpItems}
+          categories={categories}
+          onUpdateBoardCanvas={updateBoardCanvas}
+          onOpenBoard={() => setViewMode('BOARD')}
+          onOpenCategoryManager={onOpenCategoryManager}
+          onOpenComposer={() => setViewMode('COMPOSER')}
         />
       ) : null}
 

@@ -474,6 +474,7 @@ function App() {
     removeTimeBox,
     restoreTimeBox,
     clearTimeBoxCategory,
+    updateBoardCanvas,
     reloadCurrentDay,
   } = useDailyData()
   const { categories, addCategory, updateCategory, removeCategory, reloadCategories } = useCategoryMeta()
@@ -1353,6 +1354,7 @@ function App() {
       addBoardCard={addBoardCard}
       updateBrainDumpItem={updateBrainDumpItem}
       applyBrainDumpBoardLayout={applyBrainDumpBoardLayout}
+      updateBoardCanvas={updateBoardCanvas}
       updateTimeBox={handleUpdateTimeBox}
       onTimerStart={startTimeBoxTimer}
       onTimerPause={pauseTimeBoxTimer}

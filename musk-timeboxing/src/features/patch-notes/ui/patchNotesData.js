@@ -1,5 +1,28 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.21.2',
+    date: '2026-03-11',
+    title: 'tldraw Planning Canvas shell 도입(T84~T86)',
+    summary:
+      'Planning Board를 그대로 대체하기 전에, tldraw 기반 무한 캔버스를 별도 CANVAS 뷰로 병행 도입하고 날짜별 snapshot 저장/복원과 초기 auto-layout migration까지 먼저 연결했습니다.',
+    focus: [
+      'source of truth는 계속 brainDump에 두고, 캔버스는 위치/카메라/session 같은 시각 상태만 `boardCanvas` snapshot으로 저장',
+      '기존 보드 카드가 있는 날짜는 첫 진입 시 카테고리 노드와 카드 shape를 자동 배치해 빈 캔버스가 아니라 현재 상태를 즉시 투영',
+      'tldraw 기본 UI는 숨기고 planner toolbar만 남겨 플래너 흐름에 맞는 shell을 우선 고정',
+    ],
+    improvements: [
+      '`tldraw@4.4.1`을 exact version으로 고정하고 `docs/TLDRAW_CANVAS_ARCHITECTURE.md`에 버전 정책, 저장 구조, 제외 범위를 문서화',
+      '`storage.js`, `useDailyData.js`에 `boardCanvas` 스키마와 normalize/update 경로를 추가해 export/import 및 날짜별 persistence와 같은 계층으로 통합',
+      '`PlanningCanvas.jsx`를 신설해 CANVAS view 진입, snapshot debounce 저장, 자동 배치, 보드/카테고리/편성기 전환 액션을 연결',
+      '`planning-canvas.spec.js`로 첫 진입 auto-layout 후 localStorage에 `boardCanvas.document/session`이 남는지 회귀를 추가',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planning-canvas 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.21.1',
     date: '2026-03-11',
     title: 'Schedule Composer 실배치 + 보드 카드 링크 동기화(T77~T80)',

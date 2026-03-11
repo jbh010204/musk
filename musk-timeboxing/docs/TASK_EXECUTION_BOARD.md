@@ -1,4 +1,4 @@
-# Musk Planner Task Execution Board (80 Tasks)
+# Musk Planner Task Execution Board (86 Tasks)
 
 이 문서는 현재 합의된 작업을 한 번에 처리하지 않고,
 작업 단위를 쪼개서 순차 실행하기 위한 운영 보드다.
@@ -109,6 +109,9 @@
   - `T78` Schedule Composer 카드 큐 + 시간표 그리드 구현
   - `T79` 보드 카드 -> 시간표 배치로 timeBox 생성
   - `T80` linkedTimeBoxIds 자동 동기화 및 회귀 검증
+  - `T84` tldraw Planning Canvas 아키텍처 문서화
+  - `T85` boardCanvas 스키마 확장 및 migration 추가
+  - `T86` CANVAS view와 PlanningCanvas shell 도입
 
 ## 3. Prioritized Task List
 
