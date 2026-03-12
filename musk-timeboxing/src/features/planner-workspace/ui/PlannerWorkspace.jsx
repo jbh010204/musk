@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { UNCATEGORIZED_BOARD_LANE } from '../../../entities/planner'
+import {
+  createClearedStackCanvasSelectionPatch,
+  createStackCanvasBigThreeSelectionPatch,
+  createStackCanvasCardSelectionPatch,
+  resolveStackCanvasSelectedCardIds,
+} from '../../../entities/planner'
 import { Card } from '../../../shared/ui'
 import PlanningCanvas from '../../planning-canvas'
 import TimelineRailSurface from '../../timeline/ui/TimelineRailSurface'
@@ -38,7 +43,7 @@ function PlannerWorkspace({
   const selectedCardId = data.stackCanvasState?.selectedCardId ?? null
   const selectedBigThreeId = data.stackCanvasState?.selectedBigThreeId ?? null
   const selectedCardIds = useMemo(
-    () => data.stackCanvasState?.selectedCardIds ?? (selectedCardId ? [selectedCardId] : []),
+    () => resolveStackCanvasSelectedCardIds(selectedCardId, data.stackCanvasState?.selectedCardIds ?? []),
     [data.stackCanvasState?.selectedCardIds, selectedCardId],
   )
   const selectedBigThreeItem = useMemo(
@@ -52,23 +57,9 @@ function PlannerWorkspace({
   }, [bigThree, selectedBigThreeId, updateStackCanvasState])
 
   const syncSelection = (nextIds, preferredId = null, nextBigThreeId = null) => {
-    const dedupedIds = [...new Set(nextIds.filter(Boolean))]
-    const resolvedSelectedCardId =
-      dedupedIds.length === 0
-        ? null
-        : dedupedIds.includes(preferredId)
-          ? preferredId
-          : dedupedIds.at(-1) ?? null
-    const nextCard = resolvedSelectedCardId
-      ? taskCards.find((item) => item.id === resolvedSelectedCardId) || null
-      : null
-
-    updateStackCanvasState({
-      selectedCardId: resolvedSelectedCardId,
-      selectedCardIds: dedupedIds,
-      selectedBigThreeId: nextBigThreeId,
-      focusedLaneId: nextCard?.categoryId || UNCATEGORIZED_BOARD_LANE,
-    })
+    updateStackCanvasState(
+      createStackCanvasCardSelectionPatch(taskCards, nextIds, preferredId, nextBigThreeId),
+    )
   }
 
   const handleSelectCard = (nextId) => {
@@ -85,28 +76,11 @@ function PlannerWorkspace({
       return
     }
 
-    const sourceCard = slot.taskId
-      ? taskCards.find((item) => item.id === slot.taskId) || null
-      : null
-
-    if (sourceCard) {
-      syncSelection([slot.taskId], slot.taskId, slot.id)
-      return
-    }
-
-    updateStackCanvasState({
-      selectedCardId: null,
-      selectedCardIds: [],
-      selectedBigThreeId: slot.id,
-    })
+    updateStackCanvasState(createStackCanvasBigThreeSelectionPatch(taskCards, slot))
   }
 
   const handleClearSelections = () => {
-    updateStackCanvasState({
-      selectedCardId: null,
-      selectedCardIds: [],
-      selectedBigThreeId: null,
-    })
+    updateStackCanvasState(createClearedStackCanvasSelectionPatch())
   }
 
   return (

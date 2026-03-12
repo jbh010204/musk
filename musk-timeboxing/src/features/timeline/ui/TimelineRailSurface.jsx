@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { slotToTime } from '../../../entities/planner'
+import { resolveStackCanvasSelectedCardIds, slotToTime } from '../../../entities/planner'
 import CompletionModal from './CompletionModal'
 import TimeBoxCard from './TimeBoxCard'
 import TimeSlotGrid from './TimeSlotGrid'
@@ -62,9 +62,8 @@ function TimelineRailSurface({
     () => timeBoxes.some((box) => Number.isFinite(box.timerStartedAt)),
     [timeBoxes],
   )
-  const hasSelection = Boolean(selectedBigThreeItem) || selectedCardIds.length > 0 || Boolean(selectedCardId)
-  const effectiveSelectedCardIds =
-    selectedCardIds.length > 0 ? selectedCardIds : selectedCardId ? [selectedCardId] : []
+  const effectiveSelectedCardIds = resolveStackCanvasSelectedCardIds(selectedCardId, selectedCardIds)
+  const hasSelection = Boolean(selectedBigThreeItem) || effectiveSelectedCardIds.length > 0
   const nativeDragActive = typeof nativeDraggingCardId === 'string' && nativeDraggingCardId.trim().length > 0
 
   useEffect(() => {

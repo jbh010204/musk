@@ -11,7 +11,10 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   buildBoardLayoutEntries,
+  createStackCanvasCardSelectionPatch,
   getCategoryColor,
+  resolveStackCanvasSelectedCardIds,
+  sanitizeStackCanvasCardSelection,
   getTaskCardStackCanvasStatus,
   groupBoardCardsByCategory,
   UNCATEGORIZED_BOARD_LANE,
@@ -45,6 +48,9 @@ const createLaneState = (lanes) =>
     id: lane.id,
     items: lane.items.map((item) => item.id),
   }))
+
+const areIdsEqual = (left = [], right = []) =>
+  left.length === right.length && left.every((itemId, index) => itemId === right[index])
 
 function PlanningCanvas({
   stackCanvasState,
@@ -84,10 +90,25 @@ function PlanningCanvas({
   const [laneState, setLaneState] = useState(() => createLaneState(lanes))
   const cardMap = useMemo(() => new Map(taskCards.map((item) => [item.id, item])), [taskCards])
   const laneMap = useMemo(() => new Map(lanes.map((lane) => [lane.id, lane])), [lanes])
-  const selectedCardId = controlledSelectedCardId ?? internalSelectedCardId
-  const selectedCardIds = Array.isArray(controlledSelectedCardIds)
-    ? controlledSelectedCardIds
-    : internalSelectedCardIds
+  const isControlledSelection = typeof onSelectCard === 'function' || typeof onSelectCards === 'function'
+  const rawSelectedCardId = isControlledSelection ? controlledSelectedCardId : internalSelectedCardId
+  const rawSelectedCardIds = useMemo(
+    () =>
+      isControlledSelection
+        ? Array.isArray(controlledSelectedCardIds)
+          ? controlledSelectedCardIds
+          : []
+        : internalSelectedCardIds,
+    [controlledSelectedCardIds, internalSelectedCardIds, isControlledSelection],
+  )
+  const resolvedRawSelectedCardIds = useMemo(
+    () => resolveStackCanvasSelectedCardIds(rawSelectedCardId, rawSelectedCardIds),
+    [rawSelectedCardId, rawSelectedCardIds],
+  )
+  const { selectedCardId, selectedCardIds } = useMemo(
+    () => sanitizeStackCanvasCardSelection(cardMap, rawSelectedCardId, rawSelectedCardIds),
+    [cardMap, rawSelectedCardId, rawSelectedCardIds],
+  )
   const focusedLaneId = stackCanvasState?.focusedLaneId ?? UNCATEGORIZED_BOARD_LANE
   const inboxFilter = stackCanvasState?.inboxFilter ?? 'ALL'
   const isInboxCollapsed = Boolean(stackCanvasState?.isInboxCollapsed)
@@ -152,24 +173,10 @@ function PlanningCanvas({
   }, [lanes])
 
   useEffect(() => {
-    if (controlledSelectedCardId !== null) {
-      setInternalSelectedCardId(controlledSelectedCardId)
-    }
-  }, [controlledSelectedCardId])
-
-  useEffect(() => {
-    if (Array.isArray(controlledSelectedCardIds)) {
-      setInternalSelectedCardIds(controlledSelectedCardIds)
-    }
-  }, [controlledSelectedCardIds])
-
-  useEffect(() => {
-    const nextSelectedCardIds = selectedCardIds.filter((itemId) => cardMap.has(itemId))
-    const shouldUpdateIds = nextSelectedCardIds.length !== selectedCardIds.length
-    const nextSelectedCardId = nextSelectedCardIds.includes(selectedCardId)
-      ? selectedCardId
-      : nextSelectedCardIds.at(-1) ?? null
-    const shouldUpdateId = nextSelectedCardId !== selectedCardId
+    const nextSelectedCardIds = selectedCardIds
+    const nextSelectedCardId = selectedCardId
+    const shouldUpdateIds = !areIdsEqual(nextSelectedCardIds, resolvedRawSelectedCardIds)
+    const shouldUpdateId = nextSelectedCardId !== rawSelectedCardId
 
     if (!shouldUpdateIds && !shouldUpdateId) {
       return
@@ -186,36 +193,28 @@ function PlanningCanvas({
     } else {
       setInternalSelectedCardId(nextSelectedCardId)
     }
-  }, [cardMap, onSelectCard, onSelectCards, selectedCardId, selectedCardIds])
+  }, [onSelectCard, onSelectCards, rawSelectedCardId, resolvedRawSelectedCardIds, selectedCardId, selectedCardIds])
 
   const applySelection = (nextSelectedCardIds, nextSelectedCardId = null) => {
-    const dedupedIds = [...new Set(nextSelectedCardIds.filter((itemId) => cardMap.has(itemId)))]
-    const resolvedSelectedCardId =
-      dedupedIds.length === 0
-        ? null
-        : dedupedIds.includes(nextSelectedCardId)
-          ? nextSelectedCardId
-          : dedupedIds.at(-1) ?? null
-    const nextCard = resolvedSelectedCardId ? cardMap.get(resolvedSelectedCardId) || null : null
+    const nextSelectionPatch = createStackCanvasCardSelectionPatch(
+      cardMap,
+      nextSelectedCardIds,
+      nextSelectedCardId,
+    )
 
     if (onSelectCards) {
-      onSelectCards(dedupedIds)
+      onSelectCards(nextSelectionPatch.selectedCardIds)
     } else {
-      setInternalSelectedCardIds(dedupedIds)
+      setInternalSelectedCardIds(nextSelectionPatch.selectedCardIds)
     }
 
     if (onSelectCard) {
-      onSelectCard(resolvedSelectedCardId)
+      onSelectCard(nextSelectionPatch.selectedCardId)
     } else {
-      setInternalSelectedCardId(resolvedSelectedCardId)
+      setInternalSelectedCardId(nextSelectionPatch.selectedCardId)
     }
 
-    onUpdateStackCanvasState({
-      selectedCardId: resolvedSelectedCardId,
-      selectedCardIds: dedupedIds,
-      selectedBigThreeId: null,
-      focusedLaneId: nextCard?.categoryId || UNCATEGORIZED_BOARD_LANE,
-    })
+    onUpdateStackCanvasState(nextSelectionPatch)
   }
 
   const setSelectedCard = (itemOrId) => {
@@ -350,7 +349,7 @@ function PlanningCanvas({
   }
 
   const handleSelectNode = useCallback((laneId) => {
-    const armedCardIds = selectedCardIds.length > 0 ? selectedCardIds : selectedCardId ? [selectedCardId] : []
+    const armedCardIds = resolveStackCanvasSelectedCardIds(selectedCardId, selectedCardIds)
     if (armedCardIds.length === 0) {
       onUpdateStackCanvasState({
         focusedLaneId: laneId,
@@ -367,7 +366,7 @@ function PlanningCanvas({
   }, [moveCardsToLane, onUpdateStackCanvasState, selectedCardId, selectedCardIds])
 
   const moveSelectionAcrossDock = useCallback((offset) => {
-    const armedCardIds = selectedCardIds.length > 0 ? selectedCardIds : selectedCardId ? [selectedCardId] : []
+    const armedCardIds = resolveStackCanvasSelectedCardIds(selectedCardId, selectedCardIds)
     if (armedCardIds.length === 0 || orderedDockLaneIds.length === 0) {
       return
     }
@@ -441,7 +440,7 @@ function PlanningCanvas({
         return
       }
 
-      const armedCardIds = selectedCardIds.length > 0 ? selectedCardIds : selectedCardId ? [selectedCardId] : []
+      const armedCardIds = resolveStackCanvasSelectedCardIds(selectedCardId, selectedCardIds)
       if (armedCardIds.length === 0) {
         return
       }
