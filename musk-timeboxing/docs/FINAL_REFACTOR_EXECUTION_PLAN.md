@@ -38,13 +38,14 @@
 - `model/bigThree.js`
 - internal `sourceId -> taskId` adapter boundary
 - `boardCanvas -> stackCanvasState` 전환
+- workspace / selection helper extraction
 
 아직 큰 덩어리로 남아 있는 곳:
 
 - `src/app/hooks/useDailyData.js`
 - `src/App.jsx`
-- workspace / selection command 정리
 - DnD payload 통합
+- cross-feature derived planner state 정리
 
 ## 작업 원칙
 
@@ -134,7 +135,7 @@
 - business rule은 model에 있고
 - hook은 `prev -> next` 연결만 담당
 
-## Step 4. selection / workspace command 정리
+## Step 4. selection / workspace command 정리 [Done]
 
 목표:
 
@@ -146,6 +147,11 @@
 - selectedCardIds
 - selectedBigThreeId
 - focusedLaneId
+
+완료 기준:
+
+- selection patch 계산이 `stackCanvasState` helper로 이동
+- `PlanningCanvas`, `PlannerWorkspace`, `TimelineRailSurface`가 같은 selection 규칙을 공유
 
 ## Step 5. App orchestration 축소
 
@@ -233,8 +239,8 @@
 이번 턴에서 바로 시작할 범위:
 
 1. `useDailyData.js`를 reducer adapter 수준으로 축소
-2. workspace / selection helper를 model 또는 feature helper로 이동
-3. `App.jsx`의 파생 계산과 DnD payload 계약을 분리
+2. `App.jsx`의 파생 계산과 timebox planning helper를 분리
+3. DnD payload 계약을 공통 모듈로 이동
 4. 관련 lint / build / workspace E2E 확인
 
 ## 검증 기준
