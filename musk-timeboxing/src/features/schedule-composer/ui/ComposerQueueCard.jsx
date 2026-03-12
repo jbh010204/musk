@@ -1,13 +1,11 @@
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
+import { createComposerCardDragPayload } from '../../planner-dnd/lib/payloads'
 
 function ComposerQueueCard({ item, color = '#94a3b8', isSelected = false, onSelect = () => {} }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `composer-card-${item.id}`,
-    data: {
-      type: 'COMPOSER_CARD',
-      itemId: item.id,
-    },
+    data: createComposerCardDragPayload(item.id),
   })
 
   return (

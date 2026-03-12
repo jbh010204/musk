@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { BRAIN_DUMP_PRIORITY_LABELS } from '../../../entities/planner'
 import { Button } from '../../../shared/ui'
+import { createBrainDumpDragPayload } from '../../planner-dnd/lib/payloads'
 
 const REMOVE_ANIMATION_MS = 220
 const PRIORITY_SEGMENT_CLASSES = [
@@ -48,11 +49,7 @@ function BrainDumpItem({ item, onRemove, onCyclePriority, onSendToBigThree }) {
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `brain-dump-${item.id}`,
-    data: {
-      type: 'BRAIN_DUMP',
-      id: item.id,
-      title: item.title,
-    },
+    data: createBrainDumpDragPayload(item),
   })
 
   useEffect(() => {

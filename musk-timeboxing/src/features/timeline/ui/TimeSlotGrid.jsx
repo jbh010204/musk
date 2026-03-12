@@ -1,5 +1,6 @@
 import { useDroppable } from '@dnd-kit/core'
 import { TOTAL_SLOTS, slotToTime } from '../../../entities/planner'
+import { createTimelineSlotDropPayload } from '../../planner-dnd/lib/payloads'
 
 function TimeSlotRow({
   slotIndex,
@@ -16,10 +17,7 @@ function TimeSlotRow({
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `timeline-slot-${slotIndex}`,
-    data: {
-      type: 'TIMELINE_SLOT',
-      slotIndex,
-    },
+    data: createTimelineSlotDropPayload(slotIndex),
   })
 
   const label = slotToTime(slotIndex)

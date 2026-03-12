@@ -1,6 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Button, IconButton } from '../../../shared/ui'
+import { createBoardCardDragPayload } from '../../planner-dnd/lib/payloads'
 
 const formatDurationLabel = (estimateSlots = 1) => `${estimateSlots * 30}분`
 
@@ -19,10 +20,7 @@ function BoardCard({
 }) {
   const sortableState = useSortable({
     id: item.id,
-    data: {
-      type: 'BOARD_CARD',
-      itemId: item.id,
-    },
+    data: createBoardCardDragPayload(item.id),
     disabled: !sortable,
   })
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = sortableState

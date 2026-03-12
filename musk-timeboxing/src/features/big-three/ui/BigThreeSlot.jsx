@@ -1,5 +1,6 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { useState } from 'react'
+import { createBigThreeDragPayload, createBigThreeSlotDropPayload } from '../../planner-dnd/lib/payloads'
 
 function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -14,23 +15,13 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
   } = useDraggable({
     id: `big-three-item-${slot?.id ?? slotIndex}`,
     disabled: !slot,
-    data: slot
-      ? {
-          type: 'BIG_THREE',
-          id: slot.id,
-          content: slot.content,
-          taskId: slot.taskId ?? null,
-        }
-      : null,
+    data: slot ? createBigThreeDragPayload(slot) : null,
   })
 
   const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
     id: `big-three-slot-${slotIndex}`,
     disabled: Boolean(slot),
-    data: {
-      type: 'BIG_THREE_SLOT',
-      slotIndex,
-    },
+    data: createBigThreeSlotDropPayload(slotIndex),
   })
 
   const handleSubmit = () => {

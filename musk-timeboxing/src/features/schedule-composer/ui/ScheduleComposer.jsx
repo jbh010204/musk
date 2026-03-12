@@ -9,6 +9,7 @@ import {
   slotToTime,
 } from '../../../entities/planner'
 import { Button, Card } from '../../../shared/ui'
+import { getPlannerQueueItemId } from '../../planner-dnd/lib/payloads'
 import { WORKSPACE_LAYOUT } from '../../planner-workspace/lib/workspaceLayout'
 import ComposerQueueCard from './ComposerQueueCard'
 import ComposerTimeGrid from './ComposerTimeGrid'
@@ -142,10 +143,7 @@ function ScheduleComposer({
   }
 
   const handleDragEnd = ({ active, over }) => {
-    const cardId =
-      typeof active?.data?.current?.itemId === 'string'
-        ? active.data.current.itemId
-        : null
+    const cardId = getPlannerQueueItemId(active?.data?.current)
     const slotIndex = resolveSlotFromOver(typeof over?.id === 'string' ? over.id : null)
 
     setActiveCardId(null)
@@ -199,7 +197,7 @@ function ScheduleComposer({
         sensors={sensors}
         collisionDetection={collisionStrategy}
         onDragStart={({ active }) => {
-          setActiveCardId(typeof active?.data?.current?.itemId === 'string' ? active.data.current.itemId : null)
+          setActiveCardId(getPlannerQueueItemId(active?.data?.current))
         }}
         onDragCancel={() => setActiveCardId(null)}
         onDragEnd={handleDragEnd}

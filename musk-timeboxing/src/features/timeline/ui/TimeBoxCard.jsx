@@ -8,6 +8,7 @@ import {
   slotDurationMinutes,
   TOTAL_SLOTS,
 } from '../../../entities/planner'
+import { createTimeBoxDragPayload } from '../../planner-dnd/lib/payloads'
 import { resolveTimeBoxLayout } from './timeBoxLayout'
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
@@ -28,12 +29,7 @@ function TimeBoxCard({
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `time-box-${timeBox.id}`,
-    data: {
-      type: 'TIME_BOX',
-      id: timeBox.id,
-      startSlot: timeBox.startSlot,
-      endSlot: timeBox.endSlot,
-    },
+    data: createTimeBoxDragPayload(timeBox),
   })
 
   const currentEndSlot = previewEndSlot ?? timeBox.endSlot

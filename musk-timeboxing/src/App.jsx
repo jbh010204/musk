@@ -33,6 +33,16 @@ import {
   subscribePlannerPersistenceStatus,
   TOTAL_SLOTS,
 } from './entities/planner'
+import {
+  getPlannerDndType,
+  getScheduleSourceContent,
+  getScheduleSourceTaskId,
+  isBigThreeSlotDropPayload,
+  isScheduleSourceDragPayload,
+  isTimeBoxDragPayload,
+  isTimelineSlotDropPayload,
+  PLANNER_DND_TYPES,
+} from './features/planner-dnd/lib/payloads'
 
 const DEFAULT_BOX_SLOTS = 1
 const BASE_SLOT_HEIGHT = 32
@@ -881,19 +891,19 @@ function App() {
       return
     }
 
-    activeDragTypeRef.current = payload.type ?? null
+    activeDragTypeRef.current = getPlannerDndType(payload)
 
-    if (payload.type === 'BRAIN_DUMP' || payload.type === 'BIG_THREE') {
+    if (isScheduleSourceDragPayload(payload)) {
       startPointerTracking()
       setActiveDragPreview({
-        type: payload.type,
-        content: payload.title ?? payload.content,
+        type: getPlannerDndType(payload),
+        content: getScheduleSourceContent(payload),
       })
       updateDropPreviewFromPointer(pointer)
       return
     }
 
-    if (payload.type === 'TIME_BOX') {
+    if (isTimeBoxDragPayload(payload)) {
       setMovingTimeBoxPreview({
         id: payload.id,
         startSlot: Number(payload.startSlot) || 0,
@@ -918,9 +928,9 @@ function App() {
   }
 
   const handleDragMove = ({ over, activatorEvent, active, delta }) => {
-    if (activeDragTypeRef.current === 'TIME_BOX') {
+    if (activeDragTypeRef.current === PLANNER_DND_TYPES.TIME_BOX) {
       const activeData = active?.data?.current
-      if (!activeData) {
+      if (!isTimeBoxDragPayload(activeData)) {
         setMovingTimeBoxPreview(null)
         return
       }
@@ -935,12 +945,15 @@ function App() {
       return
     }
 
-    if (activeDragTypeRef.current !== 'BRAIN_DUMP' && activeDragTypeRef.current !== 'BIG_THREE') {
+    if (
+      activeDragTypeRef.current !== PLANNER_DND_TYPES.BRAIN_DUMP &&
+      activeDragTypeRef.current !== PLANNER_DND_TYPES.BIG_THREE
+    ) {
       return
     }
 
     const overData = over?.data?.current
-    if (overData?.type === 'TIMELINE_SLOT' && Number.isInteger(overData.slotIndex)) {
+    if (isTimelineSlotDropPayload(overData)) {
       updateDropPreviewSlot(overData.slotIndex)
       return
     }
@@ -976,7 +989,7 @@ function App() {
       return
     }
 
-    if (activeData.type === 'TIME_BOX') {
+    if (isTimeBoxDragPayload(activeData)) {
       const movedRange = resolveMovedRangeFromDelta(activeData, delta?.y, timelineSlotHeight)
       const activeStart = Number(activeData.startSlot) || 0
       const activeEnd = Number(activeData.endSlot) || activeStart + 1
@@ -1011,7 +1024,10 @@ function App() {
 
     const overData = over?.data?.current ?? null
 
-    if (activeData.type === 'BRAIN_DUMP' && overData?.type === 'BIG_THREE_SLOT') {
+    if (
+      getPlannerDndType(activeData) === PLANNER_DND_TYPES.BRAIN_DUMP &&
+      isBigThreeSlotDropPayload(overData)
+    ) {
       const success = sendToBigThree(activeData.id)
       if (!success) {
         showToast('빅 3이 이미 가득 찼습니다')
@@ -1020,11 +1036,8 @@ function App() {
       return
     }
 
-    if (activeData.type === 'BRAIN_DUMP' || activeData.type === 'BIG_THREE') {
-      const overSlot =
-        overData?.type === 'TIMELINE_SLOT' && Number.isInteger(overData.slotIndex)
-          ? overData.slotIndex
-          : null
+    if (isScheduleSourceDragPayload(activeData)) {
+      const overSlot = isTimelineSlotDropPayload(overData) ? overData.slotIndex : null
       const startSlot =
         overSlot ??
         dropPreviewSlotRef.current ??
@@ -1039,8 +1052,8 @@ function App() {
 
       const endSlot = Math.min(startSlot + DEFAULT_BOX_SLOTS, TOTAL_SLOTS)
       const newBox = {
-        content: activeData.title ?? activeData.content,
-        taskId: activeData.type === 'BIG_THREE' ? activeData.taskId ?? null : activeData.id,
+        content: getScheduleSourceContent(activeData),
+        taskId: getScheduleSourceTaskId(activeData),
         startSlot,
         endSlot,
       }
