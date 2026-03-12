@@ -14,6 +14,7 @@ test('brain dump item slides out on remove', async ({ page }) => {
   await page.goto('/')
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
+  await page.locator('[data-testid="timeline-view-canvas"]:visible').first().click()
 
   await page.getByPlaceholder('할 일을 입력하고 엔터...').fill('SLIDE-삭제-테스트')
   await page.getByPlaceholder('할 일을 입력하고 엔터...').press('Enter')

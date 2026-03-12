@@ -4,6 +4,7 @@ test('header shows big3 completion progress', async ({ page }) => {
   await page.goto('/')
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
+  await page.locator('[data-testid="timeline-view-canvas"]:visible').first().click()
 
   const header = page.locator('header').first()
   await expect(header).toContainText('0/3')
@@ -12,6 +13,7 @@ test('header shows big3 completion progress', async ({ page }) => {
   await page.getByPlaceholder('빅3 입력 후 엔터').fill('BIG3-완료대시')
   await page.getByPlaceholder('빅3 입력 후 엔터').press('Enter')
 
+  await page.locator('[data-testid="timeline-view-day"]:visible').first().click()
   await page.locator('button[aria-label="09:00 슬롯"]:visible').first().click()
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').fill('BIG3-완료대시')
   await page.getByPlaceholder('일정을 입력하고 엔터 (기본 30분)').press('Enter')

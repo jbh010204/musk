@@ -16,6 +16,7 @@ test('brain dump auto-fill prefers highest-priority items for big3', async ({ pa
   await page.goto('/')
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
+  await page.locator('[data-testid="timeline-view-canvas"]:visible').first().click()
 
   const input = page.getByPlaceholder('할 일을 입력하고 엔터...')
   await input.fill('우선순위-낮음')

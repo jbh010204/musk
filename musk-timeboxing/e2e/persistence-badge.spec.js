@@ -4,6 +4,7 @@ test('header shows local persistence badge when server storage is disabled', asy
   await page.goto('/')
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
+  await page.locator('[data-testid="timeline-view-canvas"]:visible').first().click()
 
   await expect(page.getByText('로컬 저장').first()).toBeVisible()
 

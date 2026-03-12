@@ -21,6 +21,7 @@ test('brain dump priority change keeps current order until reload, then restores
   await page.goto('/')
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
+  await page.locator('[data-testid="timeline-view-canvas"]:visible').first().click()
 
   const input = page.getByPlaceholder('할 일을 입력하고 엔터...')
 
@@ -70,6 +71,7 @@ test('brain dump long text uses two-line clamp with compact battery width', asyn
   await page.goto('/')
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
+  await page.locator('[data-testid="timeline-view-canvas"]:visible').first().click()
 
   const longText =
     '이것은 브레인 덤프에서 길게 적었을 때도 한 줄만 보이지 않고 두 줄까지 안정적으로 보여야 하는 테스트 문장입니다'

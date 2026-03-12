@@ -1,5 +1,23 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.22.8',
+    date: '2026-03-12',
+    title: 'Workspace unification: real timeline rail + decluttered day/week/month',
+    summary:
+      'DAY/WEEK/MONTH 화면에서는 app-level 브레인 덤프 rail을 걷어내고, WORKSPACE 우측은 축약 편성기가 아니라 실제 타임라인 표면을 공유하도록 바꿨습니다. 결과적으로 계획 화면과 실행 화면의 시각적 분리가 줄고, 일정 생성/배치 규칙도 같은 컴포넌트로 묶였습니다.',
+    focus: [
+      '워크스페이스 우측 rail이 더 이상 별도 composer가 아니라, 슬롯 클릭/인라인 생성/드래그 드롭/리사이즈/완료 처리까지 포함한 실제 timeline surface를 사용하도록 통합',
+      'DAY/WEEK/MONTH/WORKSPACE에서는 외부 브레인 덤프 rail을 숨겨 메인 서피스를 더 넓게 쓰고, planning rail은 standalone CANVAS/COMPOSER에서만 유지',
+      'workspace schedule 경로와 일간 타임라인 경로가 같은 surface를 공유하도록 정리해 테스트/유지보수 경계도 단순화',
+    ],
+    improvements: [
+      '`TimelineRailSurface.jsx`를 추가해 슬롯 클릭 배치, 수동 인라인 생성, native drop, timeBox 렌더/리사이즈/완료 모달을 한 컴포넌트로 재사용하게 정리',
+      '`Timeline/index.jsx`, `PlannerWorkspace.jsx`, `TimeSlotGrid.jsx`, `TimeBoxCard.jsx`를 수정해 DAY와 WORKSPACE가 같은 rail surface와 test contract를 공유하도록 변경',
+      '`App.jsx`에서 desktop/mobile planning rail 노출 조건을 CANVAS/COMPOSER 전용으로 줄이고, 관련 E2E와 문서를 현재 구조 기준으로 갱신',
+    ],
+    validation: ['lint/build 통과', 'E2E 전체 회귀 통과 (62 passed)'],
+  },
+  {
     version: 'v0.22.7',
     date: '2026-03-12',
     title: 'Workspace cues: armed dock, inline create, selection bar',

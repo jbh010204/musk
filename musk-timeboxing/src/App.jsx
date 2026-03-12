@@ -556,6 +556,8 @@ function App() {
   const activeDragTypeRef = useRef(null)
   const pointerTrackingRef = useRef(false)
   const timelineSlotHeight = timelineScale === '15' ? DETAIL_SLOT_HEIGHT : BASE_SLOT_HEIGHT
+  const showDesktopPlanningRail = timelineViewMode === 'CANVAS' || timelineViewMode === 'COMPOSER'
+  const showMobilePlanningTabs = timelineViewMode === 'CANVAS' || timelineViewMode === 'COMPOSER'
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -1476,58 +1478,66 @@ function App() {
           />
 
           <div className="hidden min-h-0 flex-1 gap-6 overflow-hidden px-6 pb-6 md:flex">
-            {timelineViewMode === 'WORKSPACE' ? null : (
+            {showDesktopPlanningRail ? (
               <aside className="ui-panel-subtle w-80 flex-shrink-0 overflow-y-auto">
                 {dumpSection}
                 {bigThreeSection}
               </aside>
-            )}
+            ) : null}
             <main className="ui-panel flex-1 overflow-y-auto">{timelineSection}</main>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto pb-16 md:hidden">
-            {mobileTab === 'dump' ? dumpSection : null}
-            {mobileTab === 'big3' ? bigThreeSection : null}
-            {mobileTab === 'timeline' ? timelineSection : null}
+            {showMobilePlanningTabs ? (
+              <>
+                {mobileTab === 'dump' ? dumpSection : null}
+                {mobileTab === 'big3' ? bigThreeSection : null}
+                {mobileTab === 'timeline' ? timelineSection : null}
+              </>
+            ) : (
+              timelineSection
+            )}
           </div>
 
-          <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 shadow-sm backdrop-blur dark:bg-gray-800/95 md:hidden">
-            <div className="grid grid-cols-3">
-              <button
-                type="button"
-                onClick={() => setMobileTab('dump')}
-                className={`px-3 py-3 text-sm ${
-                  mobileTab === 'dump'
-                    ? 'bg-indigo-600 text-gray-100'
-                    : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
-                }`}
-              >
-                덤프
-              </button>
-              <button
-                type="button"
-                onClick={() => setMobileTab('big3')}
-                className={`px-3 py-3 text-sm ${
-                  mobileTab === 'big3'
-                    ? 'bg-indigo-600 text-gray-100'
-                    : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
-                }`}
-              >
-                빅3
-              </button>
-              <button
-                type="button"
-                onClick={() => setMobileTab('timeline')}
-                className={`px-3 py-3 text-sm ${
-                  mobileTab === 'timeline'
-                    ? 'bg-indigo-600 text-gray-100'
-                    : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
-                }`}
-              >
-                타임라인
-              </button>
-            </div>
-          </nav>
+          {showMobilePlanningTabs ? (
+            <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 shadow-sm backdrop-blur dark:bg-gray-800/95 md:hidden">
+              <div className="grid grid-cols-3">
+                <button
+                  type="button"
+                  onClick={() => setMobileTab('dump')}
+                  className={`px-3 py-3 text-sm ${
+                    mobileTab === 'dump'
+                      ? 'bg-indigo-600 text-gray-100'
+                      : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  덤프
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileTab('big3')}
+                  className={`px-3 py-3 text-sm ${
+                    mobileTab === 'big3'
+                      ? 'bg-indigo-600 text-gray-100'
+                      : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  빅3
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileTab('timeline')}
+                  className={`px-3 py-3 text-sm ${
+                    mobileTab === 'timeline'
+                      ? 'bg-indigo-600 text-gray-100'
+                      : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  타임라인
+                </button>
+              </div>
+            </nav>
+          ) : null}
         </div>
 
         <ToastContainer />

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('planner workspace composes board canvas and composer in one view', async ({ page }) => {
+test('planner workspace composes stack canvas and timeline rail in one view', async ({ page }) => {
   await page.goto('/')
 
   const setup = await page.evaluate(() => {
@@ -62,15 +62,15 @@ test('planner workspace composes board canvas and composer in one view', async (
 
   await expect(page.locator('[data-testid="planner-workspace-view"]:visible').first()).toBeVisible()
   await expect(page.locator('[data-testid="planning-canvas-view"]:visible').first()).toBeVisible()
-  await expect(page.locator('[data-testid="schedule-composer-view"]:visible').first()).toBeVisible()
+  await expect(page.locator('[data-testid="workspace-timeline-rail"]:visible').first()).toBeVisible()
   await expect(page.locator('[data-testid="planning-board-card-workspace-card-001"]:visible').first()).toBeVisible()
 
   const canvasCard = page.locator('[data-testid="planning-board-card-workspace-card-001"]:visible').first()
   await canvasCard.click()
-  await page.locator('[data-testid="composer-slot-10"]:visible').first().click()
+  await page.locator('[data-testid="workspace-slot-10"]:visible').first().click()
 
   await expect(canvasCard).toContainText('예정 1')
-  await expect(page.locator('[data-testid^="composer-block-"]').first()).toContainText(
+  await expect(page.locator('[data-testid^="workspace-timeline-block-"]').first()).toContainText(
     '워크스페이스 통합 배치 테스트',
   )
 
@@ -160,9 +160,9 @@ test('planner workspace closes the loop from canvas selection to big3 rail and t
   await expect(bigThreeSlot).toContainText('워크스페이스 Big3 연결 테스트')
   await bigThreeSlot.click()
 
-  await page.locator('[data-testid="composer-slot-6"]:visible').first().click()
+  await page.locator('[data-testid="workspace-slot-6"]:visible').first().click()
 
-  await expect(page.locator('[data-testid^="composer-block-"]:visible')).toHaveCount(1)
+  await expect(page.locator('[data-testid^="workspace-timeline-block-"]:visible')).toHaveCount(1)
   await expect(page.locator('[data-testid="planning-board-card-workspace-big3-card"]:visible').first()).toContainText(
     '예정 1',
   )
@@ -260,9 +260,9 @@ test('planner workspace uses category dock and slot click as the primary schedul
     '도크 분류 후 슬롯 클릭 배치',
   )
 
-  await page.locator('[data-testid="composer-slot-12"]:visible').first().click()
+  await page.locator('[data-testid="workspace-slot-12"]:visible').first().click()
 
-  await expect(page.locator('[data-testid^="composer-block-"]').first()).toContainText('도크 분류 후 슬롯 클릭 배치')
+  await expect(page.locator('[data-testid^="workspace-timeline-block-"]').first()).toContainText('도크 분류 후 슬롯 클릭 배치')
   await expect(page.locator('[data-testid="planning-board-card-workspace-drag-card"]:visible').first()).toContainText(
     '예정 1',
   )
@@ -343,7 +343,7 @@ test('planner workspace can bulk schedule multiple selected canvas cards', async
   await page.locator('[data-testid="planning-board-card-select-toggle-workspace-bulk-card-2"]:visible').first().click()
 
   await expect(page.getByText('다중 선택 2개').first()).toBeVisible()
-  await page.locator('[data-testid="composer-slot-8"]:visible').first().click()
+  await page.locator('[data-testid="workspace-slot-8"]:visible').first().click()
 
   await expect
     .poll(async () =>
@@ -362,7 +362,7 @@ test('planner workspace can bulk schedule multiple selected canvas cards', async
     )
     .toBe(2)
 
-  await expect(page.locator('[data-testid^="composer-block-"]:visible')).toHaveCount(2)
+  await expect(page.locator('[data-testid^="workspace-timeline-block-"]:visible')).toHaveCount(2)
   await expect(page.locator('[data-testid="planning-board-card-workspace-bulk-card-1"]:visible').first()).toContainText(
     '예정 1',
   )
@@ -625,7 +625,7 @@ test('planner workspace supports keyboard shortcuts for move, big3, and first-op
       }),
     )
   })
-  await expect(page.locator('[data-testid^="composer-block-"]:visible')).toHaveCount(1)
+  await expect(page.locator('[data-testid^="workspace-timeline-block-"]:visible')).toHaveCount(1)
   await expect(page.locator('[data-testid="planning-board-card-workspace-shortcut-card"]:visible').first()).toContainText(
     '예정 1',
   )

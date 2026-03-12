@@ -7,25 +7,21 @@ import {
   hasOverlap,
   loadLastViewMode,
   saveLastViewMode,
-  slotToTime,
   TOTAL_SLOTS,
 } from '../../../entities/planner'
 import PlanningCanvas from '../../planning-canvas'
 import PlannerWorkspace from '../../planner-workspace'
 import ScheduleComposer from '../../schedule-composer'
-import CompletionModal from './CompletionModal'
 import DailyRecapCard from './DailyRecapCard'
 import MonthDayDetailSheet from './MonthDayDetailSheet'
 import MonthlyCalendarView from './MonthlyCalendarView'
-import TimeBoxCard from './TimeBoxCard'
-import TimeSlotGrid from './TimeSlotGrid'
+import TimelineRailSurface from './TimelineRailSurface'
 import WeeklyCalendarView from './WeeklyCalendarView'
 import WeeklyPlanningBoard from './WeeklyPlanningBoard'
 import WeeklyReportCard from './WeeklyReportCard'
 
 const DEFAULT_SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
-const DURATION_PRESETS = [1, 2, 3, 4]
 const VIEW_MODE_OPTIONS = [
   { value: 'WORKSPACE', label: '워크스페이스' },
   { value: 'CANVAS', label: '캔버스' },
@@ -145,11 +141,6 @@ function Timeline({
   onApplyTemplate = () => {},
 }) {
   const sectionRef = useRef(null)
-  const [pendingInput, setPendingInput] = useState(null)
-  const [selectedBoxId, setSelectedBoxId] = useState(null)
-  const [resizePreview, setResizePreview] = useState({})
-  const [isComposing, setIsComposing] = useState(false)
-  const [timerNow, setTimerNow] = useState(0)
   const [viewMode, setViewMode] = useState(() => resolveInitialViewMode(data))
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [categoryFilter, setCategoryFilter] = useState('ALL')
@@ -174,10 +165,6 @@ function Timeline({
     () => new Map(categories.map((category) => [category.id, category])),
     [categories],
   )
-  const selectedBox = useMemo(
-    () => data.timeBoxes.find((box) => box.id === selectedBoxId) || null,
-    [data.timeBoxes, selectedBoxId],
-  )
   const selectedMonthCell = useMemo(
     () =>
       selectedMonthDate
@@ -185,11 +172,6 @@ function Timeline({
         : null,
     [monthCalendar.cells, selectedMonthDate],
   )
-  const hasRunningTimer = useMemo(
-    () => data.timeBoxes.some((box) => Number.isFinite(box.timerStartedAt)),
-    [data.timeBoxes],
-  )
-
   useEffect(() => {
     if (!Number.isInteger(initialFocusSlot) || !sectionRef.current) {
       return
@@ -200,20 +182,6 @@ function Timeline({
     )
     slotButton?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }, [initialFocusSlot])
-
-  useEffect(() => {
-    if (!hasRunningTimer) {
-      return undefined
-    }
-
-    const intervalId = window.setInterval(() => {
-      setTimerNow(Date.now())
-    }, 1000)
-
-    return () => {
-      window.clearInterval(intervalId)
-    }
-  }, [hasRunningTimer])
 
   useEffect(() => {
     saveLastViewMode(viewMode)
@@ -436,40 +404,7 @@ function Timeline({
     })
   }
 
-  const handleSlotClick = (slotIndex) => {
-    setPendingInput({ slotIndex, content: '', durationSlots: DEFAULT_BOX_SLOTS })
-  }
-
-  const handlePendingSubmit = () => {
-    if (!pendingInput) {
-      return
-    }
-
-    const content = pendingInput.content.trim()
-    if (!content) {
-      setPendingInput(null)
-      return
-    }
-
-    const created = createBox({
-      content,
-      startSlot: pendingInput.slotIndex,
-      durationSlots: pendingInput.durationSlots,
-    })
-
-    if (created) {
-      setPendingInput(null)
-    }
-  }
-
-  const handleResizePreview = (id, endSlot) => {
-    setResizePreview((prev) => ({
-      ...prev,
-      [id]: endSlot,
-    }))
-  }
-
-  const handleResizeEnd = (id, endSlot) => {
+  const handleResizeTimeBox = (id, endSlot) => {
     const original = data.timeBoxes.find((box) => box.id === id)
     if (!original) {
       return
@@ -482,21 +417,10 @@ function Timeline({
 
     if (hasOverlap(data.timeBoxes, nextBox, id)) {
       showToast('해당 시간에 이미 일정이 있습니다')
-      setResizePreview((prev) => {
-        const copy = { ...prev }
-        delete copy[id]
-        return copy
-      })
       return
     }
 
     updateTimeBox(id, { endSlot })
-
-    setResizePreview((prev) => {
-      const copy = { ...prev }
-      delete copy[id]
-      return copy
-    })
   }
 
   const handleOpenCalendarDate = (dateStr) => {
@@ -634,6 +558,14 @@ function Timeline({
           onScheduleBoardCards={handleScheduleBoardCards}
           onScheduleSelectedCardsToFirstOpen={handleScheduleBoardCardsToFirstOpen}
           onScheduleBigThreeItem={handleScheduleBigThreeItem}
+          onCreateManualTimeBox={createBox}
+          onResizeTimeBox={handleResizeTimeBox}
+          updateTimeBox={updateTimeBox}
+          removeTimeBox={removeTimeBox}
+          onDuplicateTimeBox={onDuplicateTimeBox}
+          onTimerStart={onTimerStart}
+          onTimerPause={onTimerPause}
+          onTimerComplete={onTimerComplete}
           onJumpToDay={() => setViewMode('DAY')}
         />
       ) : null}
@@ -846,180 +778,31 @@ function Timeline({
 
       {isDayView ? (
         <div data-testid="timeline-day-view">
-          <div className="overflow-x-auto">
-            {sortedBoxes.length > 0 && filteredBoxes.length === 0 ? (
-              <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-                현재 필터 조건에 맞는 일정이 없습니다.
-              </p>
-            ) : null}
-
-            <div className="relative min-w-[520px]">
-              <TimeSlotGrid
-                onSlotClick={handleSlotClick}
-                showDropGuide={showDropGuide}
-                rowHeight={slotHeight}
-                showQuarterDividers={timelineScale === '15'}
-              />
-
-              {showDropGuide && Number.isInteger(dropPreviewSlot) ? (
-                <div
-                  data-testid="timeline-drop-preview"
-                  className="pointer-events-none absolute left-16 right-2 z-10"
-                  style={{ top: dropPreviewSlot * slotHeight }}
-                >
-                  <div className="relative border-t-2 border-indigo-400/90">
-                    <span className="absolute -left-14 -top-3 rounded bg-indigo-600/80 px-1.5 py-0.5 text-[10px] text-white">
-                      {slotToTime(dropPreviewSlot)}
-                    </span>
-                  </div>
-                </div>
-              ) : null}
-
-              {movingTimeBoxPreview &&
-              Number.isInteger(movingTimeBoxPreview.startSlot) &&
-              Number.isInteger(movingTimeBoxPreview.endSlot) ? (
-                <div
-                  data-testid="timeline-move-preview"
-                  className="pointer-events-none absolute left-16 right-2 z-20"
-                  style={{
-                    top: movingTimeBoxPreview.startSlot * slotHeight,
-                    height:
-                      Math.max(1, movingTimeBoxPreview.endSlot - movingTimeBoxPreview.startSlot) *
-                      slotHeight,
-                  }}
-                >
-                  <div
-                    className={`h-full rounded border-2 border-dashed px-2 py-1 text-[11px] ${
-                      movingTimeBoxPreview.hasConflict
-                        ? 'border-red-300 bg-red-500/20 text-red-100'
-                        : 'border-cyan-300 bg-cyan-500/20 text-cyan-100'
-                    }`}
-                  >
-                    이동 예정 {slotToTime(movingTimeBoxPreview.startSlot)} ~{' '}
-                    {slotToTime(movingTimeBoxPreview.endSlot)}
-                    {movingTimeBoxPreview.hasConflict ? ' (겹침)' : ''}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="pointer-events-none absolute inset-y-0 left-16 right-2">
-                {filteredBoxes.map((box) => (
-                  <TimeBoxCard
-                    key={box.id}
-                    timeBox={box}
-                    slotHeight={slotHeight}
-                    previewEndSlot={resizePreview[box.id]}
-                    onResizePreview={handleResizePreview}
-                    onResizeEnd={handleResizeEnd}
-                    nowTimestamp={timerNow}
-                    onTimerStart={onTimerStart}
-                    onTimerPause={onTimerPause}
-                    onTimerComplete={onTimerComplete}
-                    categoryMeta={box.categoryId ? categoryMap.get(box.categoryId) : null}
-                    onTimeBoxClick={(timeBox) => setSelectedBoxId(timeBox.id)}
-                  />
-                ))}
-
-                {pendingInput ? (
-                  <div
-                    className="ui-panel-subtle pointer-events-auto absolute left-0 right-0 z-20 flex items-center gap-2 px-3 py-2"
-                    style={{
-                      top: pendingInput.slotIndex * slotHeight,
-                    }}
-                  >
-                    <input
-                      type="text"
-                      autoFocus
-                      value={pendingInput.content}
-                      onCompositionStart={() => setIsComposing(true)}
-                      onCompositionEnd={() => setIsComposing(false)}
-                      onChange={(event) =>
-                        setPendingInput((prev) =>
-                          prev ? { ...prev, content: event.target.value } : prev,
-                        )
-                      }
-                      onKeyDown={(event) => {
-                        const nativeComposing = event.nativeEvent?.isComposing || event.keyCode === 229
-
-                        if (isComposing || nativeComposing) {
-                          return
-                        }
-
-                        if (event.key === 'Enter') {
-                          if (event.repeat) {
-                            return
-                          }
-
-                          event.preventDefault()
-                          handlePendingSubmit()
-                        }
-
-                        if (event.key === 'Escape') {
-                          setPendingInput(null)
-                        }
-                      }}
-                      onBlur={(event) => {
-                        const related = event.relatedTarget
-                        if (related && related.dataset.durationPreset) {
-                          return
-                        }
-                        setPendingInput(null)
-                      }}
-                      className="min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
-                      placeholder="일정을 입력하고 엔터 (기본 30분)"
-                    />
-
-                    <div className="flex items-center gap-1">
-                      {DURATION_PRESETS.map((presetSlots) => {
-                        const isActive = pendingInput.durationSlots === presetSlots
-
-                        return (
-                          <button
-                            key={presetSlots}
-                            type="button"
-                            data-duration-preset="true"
-                            aria-label={`${presetSlots * 30}분 프리셋`}
-                            onMouseDown={(event) => event.preventDefault()}
-                            onClick={() =>
-                              setPendingInput((prev) =>
-                                prev ? { ...prev, durationSlots: presetSlots } : prev,
-                              )
-                            }
-                            className={`rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                              isActive
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-gray-700 text-gray-200 hover:bg-slate-50 dark:hover:bg-slate-800'
-                            }`}
-                          >
-                            {presetSlots * 30}분
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
+          <TimelineRailSurface
+            timeBoxes={filteredBoxes}
+            categories={categories}
+            slotHeight={slotHeight}
+            labelWidth={64}
+            onCreateManualTimeBox={createBox}
+            onResizeTimeBox={handleResizeTimeBox}
+            updateTimeBox={updateTimeBox}
+            removeTimeBox={removeTimeBox}
+            onDuplicateTimeBox={onDuplicateTimeBox}
+            onTimerStart={onTimerStart}
+            onTimerPause={onTimerPause}
+            onTimerComplete={onTimerComplete}
+            showDropGuide={showDropGuide}
+            dropPreviewSlot={dropPreviewSlot}
+            movingTimeBoxPreview={movingTimeBoxPreview}
+            emptyState={
+              sortedBoxes.length > 0 && filteredBoxes.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  현재 필터 조건에 맞는 일정이 없습니다.
+                </p>
+              ) : null
+            }
+          />
         </div>
-      ) : null}
-
-      {selectedBox ? (
-        <CompletionModal
-          key={selectedBox.id}
-          timeBox={selectedBox}
-          categories={categories}
-          onClose={() => setSelectedBoxId(null)}
-          onUpdate={updateTimeBox}
-          onDuplicate={(id) => {
-            onDuplicateTimeBox(id)
-            setSelectedBoxId(null)
-          }}
-          onDelete={(id) => {
-            removeTimeBox(id)
-            setSelectedBoxId(null)
-          }}
-        />
       ) : null}
     </section>
   )

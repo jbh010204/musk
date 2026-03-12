@@ -4,6 +4,7 @@ test('big three stays isolated by date when navigating days', async ({ page }) =
   await page.goto('/')
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
+  await page.locator('[data-testid="timeline-view-canvas"]:visible').first().click()
 
   await page.getByRole('button', { name: '빅3 빈 슬롯' }).first().click()
   await page.getByPlaceholder('빅3 입력 후 엔터').fill('빅3-날짜독립')

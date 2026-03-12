@@ -24,6 +24,7 @@ function TimeBoxCard({
   onTimerStart,
   onTimerPause,
   onTimerComplete,
+  testId = 'timebox-card',
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `time-box-${timeBox.id}`,
@@ -188,7 +189,7 @@ function TimeBoxCard({
       tabIndex={0}
       data-timebox-dragging={isDragging ? 'true' : 'false'}
       data-timebox-title={timeBox.content}
-      data-testid="timebox-card"
+      data-testid={testId}
       className={`timebox-card group/timebox absolute left-0 right-0 text-left text-xs text-white pointer-events-auto transition-[transform,top,height,opacity] duration-100 ease-out will-change-transform ${
         isDragging ? 'z-40 opacity-80 ring-2 ring-cyan-300/70' : ''
       }`}

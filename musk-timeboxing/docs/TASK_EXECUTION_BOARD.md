@@ -146,6 +146,7 @@
 - `W5` Category Dock glow presentation + timeline rail density token 정리
 - `W6` Inbox search/filter/collapse + keyboard shortcut flow
 - `W7` Dock armed state + inline create slot + selection bar 전환
+- `W8` 실제 timeline rail 공유 + day/week/month rail 제거
 - `P6` tldraw 제거 및 문서 교체
 
 완료:
@@ -169,6 +170,7 @@
 - `W5` Category Dock glow presentation + timeline rail density token 정리
 - `W6` Inbox search/filter/collapse + keyboard shortcut flow
 - `W7` Dock armed state + inline create slot + selection bar 전환
+- `W8` 실제 timeline rail 공유 + day/week/month rail 제거
 - `P6` tldraw 제거 및 문서 교체
 
 ### T1. FSD 전환 1단계 (폴더 구조 개편 기반)
