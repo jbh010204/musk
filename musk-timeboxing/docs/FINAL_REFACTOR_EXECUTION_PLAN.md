@@ -40,6 +40,7 @@
 - `boardCanvas -> stackCanvasState` 전환
 - workspace / selection helper extraction
 - App-level Big3/reschedule derivation extraction
+- core DnD payload helper extraction
 
 아직 큰 덩어리로 남아 있는 곳:
 
@@ -183,6 +184,11 @@
 목표:
 
 - drag source / drop target 계약을 공통 discriminated union으로 고정
+
+현재까지:
+
+- 주요 `dnd-kit` payload 생성 로직을 공통 helper로 이동
+- `App.jsx`, `PlanningBoard`, `Timeline`, `ScheduleComposer`, `BigThree`, `BrainDump`가 같은 payload shape를 공유
 
 후보 파일:
 
