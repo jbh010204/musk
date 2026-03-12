@@ -39,13 +39,14 @@
 - internal `sourceId -> taskId` adapter boundary
 - `boardCanvas -> stackCanvasState` 전환
 - workspace / selection helper extraction
+- App-level Big3/reschedule derivation extraction
 
 아직 큰 덩어리로 남아 있는 곳:
 
 - `src/app/hooks/useDailyData.js`
 - `src/App.jsx`
 - DnD payload 통합
-- cross-feature derived planner state 정리
+- weekly/report level derived planner state 정리
 
 ## 작업 원칙
 
@@ -158,6 +159,11 @@
 목표:
 
 - `App.jsx`에서 도메인 계산, 중복 가공, 데이터 조립을 줄인다.
+
+현재까지:
+
+- `bigThreeProgress` selector를 model로 이동
+- reschedule plan / apply helper를 model로 이동
 
 허용:
 
