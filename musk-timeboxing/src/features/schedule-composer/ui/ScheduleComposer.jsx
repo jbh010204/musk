@@ -33,10 +33,13 @@ function ScheduleComposer({
   selectedCardId: controlledSelectedCardId = null,
   onSelectCard = null,
   hideQueue = false,
+  nativeDraggingCardId = null,
+  onNativeDragEnd = () => {},
   embedded = false,
 }) {
   const [internalSelectedCardId, setInternalSelectedCardId] = useState(null)
   const [activeCardId, setActiveCardId] = useState(null)
+  const [nativeOverSlot, setNativeOverSlot] = useState(null)
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
   const lanes = useMemo(
     () => groupBoardCardsByCategory(items, categories).filter((lane) => lane.items.length > 0),
@@ -44,6 +47,8 @@ function ScheduleComposer({
   )
   const cardMap = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
   const selectedCardId = controlledSelectedCardId ?? internalSelectedCardId
+  const nativeDragActive = typeof nativeDraggingCardId === 'string' && nativeDraggingCardId.trim().length > 0
+  const effectiveNativeOverSlot = nativeDragActive ? nativeOverSlot : null
   const activeCard = activeCardId ? cardMap.get(activeCardId) || null : null
   const visibleTimeBoxes = useMemo(
     () => [...timeBoxes].sort((left, right) => left.startSlot - right.startSlot),
@@ -73,6 +78,7 @@ function ScheduleComposer({
         setInternalSelectedCardId(null)
       }
     }
+    setNativeOverSlot(null)
     return success
   }
 
@@ -231,6 +237,17 @@ function ScheduleComposer({
 
                   handleCreateFromCard(selectedCardId, slotIndex)
                 }}
+                onNativeSlotDrop={(slotIndex, cardId) => {
+                  if (!cardId) {
+                    return
+                  }
+
+                  handleCreateFromCard(cardId, slotIndex)
+                  onNativeDragEnd()
+                }}
+                onNativeSlotHover={setNativeOverSlot}
+                nativeOverSlot={effectiveNativeOverSlot}
+                nativeDragActive={nativeDragActive}
               />
 
               <div className="pointer-events-none absolute inset-y-0 left-16 right-2">

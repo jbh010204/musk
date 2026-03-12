@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { getCategoryColor, getCategoryLabel } from '../../../entities/planner'
 import { UNCATEGORIZED_BOARD_LANE } from '../../../entities/planner'
 import PlanningCanvas from '../../planning-canvas'
@@ -17,6 +17,7 @@ function PlannerWorkspace({
   onScheduleBoardCard,
   onJumpToDay,
 }) {
+  const [nativeDraggingCardId, setNativeDraggingCardId] = useState(null)
   const selectedCardId = data.boardCanvas?.selectedCardId ?? null
   const selectedCard = useMemo(
     () => brainDumpItems.find((item) => item.id === selectedCardId) || null,
@@ -57,6 +58,12 @@ function PlannerWorkspace({
           onOpenComposer={() => {}}
           selectedCardId={selectedCardId}
           onSelectCard={handleSelectCard}
+          scheduleDraggable
+          onScheduleDragStart={(card) => {
+            setNativeDraggingCardId(card.id)
+            handleSelectCard(card.id)
+          }}
+          onScheduleDragEnd={() => setNativeDraggingCardId(null)}
           embedded
         />
 
@@ -94,6 +101,8 @@ function PlannerWorkspace({
             selectedCardId={selectedCardId}
             onSelectCard={handleSelectCard}
             hideQueue
+            nativeDraggingCardId={nativeDraggingCardId}
+            onNativeDragEnd={() => setNativeDraggingCardId(null)}
             embedded
           />
         </div>

@@ -136,6 +136,7 @@
 - `P3` StackCanvas shell 구현
 - `P4` StackCanvas 카드 생성/카테고리 DnD
 - `P5` StackCanvas -> Timeline Rail 연결
+- `P5a` StackCanvas 카드 -> Timeline Rail 직접 드래그 배치
 - `P6` tldraw 제거 및 문서 교체
 
 완료:

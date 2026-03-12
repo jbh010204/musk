@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.21.9',
+    date: '2026-03-12',
+    title: 'Workspace direct scheduling: 캔버스 카드 -> Timeline Rail 직접 드래그',
+    summary:
+      '워크스페이스에서 캔버스 카드를 먼저 선택한 뒤 슬롯을 누르는 경로 외에, 카드 자체의 `일정` 핸들을 timeline rail 슬롯으로 직접 끌어다 놓아 배치하는 빠른 경로를 추가했습니다.',
+    focus: [
+      '카테고리 스택 내부의 기존 dnd-kit 재정렬 흐름은 유지하면서, 일정 배치 전용 native drag 경로를 따로 분리',
+      'Timeline Rail 슬롯은 native drag hover/drop도 받아 캔버스 카드가 바로 timeBox로 생성되도록 확장',
+      '배치 성공 후 `linkedTimeBoxIds` badge가 즉시 `예정 N`으로 갱신되는 회귀를 planner-workspace E2E로 고정',
+    ],
+    improvements: [
+      '`BoardCard.jsx`에 일정 배치 전용 `일정` drag handle을 추가하고 `PlanningCanvas`, `CategoryStackLane`, `PlannerWorkspace`를 통해 workspace 전체로 연결',
+      '`ComposerTimeGrid.jsx`, `ScheduleComposer.jsx`에 native drag hover/drop 상태를 추가해 slot highlight와 생성 경로를 분리',
+      '`planner-workspace.spec.js`에 캔버스 카드 직접 드래그 -> timeline rail drop -> 예정 배지 갱신 시나리오를 추가',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planner-workspace 타깃 E2E 통과',
+      'E2E 전체 회귀 통과 (56 passed)',
+    ],
+  },
+  {
     version: 'v0.21.8',
     date: '2026-03-11',
     title: 'Canvas simplification: BOARD view 제거',

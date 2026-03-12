@@ -56,6 +56,9 @@ function PlanningCanvas({
   onOpenComposer = () => {},
   selectedCardId: controlledSelectedCardId = null,
   onSelectCard = null,
+  scheduleDraggable = false,
+  onScheduleDragStart = () => {},
+  onScheduleDragEnd = () => {},
   embedded = false,
 }) {
   const [editingCard, setEditingCard] = useState(null)
@@ -353,6 +356,9 @@ function PlanningCanvas({
                   onEditCard={setEditingCard}
                   onSelectCard={(item) => setSelectedCard(item)}
                   onSelectNode={handleSelectNode}
+                  scheduleDraggable={scheduleDraggable}
+                  onScheduleDragStart={onScheduleDragStart}
+                  onScheduleDragEnd={onScheduleDragEnd}
                 />
               ))}
             </div>

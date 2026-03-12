@@ -89,3 +89,78 @@ test('planner workspace composes board canvas and composer in one view', async (
     )
   }, setup.today)
 })
+
+test('planner workspace can drag a canvas card directly into the timeline rail', async ({ page }) => {
+  await page.goto('/')
+
+  await page.evaluate(() => {
+    window.localStorage.clear()
+
+    const formatDate = (date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    const today = formatDate(new Date())
+    window.localStorage.setItem('musk-planner-last-date', today)
+    window.localStorage.setItem(
+      'musk-planner-meta',
+      JSON.stringify({
+        schemaVersion: 4,
+        categories: [{ id: 'cat-focus', name: '집중', color: '#6366f1', parentId: null, order: 0 }],
+        templates: [],
+      }),
+    )
+    window.localStorage.setItem(
+      `musk-planner-${today}`,
+      JSON.stringify({
+        schemaVersion: 4,
+        date: today,
+        brainDump: [
+          {
+            id: 'workspace-drag-card',
+            content: '직접 드래그 배치 테스트',
+            isDone: false,
+            priority: 0,
+            categoryId: 'cat-focus',
+            stackOrder: 0,
+            estimatedSlots: 3,
+            linkedTimeBoxIds: [],
+            note: '',
+            createdFrom: 'board',
+          },
+        ],
+        bigThree: [],
+        timeBoxes: [],
+        boardCanvas: {
+          version: 2,
+          layoutMode: 'stack',
+          selectedCardId: null,
+          focusedLaneId: 'cat-focus',
+          migratedFromLegacyBoard: false,
+          lastSyncedAt: null,
+        },
+      }),
+    )
+  })
+
+  await page.reload()
+  await page.locator('[data-testid="timeline-view-workspace"]:visible').first().click()
+
+  const dragHandle = page.locator('[data-testid="planning-board-card-schedule-handle-workspace-drag-card"]').first()
+  const targetSlot = page.locator('[data-testid="composer-slot-12"]:visible').first()
+  const dataTransfer = await page.evaluateHandle(() => new DataTransfer())
+
+  await dragHandle.dispatchEvent('dragstart', { dataTransfer })
+  await targetSlot.dispatchEvent('dragenter', { dataTransfer })
+  await targetSlot.dispatchEvent('dragover', { dataTransfer })
+  await targetSlot.dispatchEvent('drop', { dataTransfer })
+  await dragHandle.dispatchEvent('dragend', { dataTransfer })
+
+  await expect(page.locator('[data-testid^="composer-block-"]').first()).toContainText('직접 드래그 배치 테스트')
+  await expect(page.locator('[data-testid="planning-board-card-workspace-drag-card"]:visible').first()).toContainText(
+    '예정 1',
+  )
+})

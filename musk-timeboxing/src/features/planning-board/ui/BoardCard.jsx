@@ -11,6 +11,9 @@ function BoardCard({
   onSelect = () => {},
   sortable = true,
   isSelected = false,
+  scheduleDraggable = false,
+  onScheduleDragStart = () => {},
+  onScheduleDragEnd = () => {},
 }) {
   const sortableState = useSortable({
     id: item.id,
@@ -88,6 +91,32 @@ function BoardCard({
                 ⋮⋮
               </Button>
             </>
+          ) : null}
+          {scheduleDraggable ? (
+            <button
+              type="button"
+              draggable
+              data-testid={`planning-board-card-schedule-handle-${item.id}`}
+              aria-label="일정 배치 드래그"
+              className="rounded-full px-2 py-1 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-400/10"
+              onClick={(event) => {
+                event.stopPropagation()
+                onSelect(item)
+              }}
+              onDragStart={(event) => {
+                event.stopPropagation()
+                event.dataTransfer.effectAllowed = 'move'
+                event.dataTransfer.setData('text/planner-card-id', item.id)
+                onSelect(item)
+                onScheduleDragStart(item)
+              }}
+              onDragEnd={(event) => {
+                event.stopPropagation()
+                onScheduleDragEnd(item)
+              }}
+            >
+              일정
+            </button>
           ) : null}
         </div>
       </div>

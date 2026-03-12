@@ -9,6 +9,9 @@ function CategoryStackLane({
   onEditCard = () => {},
   onSelectCard = () => {},
   onSelectNode = () => {},
+  scheduleDraggable = false,
+  onScheduleDragStart = () => {},
+  onScheduleDragEnd = () => {},
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `lane:${lane.id}`,
@@ -66,6 +69,9 @@ function CategoryStackLane({
                   onEdit={onEditCard}
                   onSelect={onSelectCard}
                   isSelected={selectedCardId === item.id}
+                  scheduleDraggable={scheduleDraggable}
+                  onScheduleDragStart={onScheduleDragStart}
+                  onScheduleDragEnd={onScheduleDragEnd}
                 />
               ))
             )}

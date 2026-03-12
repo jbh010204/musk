@@ -21,7 +21,7 @@
 - 미분류 -> 카테고리 분류
 
 ### 캔버스 밖
-- 시간표 슬롯 클릭으로 일정 생성
+- 시간표 슬롯 클릭 또는 카드 직접 드래그로 일정 생성
 - 30분 스냅
 - overlap 검사
 - 완료/스킵/실측 기록
@@ -54,7 +54,7 @@
 
 ### P5. StackCanvas -> TimelineRail 연결
 - workspace에서 canvas card 선택
-- 우측 timeline rail 슬롯 클릭으로 `timeBox` 생성
+- 우측 timeline rail 슬롯 클릭 또는 카드의 `일정` 핸들 직접 드래그로 `timeBox` 생성
 - 성공 시 linked badge 동기화
 
 ### P6. tldraw 제거
