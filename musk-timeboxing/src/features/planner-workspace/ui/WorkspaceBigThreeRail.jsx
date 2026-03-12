@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Button, Card } from '../../../shared/ui'
+import { Button } from '../../../shared/ui'
 
 function WorkspaceBigThreeRail({
   bigThree = [],
@@ -37,36 +37,37 @@ function WorkspaceBigThreeRail({
   }
 
   return (
-    <Card className="p-4" data-testid="workspace-bigthree-rail">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Focus Strip
-          </p>
-          <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
-            Big3를 짧게 확정하고 바로 오른쪽에 배치합니다.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            data-testid="workspace-bigthree-add-selected"
-            variant="secondary"
-            className="px-3 py-1.5 text-xs"
-            disabled={selectedCardIds.length === 0 || remainingSlots === 0}
-            onClick={() => onSendSelectedCardsToBigThree(selectedCardIds)}
-          >
-            {selectedCardIds.length > 1
-              ? `선택 ${Math.min(selectedCardIds.length, remainingSlots)}개 → Big3`
-              : '선택 카드 → Big3'}
-          </Button>
-          <span className="rounded-xl bg-slate-200/70 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800/70 dark:text-slate-300">
+    <section
+      data-testid="workspace-bigthree-rail"
+      className="border-b border-slate-200/80 bg-white/80 px-5 py-4 backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/70"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+              Focus
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">오늘의 Big3</p>
+          </div>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
             {bigThree.length}/3
           </span>
         </div>
+
+        <Button
+          data-testid="workspace-bigthree-add-selected"
+          variant="secondary"
+          className="px-3 py-1.5 text-xs"
+          disabled={selectedCardIds.length === 0 || remainingSlots === 0}
+          onClick={() => onSendSelectedCardsToBigThree(selectedCardIds)}
+        >
+          {selectedCardIds.length > 1
+            ? `선택 ${Math.min(selectedCardIds.length, remainingSlots)}개 → Big3`
+            : '선택 카드 → Big3'}
+        </Button>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
+      <div className="mt-3 grid gap-3 md:grid-cols-3">
         {[0, 1, 2].map((slotIndex) => {
           const slot = bigThree[slotIndex] ?? null
           const sourceCard = slot?.sourceId ? sourceCardMap.get(slot.sourceId) || null : null
@@ -79,7 +80,7 @@ function WorkspaceBigThreeRail({
               return (
                 <div
                   key={slotIndex}
-                  className="rounded-2xl border border-dashed border-slate-300/90 bg-slate-50/80 p-3 dark:border-white/20 dark:bg-slate-900/40"
+                  className="rounded-2xl border border-dashed border-slate-300/90 bg-slate-50/90 p-3 dark:border-white/20 dark:bg-slate-900/40"
                 >
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     슬롯 {slotIndex + 1}
@@ -128,7 +129,7 @@ function WorkspaceBigThreeRail({
                   setEditingSlotIndex(slotIndex)
                   setDraft('')
                 }}
-                className="flex min-h-[92px] w-full flex-col rounded-2xl border border-dashed border-slate-300/90 bg-slate-50/80 p-3 text-left transition-all hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-white/20 dark:bg-slate-900/40 dark:hover:bg-slate-900"
+                className="flex min-h-[88px] w-full flex-col rounded-2xl border border-dashed border-slate-300/90 bg-slate-50/90 p-3 text-left transition-all hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-white/20 dark:bg-slate-900/40 dark:hover:bg-slate-900"
               >
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   슬롯 {slotIndex + 1}
@@ -142,7 +143,7 @@ function WorkspaceBigThreeRail({
             <div
               key={slot.id}
               data-testid={`workspace-bigthree-slot-${slotIndex}`}
-              className={`min-h-[92px] rounded-2xl border p-3 transition-all ${
+              className={`min-h-[88px] rounded-2xl border p-3 transition-all ${
                 isSelected
                   ? 'border-indigo-400 bg-indigo-500/10 shadow-sm'
                   : 'border-slate-200/80 bg-white/80 dark:border-slate-800 dark:bg-slate-900/60'
@@ -189,7 +190,7 @@ function WorkspaceBigThreeRail({
           )
         })}
       </div>
-    </Card>
+    </section>
   )
 }
 

@@ -342,7 +342,7 @@ test('planner workspace can bulk schedule multiple selected canvas cards', async
   await page.locator('[data-testid="planning-board-card-select-toggle-workspace-bulk-card-1"]:visible').first().click()
   await page.locator('[data-testid="planning-board-card-select-toggle-workspace-bulk-card-2"]:visible').first().click()
 
-  await expect(page.getByText('다중 선택 2개').first()).toBeVisible()
+  await expect(page.getByText('선택 2').first()).toBeVisible()
   await page.locator('[data-testid="workspace-slot-8"]:visible').first().click()
 
   await expect
@@ -507,7 +507,7 @@ test('planner workspace can search, filter, and collapse inbox cards', async ({ 
   await expect(page.locator('[data-testid="planning-board-card-workspace-inbox-card-1"]:visible')).toHaveCount(0)
 
   await page.locator('[data-testid="planning-canvas-inbox-collapse-toggle"]:visible').first().click()
-  await expect(page.getByText('Inbox를 접어두었습니다. 필요할 때 다시 펼쳐 검색하고 정리하세요.').first()).toBeVisible()
+  await expect(page.getByText('Inbox를 접어두었습니다.').first()).toBeVisible()
 
   const stored = await page.evaluate(() => {
     const dayKey = Object.keys(window.localStorage).find((key) =>

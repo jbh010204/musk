@@ -70,7 +70,7 @@ function BoardCard({
           ) : null}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 opacity-70 transition-opacity group-hover:opacity-100">
           <button
             type="button"
             data-testid={`planning-board-card-select-toggle-${item.id}`}

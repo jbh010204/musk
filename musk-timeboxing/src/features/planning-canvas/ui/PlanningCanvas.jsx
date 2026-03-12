@@ -16,7 +16,7 @@ import {
   groupBoardCardsByCategory,
   UNCATEGORIZED_BOARD_LANE,
 } from '../../../entities/planner'
-import { Badge, Button, Card } from '../../../shared/ui'
+import { Button, Card } from '../../../shared/ui'
 import { INBOX_FILTER_OPTIONS, filterInboxItems } from '../lib/inboxFilters'
 import CanvasInlineCreateSlot from './CanvasInlineCreateSlot'
 import CanvasSelectionBar from './CanvasSelectionBar'
@@ -476,46 +476,235 @@ function PlanningCanvas({
     }
   }, [editingCard, moveSelectionAcrossDock, onScheduleSelectedCardsToFirstOpen, onSendSelectedCardsToBigThree, selectedCardId, selectedCardIds])
 
+  const headerContent = (
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+          Stack Canvas
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
+            전체 {brainDumpItems.length}
+          </span>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
+            미분류 {uncategorizedCount}
+          </span>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
+            예정 {scheduledCards}
+          </span>
+          {completedCards > 0 ? (
+            <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+              완료 {completedCards}
+            </span>
+          ) : null}
+          {selectedCardIds.length > 1 ? (
+            <span className="rounded-full bg-indigo-500/10 px-2.5 py-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300">
+              선택 {selectedCardIds.length}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="secondary"
+          className={embedded ? 'px-3 py-1.5 text-xs' : 'px-3 py-2 text-sm'}
+          onClick={onOpenCategoryManager}
+        >
+          카테고리 관리
+        </Button>
+        {!embedded ? (
+          <Button variant="secondary" className="px-3 py-2 text-sm" onClick={onOpenComposer}>
+            우측 타임라인 보기
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  )
+
+  const canvasContent = (
+    <div
+      data-testid="planning-canvas-surface"
+      className={`rounded-[28px] bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.25)_1px,transparent_0)] bg-[length:24px_24px] ${embedded ? 'p-4' : 'p-5'} dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.35)_1px,transparent_0)]`}
+    >
+      <div className="space-y-5">
+        <CanvasSelectionBar
+          selectedCount={selectedCardIds.length}
+          onMovePrev={() => moveSelectionAcrossDock(-1)}
+          onMoveNext={() => moveSelectionAcrossDock(1)}
+          onSendToBigThree={() => onSendSelectedCardsToBigThree(selectedCardIds)}
+          onSchedule={() => onScheduleSelectedCardsToFirstOpen(selectedCardIds)}
+          onClear={() => applySelection([], null)}
+        />
+
+        <div
+          className={`${
+            embedded
+              ? 'rounded-2xl bg-slate-50/85 p-4 dark:bg-slate-900/40'
+              : 'rounded-3xl bg-white/55 p-4 shadow-sm backdrop-blur-sm dark:bg-slate-950/35'
+          }`}
+        >
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                Category Dock
+              </p>
+            </div>
+            <button
+              type="button"
+              className="rounded-xl px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+              data-testid="planning-canvas-inbox-collapse-toggle"
+              onClick={() =>
+                onUpdateStackCanvasState({
+                  isInboxCollapsed: !isInboxCollapsed,
+                })
+              }
+            >
+              {isInboxCollapsed ? 'Inbox 펼치기' : 'Inbox 접기'}
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <div className="flex min-w-max items-start gap-3 pb-1">
+              {dockLanes.map((lane) => (
+                <CategoryNode
+                  key={lane.id}
+                  laneId={lane.id}
+                  label={lane.label}
+                  color={lane.color}
+                  count={lane.items.length}
+                  isEmpty={lane.items.length === 0}
+                  isArmed={Boolean(selectedCardId) || selectedCardIds.length > 0}
+                  isActive={
+                    lane.id === UNCATEGORIZED_BOARD_LANE
+                      ? focusedLaneId === UNCATEGORIZED_BOARD_LANE
+                      : activeLane?.id === lane.id
+                  }
+                  compact
+                  onClick={handleSelectNode}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-[18rem_minmax(0,1fr)]">
+          {uncategorizedLane ? (
+            <CategoryStackLane
+              lane={inboxLane}
+              selectedCardId={selectedCardId}
+              selectedCardIds={selectedCardIds}
+              showNode={false}
+              isNodeActive={focusedLaneId === UNCATEGORIZED_BOARD_LANE}
+              emptyMessage="새 카드가 여기 들어옵니다."
+              collapsed={isInboxCollapsed}
+              collapsedMessage="Inbox를 접어두었습니다."
+              headerActions={
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={inboxSearch}
+                    onChange={(event) => setInboxSearch(event.target.value)}
+                    className="ui-input h-8 w-36 px-3 py-1 text-xs"
+                    placeholder="Inbox 검색"
+                    data-testid="planning-canvas-inbox-search"
+                  />
+                  <select
+                    data-testid="planning-canvas-inbox-filter"
+                    className="ui-input h-8 w-28 px-2 py-1 text-xs"
+                    value={inboxFilter}
+                    onChange={(event) => onUpdateStackCanvasState({ inboxFilter: event.target.value })}
+                  >
+                    {INBOX_FILTER_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              }
+              leadingContent={
+                <CanvasInlineCreateSlot
+                  testId="planning-canvas-inbox-create"
+                  title="Inbox에 추가"
+                  placeholder="미분류 일정 내용을 적고 Enter"
+                  color={inboxLane?.color}
+                  onCreate={({ content, estimatedSlots }) =>
+                    handleInlineCreate({
+                      content,
+                      estimatedSlots,
+                      categoryId: null,
+                    })
+                  }
+                />
+              }
+              onEditCard={setEditingCard}
+              onSelectCard={(item) => setSelectedCard(item)}
+              onToggleCardSelect={(item) => toggleSelectedCard(item)}
+              onSelectNode={handleSelectNode}
+              scheduleDraggable={scheduleDraggable}
+              onScheduleDragStart={onScheduleDragStart}
+              onScheduleDragEnd={onScheduleDragEnd}
+              compactSurface={embedded}
+            />
+          ) : null}
+
+          {activeLane ? (
+            <CategoryStackLane
+              key={activeLane.id}
+              lane={activeLane}
+              selectedCardId={selectedCardId}
+              selectedCardIds={selectedCardIds}
+              showNode={false}
+              isNodeActive
+              emptyMessage="이 카테고리는 아직 비어 있습니다."
+              leadingContent={
+                <CanvasInlineCreateSlot
+                  testId="planning-canvas-open-create"
+                  title={`${activeLane.label}에 추가`}
+                  placeholder="이 스택에 바로 일정 추가"
+                  color={activeLane.color}
+                  onCreate={({ content, estimatedSlots }) =>
+                    handleInlineCreate({
+                      content,
+                      estimatedSlots,
+                      categoryId: activeLane.id === UNCATEGORIZED_BOARD_LANE ? null : activeLane.id,
+                    })
+                  }
+                />
+              }
+              onEditCard={setEditingCard}
+              onSelectCard={(item) => setSelectedCard(item)}
+              onToggleCardSelect={(item) => toggleSelectedCard(item)}
+              onSelectNode={handleSelectNode}
+              scheduleDraggable={scheduleDraggable}
+              onScheduleDragStart={onScheduleDragStart}
+              onScheduleDragEnd={onScheduleDragEnd}
+              compactSurface={embedded}
+            />
+          ) : (
+            <div
+              className={`rounded-2xl px-6 py-10 text-sm text-slate-500 dark:text-slate-400 ${
+                embedded ? 'bg-slate-50/85 dark:bg-slate-900/40' : 'bg-white/45 shadow-sm backdrop-blur-sm'
+              }`}
+            >
+              아직 카테고리가 없습니다. 먼저 카테고리를 만든 뒤, 위 도크에서 선택하면 해당 스택이 여기 열립니다.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <section data-testid="planning-canvas-view" className={embedded ? 'space-y-4' : 'space-y-6'}>
-      <Card className={embedded ? 'p-4' : 'p-6'}>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Stack Canvas
-            </h3>
-            <p className={`mt-1 font-semibold text-slate-900 dark:text-slate-100 ${embedded ? 'text-base' : 'text-lg'}`}>
-              정리할 카드와 도크만 남깁니다.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="secondary"
-              className={embedded ? 'px-3 py-1.5 text-xs' : 'px-3 py-2 text-sm'}
-              onClick={onOpenCategoryManager}
-            >
-              카테고리 관리
-            </Button>
-            {!embedded ? (
-              <Button variant="secondary" className="px-3 py-2 text-sm" onClick={onOpenComposer}>
-                우측 타임라인 보기
-              </Button>
-            ) : null}
-          </div>
-        </div>
-
-        <div className={`${embedded ? 'mt-3' : 'mt-4'} flex flex-wrap items-center gap-2`}>
-          <Badge tone="neutral">전체 카드 {brainDumpItems.length}개</Badge>
-          <Badge tone="neutral">미분류 {uncategorizedCount}개</Badge>
-          <Badge tone="neutral">예정 연결 {scheduledCards}개</Badge>
-          {completedCards > 0 ? <Badge tone="neutral">완료 {completedCards}개</Badge> : null}
-          {selectedCardIds.length > 1 ? <Badge tone="neutral">다중 선택 {selectedCardIds.length}개</Badge> : null}
-          <Badge tone="neutral">
-            활성 카테고리 {activeLane?.label || '없음'}
-          </Badge>
-        </div>
-      </Card>
+      {embedded ? (
+        <div className="rounded-2xl bg-slate-50/75 px-4 py-3 dark:bg-slate-900/40">{headerContent}</div>
+      ) : (
+        <Card className="p-6">
+          {headerContent}
+        </Card>
+      )}
 
       <DndContext
         sensors={sensors}
@@ -524,169 +713,11 @@ function PlanningCanvas({
         onDragCancel={handleDragCancel}
         onDragEnd={handleDragEnd}
       >
-        <Card className={`overflow-hidden ${embedded ? 'p-4' : 'p-6'}`}>
-          <div
-            data-testid="planning-canvas-surface"
-            className={`rounded-[28px] bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.25)_1px,transparent_0)] bg-[length:24px_24px] ${embedded ? 'p-4' : 'p-5'} dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.35)_1px,transparent_0)]`}
-          >
-            <div className="space-y-5">
-              <CanvasSelectionBar
-                selectedCount={selectedCardIds.length}
-                onMovePrev={() => moveSelectionAcrossDock(-1)}
-                onMoveNext={() => moveSelectionAcrossDock(1)}
-                onSendToBigThree={() => onSendSelectedCardsToBigThree(selectedCardIds)}
-                onSchedule={() => onScheduleSelectedCardsToFirstOpen(selectedCardIds)}
-                onClear={() => applySelection([], null)}
-              />
-
-              <div className="rounded-3xl bg-white/55 p-4 shadow-sm backdrop-blur-sm dark:bg-slate-950/35">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      Category Dock
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      className="rounded-xl px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100"
-                      data-testid="planning-canvas-inbox-collapse-toggle"
-                      onClick={() =>
-                        onUpdateStackCanvasState({
-                          isInboxCollapsed: !isInboxCollapsed,
-                        })
-                      }
-                    >
-                      {isInboxCollapsed ? 'Inbox 펼치기' : 'Inbox 접기'}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <div className="flex min-w-max items-start gap-3 pb-1">
-                    {dockLanes.map((lane) => (
-                      <CategoryNode
-                        key={lane.id}
-                        laneId={lane.id}
-                        label={lane.label}
-                        color={lane.color}
-                        count={lane.items.length}
-                        isEmpty={lane.items.length === 0}
-                        isArmed={Boolean(selectedCardId) || selectedCardIds.length > 0}
-                        isActive={
-                          lane.id === UNCATEGORIZED_BOARD_LANE
-                            ? focusedLaneId === UNCATEGORIZED_BOARD_LANE
-                            : activeLane?.id === lane.id
-                        }
-                        compact
-                        onClick={handleSelectNode}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-5 xl:grid-cols-[20rem_minmax(0,1fr)]">
-                {uncategorizedLane ? (
-                  <CategoryStackLane
-                    lane={inboxLane}
-                    selectedCardId={selectedCardId}
-                    selectedCardIds={selectedCardIds}
-                    showNode={false}
-                    isNodeActive={focusedLaneId === UNCATEGORIZED_BOARD_LANE}
-                    emptyMessage="새 카드가 여기 들어옵니다. 위 도크를 눌러 바로 분류하세요."
-                    collapsed={isInboxCollapsed}
-                    collapsedMessage="Inbox를 접어두었습니다. 필요할 때 다시 펼쳐 검색하고 정리하세요."
-                    headerActions={
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={inboxSearch}
-                          onChange={(event) => setInboxSearch(event.target.value)}
-                          className="ui-input h-8 w-36 px-3 py-1 text-xs"
-                          placeholder="Inbox 검색"
-                          data-testid="planning-canvas-inbox-search"
-                        />
-                        <select
-                          data-testid="planning-canvas-inbox-filter"
-                          className="ui-input h-8 w-28 px-2 py-1 text-xs"
-                          value={inboxFilter}
-                          onChange={(event) => onUpdateStackCanvasState({ inboxFilter: event.target.value })}
-                        >
-                          {INBOX_FILTER_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    }
-                    leadingContent={
-                      <CanvasInlineCreateSlot
-                        testId="planning-canvas-inbox-create"
-                        title="Inbox에 추가"
-                        placeholder="미분류 일정 내용을 적고 Enter"
-                        color={inboxLane?.color}
-                        onCreate={({ content, estimatedSlots }) =>
-                          handleInlineCreate({
-                            content,
-                            estimatedSlots,
-                            categoryId: null,
-                          })
-                        }
-                      />
-                    }
-                    onEditCard={setEditingCard}
-                    onSelectCard={(item) => setSelectedCard(item)}
-                    onToggleCardSelect={(item) => toggleSelectedCard(item)}
-                    onSelectNode={handleSelectNode}
-                    scheduleDraggable={scheduleDraggable}
-                    onScheduleDragStart={onScheduleDragStart}
-                    onScheduleDragEnd={onScheduleDragEnd}
-                  />
-                ) : null}
-
-                {activeLane ? (
-                  <CategoryStackLane
-                    key={activeLane.id}
-                    lane={activeLane}
-                    selectedCardId={selectedCardId}
-                    selectedCardIds={selectedCardIds}
-                    showNode={false}
-                    isNodeActive
-                    emptyMessage="이 카테고리는 아직 비어 있습니다. Inbox 카드나 다른 카테고리 카드를 위 도크로 보내 보세요."
-                    leadingContent={
-                      <CanvasInlineCreateSlot
-                        testId="planning-canvas-open-create"
-                        title={`${activeLane.label}에 추가`}
-                        placeholder="이 스택에 바로 일정 추가"
-                        color={activeLane.color}
-                        onCreate={({ content, estimatedSlots }) =>
-                          handleInlineCreate({
-                            content,
-                            estimatedSlots,
-                            categoryId: activeLane.id === UNCATEGORIZED_BOARD_LANE ? null : activeLane.id,
-                          })
-                        }
-                      />
-                    }
-                    onEditCard={setEditingCard}
-                    onSelectCard={(item) => setSelectedCard(item)}
-                    onToggleCardSelect={(item) => toggleSelectedCard(item)}
-                    onSelectNode={handleSelectNode}
-                    scheduleDraggable={scheduleDraggable}
-                    onScheduleDragStart={onScheduleDragStart}
-                    onScheduleDragEnd={onScheduleDragEnd}
-                  />
-                ) : (
-                  <div className="rounded-3xl bg-white/45 p-6 text-sm text-slate-500 shadow-sm backdrop-blur-sm dark:bg-slate-950/35 dark:text-slate-400">
-                    아직 카테고리가 없습니다. 먼저 카테고리를 만든 뒤, 위 도크에서 선택하면 해당 스택이 여기 열립니다.
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </Card>
+        {embedded ? (
+          canvasContent
+        ) : (
+          <Card className="overflow-hidden p-6">{canvasContent}</Card>
+        )}
 
         <DragOverlay>
           {activeCard ? (

@@ -22,6 +22,7 @@ function CategoryStackLane({
   leadingContent = null,
   collapsed = false,
   collapsedMessage = '접힌 상태입니다.',
+  compactSurface = false,
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `lane:${lane.id}`,
@@ -34,7 +35,11 @@ function CategoryStackLane({
   return (
     <section
       data-testid={`planning-board-lane-${lane.id}`}
-      className="rounded-3xl bg-white/45 p-4 shadow-sm backdrop-blur-sm dark:bg-slate-950/35"
+      className={`rounded-3xl p-4 ${
+        compactSurface
+          ? 'bg-slate-50/90 dark:bg-slate-900/40'
+          : 'bg-white/45 shadow-sm backdrop-blur-sm dark:bg-slate-950/35'
+      }`}
     >
       {showNode ? (
         <CategoryNode
@@ -53,7 +58,11 @@ function CategoryStackLane({
       <div
         ref={setNodeRef}
         className={`${showNode ? 'mt-5' : ''} min-h-[220px] rounded-2xl border border-dashed p-3 transition-all ${
-          isOver ? 'border-indigo-400 bg-indigo-500/5' : 'border-slate-300/70 bg-slate-50/70 dark:border-slate-700/70 dark:bg-slate-900/45'
+          isOver
+            ? 'border-indigo-400 bg-indigo-500/5'
+            : compactSurface
+              ? 'border-slate-200/80 bg-white/80 dark:border-slate-800/80 dark:bg-slate-950/55'
+              : 'border-slate-300/70 bg-slate-50/70 dark:border-slate-700/70 dark:bg-slate-900/45'
         }`}
       >
         <div className="mb-3 flex items-center justify-between gap-2">

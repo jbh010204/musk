@@ -1,5 +1,23 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.22.9',
+    date: '2026-03-12',
+    title: 'Workspace shell: one surface, quieter chrome, denser rail',
+    summary:
+      '워크스페이스를 여러 장의 카드처럼 쪼개 보이던 구조에서 하나의 큰 작업면으로 다시 묶었습니다. Focus Strip, Stack Canvas, Timeline Rail은 같은 shell 안에서 읽히고, 설명 문구 대신 상태 칩과 직접 조작 가능한 표면만 남겼습니다.',
+    focus: [
+      '워크스페이스 전체를 하나의 shell로 합치고, embedded Stack Canvas는 외부 Card wrapper를 제거해 캔버스와 타임라인이 같은 표면 위에서 이어지도록 정리',
+      'Focus Strip과 Timeline Rail 헤더는 긴 설명 대신 작은 label + 상태 chip + 직접 액션만 남기고, 카드 내부 chrome도 한 단계 약하게 내려 정보 밀도를 정리',
+      '타임라인 rail 폭은 더 넓히고 슬롯 높이는 약간 줄여 한 화면에서 더 많은 시간대를 읽을 수 있게 재조정',
+    ],
+    improvements: [
+      '`PlannerWorkspace.jsx`, `WorkspaceBigThreeRail.jsx`, `PlanningCanvas.jsx`를 수정해 단일 workspace shell, compact focus strip, frameless embedded canvas 구조로 재편',
+      '`CategoryStackLane.jsx`, `BoardCard.jsx`를 조정해 stack section과 카드 chrome을 더 조용하게 만들고, 실제 콘텐츠와 대상 도크가 먼저 읽히게 정리',
+      '`workspaceLayout.js`, `planner-workspace.spec.js`를 갱신해 새 shell 치수와 문구 계약에 맞춘 회귀를 고정',
+    ],
+    validation: ['lint/build 통과', 'planner-workspace 타깃 E2E 통과', 'E2E 전체 회귀 통과'],
+  },
+  {
     version: 'v0.22.8',
     date: '2026-03-12',
     title: 'Workspace unification: real timeline rail + decluttered day/week/month',
