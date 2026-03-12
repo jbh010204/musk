@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.22.2',
+    date: '2026-03-12',
+    title: 'Workspace bulk scheduling: 캔버스 카드 다중 선택 + 연속 배치',
+    summary:
+      '워크스페이스의 Stack Canvas에서 여러 카드를 고른 뒤 우측 timeline rail 슬롯을 한 번 눌러 선택 순서대로 연속 배치할 수 있게 했습니다.',
+    focus: [
+      '`stackCanvasState`에 `selectedCardIds`를 추가해 단일 선택과 다중 선택을 같은 상태 계층에서 관리',
+      '카테고리 노드 클릭은 다중 선택 카드 전체를 같은 lane으로 옮기고, 우측 rail은 선택된 카드들을 contiguous block으로 원자적으로 배치',
+      '벌크 배치 성공 후 선택 상태를 비우고 `예정 N` badge와 timeBox 생성 결과가 함께 동기화되도록 고정',
+    ],
+    improvements: [
+      '`BoardCard.jsx`, `CategoryStackLane.jsx`, `PlanningCanvas.jsx`에 다중 선택 토글과 선택 요약 UI를 추가',
+      '`PlannerWorkspace.jsx`, `ScheduleComposer.jsx`, `Timeline/index.jsx`에 선택 배열 전달과 연속 배치 로직을 연결',
+      '`planner-workspace.spec.js`에 다중 선택 -> 슬롯 클릭 -> 연속 timeBox 생성 회귀를 추가',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planner-workspace 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.22.1',
     date: '2026-03-12',
     title: 'Workspace preference: 마지막 일정 보기 복원',

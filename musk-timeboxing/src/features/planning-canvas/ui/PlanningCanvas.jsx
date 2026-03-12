@@ -55,7 +55,9 @@ function PlanningCanvas({
   onOpenCategoryManager = () => {},
   onOpenComposer = () => {},
   selectedCardId: controlledSelectedCardId = null,
+  selectedCardIds: controlledSelectedCardIds = null,
   onSelectCard = null,
+  onSelectCards = null,
   scheduleDraggable = false,
   onScheduleDragStart = () => {},
   onScheduleDragEnd = () => {},
@@ -66,12 +68,20 @@ function PlanningCanvas({
   const [internalSelectedCardId, setInternalSelectedCardId] = useState(
     controlledSelectedCardId ?? stackCanvasState?.selectedCardId ?? null,
   )
+  const [internalSelectedCardIds, setInternalSelectedCardIds] = useState(
+    Array.isArray(controlledSelectedCardIds)
+      ? controlledSelectedCardIds
+      : stackCanvasState?.selectedCardIds ?? [],
+  )
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
   const lanes = useMemo(() => groupBoardCardsByCategory(brainDumpItems, categories), [brainDumpItems, categories])
   const [laneState, setLaneState] = useState(() => createLaneState(lanes))
   const cardMap = useMemo(() => new Map(brainDumpItems.map((item) => [item.id, item])), [brainDumpItems])
   const laneMap = useMemo(() => new Map(lanes.map((lane) => [lane.id, lane])), [lanes])
   const selectedCardId = controlledSelectedCardId ?? internalSelectedCardId
+  const selectedCardIds = Array.isArray(controlledSelectedCardIds)
+    ? controlledSelectedCardIds
+    : internalSelectedCardIds
 
   const visualLanes = useMemo(
     () =>
@@ -111,29 +121,84 @@ function PlanningCanvas({
   }, [controlledSelectedCardId])
 
   useEffect(() => {
-    if (selectedCardId && !cardMap.has(selectedCardId)) {
-      if (onSelectCard) {
-        onSelectCard(null)
-      } else {
-        setInternalSelectedCardId(null)
-      }
+    if (Array.isArray(controlledSelectedCardIds)) {
+      setInternalSelectedCardIds(controlledSelectedCardIds)
     }
-  }, [cardMap, onSelectCard, selectedCardId])
+  }, [controlledSelectedCardIds])
 
-  const setSelectedCard = (itemOrId) => {
-    const nextId = typeof itemOrId === 'string' ? itemOrId : itemOrId?.id || null
-    const nextCard = nextId ? cardMap.get(nextId) || null : null
+  useEffect(() => {
+    const nextSelectedCardIds = selectedCardIds.filter((itemId) => cardMap.has(itemId))
+    const shouldUpdateIds = nextSelectedCardIds.length !== selectedCardIds.length
+    const nextSelectedCardId = nextSelectedCardIds.includes(selectedCardId)
+      ? selectedCardId
+      : nextSelectedCardIds.at(-1) ?? null
+    const shouldUpdateId = nextSelectedCardId !== selectedCardId
+
+    if (!shouldUpdateIds && !shouldUpdateId) {
+      return
+    }
+
+    if (onSelectCards) {
+      onSelectCards(nextSelectedCardIds)
+    } else {
+      setInternalSelectedCardIds(nextSelectedCardIds)
+    }
 
     if (onSelectCard) {
-      onSelectCard(nextId)
+      onSelectCard(nextSelectedCardId)
     } else {
-      setInternalSelectedCardId(nextId)
+      setInternalSelectedCardId(nextSelectedCardId)
+    }
+  }, [cardMap, onSelectCard, onSelectCards, selectedCardId, selectedCardIds])
+
+  const applySelection = (nextSelectedCardIds, nextSelectedCardId = null) => {
+    const dedupedIds = [...new Set(nextSelectedCardIds.filter((itemId) => cardMap.has(itemId)))]
+    const resolvedSelectedCardId =
+      dedupedIds.length === 0
+        ? null
+        : dedupedIds.includes(nextSelectedCardId)
+          ? nextSelectedCardId
+          : dedupedIds.at(-1) ?? null
+    const nextCard = resolvedSelectedCardId ? cardMap.get(resolvedSelectedCardId) || null : null
+
+    if (onSelectCards) {
+      onSelectCards(dedupedIds)
+    } else {
+      setInternalSelectedCardIds(dedupedIds)
+    }
+
+    if (onSelectCard) {
+      onSelectCard(resolvedSelectedCardId)
+    } else {
+      setInternalSelectedCardId(resolvedSelectedCardId)
     }
 
     onUpdateStackCanvasState({
-      selectedCardId: nextId,
+      selectedCardId: resolvedSelectedCardId,
+      selectedCardIds: dedupedIds,
       focusedLaneId: nextCard?.categoryId || UNCATEGORIZED_BOARD_LANE,
     })
+  }
+
+  const setSelectedCard = (itemOrId) => {
+    const nextId = typeof itemOrId === 'string' ? itemOrId : itemOrId?.id || null
+    applySelection(nextId ? [nextId] : [], nextId)
+  }
+
+  const toggleSelectedCard = (itemOrId) => {
+    const nextId = typeof itemOrId === 'string' ? itemOrId : itemOrId?.id || null
+    if (!nextId) {
+      applySelection([], null)
+      return
+    }
+
+    if (selectedCardIds.includes(nextId)) {
+      const nextSelectedCardIds = selectedCardIds.filter((itemId) => itemId !== nextId)
+      applySelection(nextSelectedCardIds, nextSelectedCardIds.at(-1) ?? null)
+      return
+    }
+
+    applySelection([...selectedCardIds, nextId], nextId)
   }
 
   const commitLaneState = (nextLaneState) => {
@@ -141,17 +206,28 @@ function PlanningCanvas({
     onApplyLayout(buildBoardLayoutEntries(nextLaneState))
   }
 
-  const moveCardToLane = (cardId, targetLaneId) => {
-    const nextLaneState = createLaneState(visualLanes)
-    const sourceLane = nextLaneState.find((lane) => lane.items.includes(cardId))
-    const targetLane = nextLaneState.find((lane) => lane.id === targetLaneId)
-
-    if (!sourceLane || !targetLane) {
+  const moveCardsToLane = (cardIds, targetLaneId) => {
+    const uniqueCardIds = [...new Set(cardIds)].filter(Boolean)
+    if (uniqueCardIds.length === 0) {
       return
     }
 
-    sourceLane.items = sourceLane.items.filter((itemId) => itemId !== cardId)
-    targetLane.items = [...targetLane.items, cardId]
+    const nextLaneState = createLaneState(visualLanes)
+    const targetLane = nextLaneState.find((lane) => lane.id === targetLaneId)
+    if (!targetLane) {
+      return
+    }
+
+    uniqueCardIds.forEach((cardId) => {
+      const sourceLane = nextLaneState.find((lane) => lane.items.includes(cardId))
+      if (!sourceLane) {
+        return
+      }
+
+      sourceLane.items = sourceLane.items.filter((itemId) => itemId !== cardId)
+    })
+
+    targetLane.items = [...targetLane.items.filter((itemId) => !uniqueCardIds.includes(itemId)), ...uniqueCardIds]
     commitLaneState(nextLaneState)
   }
 
@@ -236,13 +312,15 @@ function PlanningCanvas({
   }
 
   const handleSelectNode = (laneId) => {
-    if (!selectedCardId) {
+    const armedCardIds = selectedCardIds.length > 0 ? selectedCardIds : selectedCardId ? [selectedCardId] : []
+    if (armedCardIds.length === 0) {
       return
     }
 
-    moveCardToLane(selectedCardId, laneId)
+    moveCardsToLane(armedCardIds, laneId)
     onUpdateStackCanvasState({
-      selectedCardId,
+      selectedCardId: armedCardIds.at(-1) ?? null,
+      selectedCardIds: armedCardIds,
       focusedLaneId: laneId,
     })
   }
@@ -310,10 +388,32 @@ function PlanningCanvas({
           <Badge tone="neutral">미분류 {uncategorizedCount}개</Badge>
           <Badge tone="neutral">예정 연결 {scheduledCards}개</Badge>
           <Badge tone="neutral">완료 {completedCards}개</Badge>
+          {selectedCardIds.length > 1 ? <Badge tone="neutral">다중 선택 {selectedCardIds.length}개</Badge> : null}
         </div>
 
         <div className="mt-4 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
-          {selectedCard ? (
+          {selectedCardIds.length > 1 ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold">다중 선택:</span>
+              <span>{selectedCardIds.length}개 카드</span>
+              <span className="text-slate-400">·</span>
+              <span>
+                총{' '}
+                {selectedCardIds.reduce(
+                  (sum, itemId) => sum + ((cardMap.get(itemId)?.estimatedSlots || 1) * 30),
+                  0,
+                )}
+                분
+              </span>
+              <button
+                type="button"
+                className="rounded-xl px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                onClick={() => applySelection([], null)}
+              >
+                선택 해제
+              </button>
+            </div>
+          ) : selectedCard ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">선택됨:</span>
               <span>{selectedCard.content}</span>
@@ -324,7 +424,7 @@ function PlanningCanvas({
               <button
                 type="button"
                 className="rounded-xl px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100"
-                onClick={() => setSelectedCard(null)}
+                onClick={() => applySelection([], null)}
               >
                 선택 해제
               </button>
@@ -348,18 +448,20 @@ function PlanningCanvas({
             className={`rounded-[28px] bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.25)_1px,transparent_0)] bg-[length:24px_24px] ${embedded ? 'p-4' : 'p-5'} dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.35)_1px,transparent_0)]`}
           >
             <div className={`grid gap-5 ${embedded ? 'grid-cols-1' : 'xl:grid-cols-3'}`}>
-              {visualLanes.map((lane) => (
-                <CategoryStackLane
-                  key={lane.id}
-                  lane={lane}
-                  selectedCardId={selectedCardId}
-                  onEditCard={setEditingCard}
-                  onSelectCard={(item) => setSelectedCard(item)}
-                  onSelectNode={handleSelectNode}
-                  scheduleDraggable={scheduleDraggable}
-                  onScheduleDragStart={onScheduleDragStart}
-                  onScheduleDragEnd={onScheduleDragEnd}
-                />
+            {visualLanes.map((lane) => (
+              <CategoryStackLane
+                key={lane.id}
+                lane={lane}
+                selectedCardId={selectedCardId}
+                selectedCardIds={selectedCardIds}
+                onEditCard={setEditingCard}
+                onSelectCard={(item) => setSelectedCard(item)}
+                onToggleCardSelect={(item) => toggleSelectedCard(item)}
+                onSelectNode={handleSelectNode}
+                scheduleDraggable={scheduleDraggable}
+                onScheduleDragStart={onScheduleDragStart}
+                onScheduleDragEnd={onScheduleDragEnd}
+              />
               ))}
             </div>
           </div>

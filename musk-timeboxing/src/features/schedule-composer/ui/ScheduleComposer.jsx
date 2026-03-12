@@ -28,10 +28,13 @@ function ScheduleComposer({
   categories = [],
   timeBoxes = [],
   onScheduleCard = () => false,
+  onScheduleCards = () => false,
   onJumpToDay = () => {},
   onJumpToBoard = () => {},
   selectedCardId: controlledSelectedCardId = null,
+  selectedCardIds: controlledSelectedCardIds = null,
   onSelectCard = null,
+  onSelectCards = null,
   hideQueue = false,
   nativeDraggingCardId = null,
   onNativeDragEnd = () => {},
@@ -47,12 +50,21 @@ function ScheduleComposer({
   )
   const cardMap = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
   const selectedCardId = controlledSelectedCardId ?? internalSelectedCardId
+  const selectedCardIds = Array.isArray(controlledSelectedCardIds)
+    ? controlledSelectedCardIds
+    : selectedCardId
+      ? [selectedCardId]
+      : []
   const nativeDragActive = typeof nativeDraggingCardId === 'string' && nativeDraggingCardId.trim().length > 0
   const effectiveNativeOverSlot = nativeDragActive ? nativeOverSlot : null
   const activeCard = activeCardId ? cardMap.get(activeCardId) || null : null
   const visibleTimeBoxes = useMemo(
     () => [...timeBoxes].sort((left, right) => left.startSlot - right.startSlot),
     [timeBoxes],
+  )
+  const selectedDurationMinutes = selectedCardIds.reduce(
+    (sum, itemId) => sum + ((cardMap.get(itemId)?.estimatedSlots || 1) * 30),
+    0,
   )
 
   const handleCreateFromCard = (cardId, startSlot) => {
@@ -76,6 +88,30 @@ function ScheduleComposer({
         onSelectCard(null)
       } else {
         setInternalSelectedCardId(null)
+      }
+      if (onSelectCards) {
+        onSelectCards([])
+      }
+    }
+    setNativeOverSlot(null)
+    return success
+  }
+
+  const handleCreateFromCards = (cardIds, startSlot) => {
+    const normalizedIds = [...new Set(cardIds.filter((itemId) => cardMap.has(itemId)))]
+    if (normalizedIds.length === 0) {
+      return false
+    }
+
+    const success = onScheduleCards(normalizedIds, startSlot)
+    if (success) {
+      if (onSelectCard) {
+        onSelectCard(null)
+      } else {
+        setInternalSelectedCardId(null)
+      }
+      if (onSelectCards) {
+        onSelectCards([])
       }
     }
     setNativeOverSlot(null)
@@ -218,7 +254,9 @@ function ScheduleComposer({
               </div>
               {selectedCardId ? (
                 <span className="rounded-xl bg-indigo-500/15 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
-                  선택됨: {cardMap.get(selectedCardId)?.content}
+                  {selectedCardIds.length > 1
+                    ? `${selectedCardIds.length}개 선택 · 총 ${selectedDurationMinutes}분`
+                    : `선택됨: ${cardMap.get(selectedCardId)?.content}`}
                 </span>
               ) : hideQueue ? (
                 <span className="rounded-xl bg-slate-200/70 px-2.5 py-1 text-xs text-slate-500 dark:bg-slate-800/70 dark:text-slate-300">
@@ -231,6 +269,11 @@ function ScheduleComposer({
               <div className={`relative ${embedded ? 'min-w-[420px]' : 'min-w-[520px]'}`}>
               <ComposerTimeGrid
                 onSlotClick={(slotIndex) => {
+                  if (selectedCardIds.length > 1) {
+                    handleCreateFromCards(selectedCardIds, slotIndex)
+                    return
+                  }
+
                   if (!selectedCardId) {
                     return
                   }

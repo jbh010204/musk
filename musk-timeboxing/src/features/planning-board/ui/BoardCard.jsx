@@ -9,8 +9,10 @@ function BoardCard({
   color = '#94a3b8',
   onEdit = () => {},
   onSelect = () => {},
+  onToggleSelect = () => {},
   sortable = true,
   isSelected = false,
+  isMultiSelected = false,
   scheduleDraggable = false,
   onScheduleDragStart = () => {},
   onScheduleDragEnd = () => {},
@@ -33,6 +35,7 @@ function BoardCard({
       className={`rounded-2xl bg-white/90 p-4 shadow-sm transition-all dark:bg-slate-900/85 ${
         isDragging ? 'opacity-60 shadow-lg' : ''
       } ${isSelected ? 'ring-2 ring-indigo-400' : ''
+      } ${!isSelected && isMultiSelected ? 'ring-2 ring-sky-300/80' : ''
       }`}
       style={{
         transform: CSS.Transform.toString(transform),
@@ -68,6 +71,22 @@ function BoardCard({
         </div>
 
         <div className="flex items-center gap-1">
+          <button
+            type="button"
+            data-testid={`planning-board-card-select-toggle-${item.id}`}
+            aria-label={isMultiSelected ? '다중 선택 해제' : '다중 선택'}
+            className={`rounded-full px-2 py-1 text-xs font-medium transition-colors ${
+              isMultiSelected
+                ? 'bg-sky-500/15 text-sky-700 dark:text-sky-300'
+                : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+            }`}
+            onClick={(event) => {
+              event.stopPropagation()
+              onToggleSelect(item)
+            }}
+          >
+            {isMultiSelected ? '선택됨' : '선택'}
+          </button>
           {sortable ? (
             <>
               <IconButton

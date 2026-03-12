@@ -15,25 +15,59 @@ function PlannerWorkspace({
   updateStackCanvasState,
   onOpenCategoryManager,
   onScheduleBoardCard,
+  onScheduleBoardCards,
   onJumpToDay,
 }) {
   const [nativeDraggingCardId, setNativeDraggingCardId] = useState(null)
   const selectedCardId = data.stackCanvasState?.selectedCardId ?? null
+  const selectedCardIds = useMemo(
+    () => data.stackCanvasState?.selectedCardIds ?? (selectedCardId ? [selectedCardId] : []),
+    [data.stackCanvasState?.selectedCardIds, selectedCardId],
+  )
   const selectedCard = useMemo(
     () => brainDumpItems.find((item) => item.id === selectedCardId) || null,
     [brainDumpItems, selectedCardId],
   )
+  const selectedCards = useMemo(
+    () =>
+      selectedCardIds
+        .map((itemId) => brainDumpItems.find((item) => item.id === itemId) || null)
+        .filter(Boolean),
+    [brainDumpItems, selectedCardIds],
+  )
   const selectedCategory = selectedCard?.categoryId
     ? categories.find((category) => category.id === selectedCard.categoryId) || null
     : null
+  const selectedDurationMinutes = selectedCards.reduce(
+    (sum, item) => sum + (item.estimatedSlots || 1) * 30,
+    0,
+  )
 
-  const handleSelectCard = (nextId) => {
-    const nextCard = nextId ? brainDumpItems.find((item) => item.id === nextId) || null : null
+  const syncSelection = (nextIds, preferredId = null) => {
+    const dedupedIds = [...new Set(nextIds.filter(Boolean))]
+    const resolvedSelectedCardId =
+      dedupedIds.length === 0
+        ? null
+        : dedupedIds.includes(preferredId)
+          ? preferredId
+          : dedupedIds.at(-1) ?? null
+    const nextCard = resolvedSelectedCardId
+      ? brainDumpItems.find((item) => item.id === resolvedSelectedCardId) || null
+      : null
 
     updateStackCanvasState({
-      selectedCardId: nextId,
+      selectedCardId: resolvedSelectedCardId,
+      selectedCardIds: dedupedIds,
       focusedLaneId: nextCard?.categoryId || UNCATEGORIZED_BOARD_LANE,
     })
+  }
+
+  const handleSelectCard = (nextId) => {
+    syncSelection(nextId ? [nextId] : [], nextId)
+  }
+
+  const handleSelectCards = (nextIds) => {
+    syncSelection(nextIds, nextIds.at(-1) ?? null)
   }
 
   return (
@@ -57,7 +91,9 @@ function PlannerWorkspace({
           onOpenCategoryManager={onOpenCategoryManager}
           onOpenComposer={() => {}}
           selectedCardId={selectedCardId}
+          selectedCardIds={selectedCardIds}
           onSelectCard={handleSelectCard}
+          onSelectCards={handleSelectCards}
           scheduleDraggable
           onScheduleDragStart={(card) => {
             setNativeDraggingCardId(card.id)
@@ -69,7 +105,22 @@ function PlannerWorkspace({
 
         <div className="space-y-4">
           <div className="rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
-            {selectedCard ? (
+            {selectedCards.length > 1 ? (
+              <div className="space-y-2">
+                <p className="font-semibold text-slate-900 dark:text-slate-100">
+                  카드 {selectedCards.length}개 선택됨
+                </p>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="inline-flex items-center rounded-full bg-indigo-500/15 px-2 py-1 font-medium text-indigo-700 dark:text-indigo-300">
+                    총 {selectedDurationMinutes}분
+                  </span>
+                  <span>선택 순서대로 연속 배치됩니다.</span>
+                </div>
+                <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                  {selectedCards.map((item) => item.content).join(' · ')}
+                </p>
+              </div>
+            ) : selectedCard ? (
               <div className="space-y-2">
                 <p className="font-semibold text-slate-900 dark:text-slate-100">{selectedCard.content}</p>
                 <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -96,10 +147,13 @@ function PlannerWorkspace({
             categories={categories}
             timeBoxes={data.timeBoxes}
             onScheduleCard={onScheduleBoardCard}
+            onScheduleCards={onScheduleBoardCards}
             onJumpToDay={onJumpToDay}
             onJumpToBoard={() => {}}
             selectedCardId={selectedCardId}
+            selectedCardIds={selectedCardIds}
             onSelectCard={handleSelectCard}
+            onSelectCards={handleSelectCards}
             hideQueue
             nativeDraggingCardId={nativeDraggingCardId}
             onNativeDragEnd={() => setNativeDraggingCardId(null)}

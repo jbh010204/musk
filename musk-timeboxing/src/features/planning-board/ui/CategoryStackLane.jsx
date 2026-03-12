@@ -6,8 +6,10 @@ import CategoryNode from './CategoryNode'
 function CategoryStackLane({
   lane,
   selectedCardId = null,
+  selectedCardIds = [],
   onEditCard = () => {},
   onSelectCard = () => {},
+  onToggleCardSelect = () => {},
   onSelectNode = () => {},
   scheduleDraggable = false,
   onScheduleDragStart = () => {},
@@ -32,7 +34,7 @@ function CategoryStackLane({
         color={lane.color}
         count={lane.items.length}
         isEmpty={lane.items.length === 0}
-        isArmed={Boolean(selectedCardId)}
+        isArmed={Boolean(selectedCardId) || selectedCardIds.length > 0}
         onClick={onSelectNode}
       />
 
@@ -68,7 +70,9 @@ function CategoryStackLane({
                   color={lane.color}
                   onEdit={onEditCard}
                   onSelect={onSelectCard}
+                  onToggleSelect={onToggleCardSelect}
                   isSelected={selectedCardId === item.id}
+                  isMultiSelected={selectedCardIds.includes(item.id)}
                   scheduleDraggable={scheduleDraggable}
                   onScheduleDragStart={onScheduleDragStart}
                   onScheduleDragEnd={onScheduleDragEnd}

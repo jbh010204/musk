@@ -137,6 +137,7 @@
 - `P4` StackCanvas 카드 생성/카테고리 DnD
 - `P5` StackCanvas -> Timeline Rail 연결
 - `P5a` StackCanvas 카드 -> Timeline Rail 직접 드래그 배치
+- `P5b` StackCanvas 카드 다중 선택 -> Timeline Rail 연속 배치
 - `P6` tldraw 제거 및 문서 교체
 
 완료:
@@ -151,6 +152,7 @@
 - `P4` StackCanvas 카드 생성/카테고리 DnD
 - `P5` StackCanvas -> Timeline Rail 연결
 - `P5a` StackCanvas 카드 -> Timeline Rail 직접 드래그 배치
+- `P5b` StackCanvas 카드 다중 선택 -> Timeline Rail 연속 배치
 - `P6` tldraw 제거 및 문서 교체
 
 ### T1. FSD 전환 1단계 (폴더 구조 개편 기반)

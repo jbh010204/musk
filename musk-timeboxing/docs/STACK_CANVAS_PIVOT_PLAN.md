@@ -37,6 +37,7 @@
 - `stackCanvasState.version = 2`
 - `layoutMode = 'stack'`
 - `selectedCardId`
+- `selectedCardIds`
 - `focusedLaneId`
 - `migratedFromLegacyBoard`
 - `lastSyncedAt`

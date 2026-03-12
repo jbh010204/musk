@@ -321,6 +321,54 @@ function Timeline({
     })
   }
 
+  const handleScheduleBoardCards = (cardIds, startSlot) => {
+    const cards = cardIds
+      .map((cardId) => brainDumpItems.find((item) => item.id === cardId) || null)
+      .filter(Boolean)
+
+    if (cards.length === 0) {
+      return false
+    }
+
+    const previewBoxes = []
+    let cursor = startSlot
+
+    for (const card of cards) {
+      const duration = Math.max(1, Math.min(TOTAL_SLOTS, card.estimatedSlots || DEFAULT_BOX_SLOTS))
+      const endSlot = cursor + duration
+
+      if (endSlot > TOTAL_SLOTS) {
+        showToast('선택한 카드를 연속 배치할 시간이 부족합니다')
+        return false
+      }
+
+      const categoryMeta = card.categoryId ? categoryMap.get(card.categoryId) : null
+      const candidate = {
+        content: card.content,
+        sourceId: card.id,
+        startSlot: cursor,
+        endSlot,
+        categoryId: card.categoryId ?? null,
+        category: categoryMeta?.name ?? null,
+      }
+
+      if (hasOverlap([...data.timeBoxes, ...previewBoxes], candidate)) {
+        showToast('선택한 카드를 연속 배치할 공간이 부족합니다')
+        return false
+      }
+
+      previewBoxes.push(candidate)
+      cursor = endSlot
+    }
+
+    previewBoxes.forEach((box) => {
+      addTimeBox(box)
+    })
+
+    showToast(`${previewBoxes.length}개 일정을 연속 배치했습니다`)
+    return true
+  }
+
   const handleSlotClick = (slotIndex) => {
     setPendingInput({ slotIndex, content: '', durationSlots: DEFAULT_BOX_SLOTS })
   }
@@ -512,6 +560,7 @@ function Timeline({
           updateStackCanvasState={updateStackCanvasState}
           onOpenCategoryManager={onOpenCategoryManager}
           onScheduleBoardCard={handleScheduleBoardCard}
+          onScheduleBoardCards={handleScheduleBoardCards}
           onJumpToDay={() => setViewMode('DAY')}
         />
       ) : null}

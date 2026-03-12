@@ -7,6 +7,7 @@ export const createEmptyStackCanvasState = () => ({
   version: STACK_CANVAS_STATE_VERSION,
   layoutMode: 'stack',
   selectedCardId: null,
+  selectedCardIds: [],
   focusedLaneId: UNCATEGORIZED_BOARD_LANE,
   migratedFromLegacyBoard: false,
   lastSyncedAt: null,
@@ -17,14 +18,24 @@ const isObject = (value) => Boolean(value) && typeof value === 'object' && !Arra
 export const normalizeStackCanvasState = (value) => {
   const safeValue = isObject(value) ? value : {}
   const hadLegacySnapshot = isObject(safeValue.document) || isObject(safeValue.session)
+  const selectedCardIds = Array.isArray(safeValue.selectedCardIds)
+    ? [...new Set(safeValue.selectedCardIds.filter((itemId) => typeof itemId === 'string' && itemId.trim().length > 0))]
+    : []
+  const selectedCardId =
+    typeof safeValue.selectedCardId === 'string' && safeValue.selectedCardId.trim().length > 0
+      ? safeValue.selectedCardId
+      : selectedCardIds.at(-1) ?? null
+
+  const normalizedSelectedCardIds =
+    selectedCardId && !selectedCardIds.includes(selectedCardId)
+      ? [...selectedCardIds, selectedCardId]
+      : selectedCardIds
 
   return {
     version: STACK_CANVAS_STATE_VERSION,
     layoutMode: 'stack',
-    selectedCardId:
-      typeof safeValue.selectedCardId === 'string' && safeValue.selectedCardId.trim().length > 0
-        ? safeValue.selectedCardId
-        : null,
+    selectedCardId,
+    selectedCardIds: normalizedSelectedCardIds,
     focusedLaneId:
       typeof safeValue.focusedLaneId === 'string' && safeValue.focusedLaneId.trim().length > 0
         ? safeValue.focusedLaneId
