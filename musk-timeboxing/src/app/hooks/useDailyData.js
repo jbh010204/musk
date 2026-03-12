@@ -5,26 +5,34 @@ import {
   addManyTaskCardsToBigThree,
   addTaskCardRecord,
   addTaskCardToBigThree,
+  addTimeBoxRecord,
   applyTaskCardBoardLayout as applyTaskCardBoardLayoutCommand,
   autofillBigThreeFromTaskCards,
   clearTaskCardCategory,
+  clearTimeBoxCategoryRecord,
+  completeTimeBoxByTimerRecord,
+  createCarryOverTimeBoxRecord,
   cycleTaskCardPriority,
   findAvailableStartSlot,
   getMostRecentStoredDate,
-  hasOverlap,
   loadLastActiveDate,
   loadLastFocus,
   loadPlannerDayModel,
   normalizeStackCanvasState,
   removeTaskCardRecord,
   removeBigThreeItemRecord,
+  removeTimeBoxRecord,
   restoreTaskCardRecord,
+  restoreTimeBoxRecord,
   saveLastActiveDate,
   saveLastFocus,
   savePlannerDayModel,
+  startTimeBoxTimerRecord,
   syncTaskCardLinksWithTimeBoxes,
   TOTAL_SLOTS,
+  updateTimeBoxRecord,
   updateTaskCardRecord,
+  pauseTimeBoxTimerRecord,
 } from '../../entities/planner'
 
 const formatDate = (date) => {
@@ -41,69 +49,6 @@ const shiftDate = (dateStr, offset) => {
 }
 
 const createId = () => crypto.randomUUID()
-const normalizeCategory = (value) => {
-  if (typeof value !== 'string') {
-    return null
-  }
-
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : null
-}
-const normalizeCategoryId = (value) => {
-  if (typeof value !== 'string') {
-    return null
-  }
-
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : null
-}
-const normalizeSkipReason = (value) => {
-  if (typeof value !== 'string') {
-    return null
-  }
-
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : null
-}
-
-const clampSlot = (value) => Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(value) || 0))
-const normalizeStatus = (value) =>
-  value === 'PLANNED' || value === 'COMPLETED' || value === 'SKIPPED' ? value : 'PLANNED'
-const normalizeActualMinutes = (value) => (Number.isFinite(value) ? Number(value) : null)
-const normalizeElapsedSeconds = (value) => (Number.isFinite(value) ? Math.max(0, Number(value)) : 0)
-
-const normalizeRestoredTimeBox = (box) => {
-  const content = typeof box?.content === 'string' ? box.content.trim() : ''
-  if (!content) {
-    return null
-  }
-
-  const startSlot = clampSlot(box?.startSlot)
-  const endSlot = Math.max(startSlot + 1, Math.min(TOTAL_SLOTS, Number(box?.endSlot) || startSlot + 1))
-
-  return {
-    id: typeof box?.id === 'string' ? box.id : createId(),
-    content,
-    sourceId: box?.sourceId ?? null,
-    startSlot,
-    endSlot,
-    status: normalizeStatus(box?.status),
-    actualMinutes: normalizeActualMinutes(box?.actualMinutes),
-    category: normalizeCategory(box?.category),
-    categoryId: normalizeCategoryId(box?.categoryId),
-    skipReason: normalizeSkipReason(box?.skipReason),
-    carryOverFromDate:
-      typeof box?.carryOverFromDate === 'string' && box.carryOverFromDate.trim().length > 0
-        ? box.carryOverFromDate
-        : null,
-    carryOverFromBoxId:
-      typeof box?.carryOverFromBoxId === 'string' && box.carryOverFromBoxId.trim().length > 0
-        ? box.carryOverFromBoxId
-        : null,
-    timerStartedAt: Number.isFinite(box?.timerStartedAt) ? Number(box.timerStartedAt) : null,
-    elapsedSeconds: normalizeElapsedSeconds(box?.elapsedSeconds),
-  }
-}
 
 const syncTaskCardLinks = (taskCards, timeBoxes) => syncTaskCardLinksWithTimeBoxes(taskCards, timeBoxes)
 
@@ -164,20 +109,17 @@ export const useDailyData = () => {
         return
       }
 
-      nextBoxes.push({
-        id: createId(),
-        content: box.content,
-        sourceId: box.sourceId ?? null,
+      const nextBox = createCarryOverTimeBoxRecord(box, {
+        fromDate,
         startSlot,
-        endSlot: startSlot + duration,
-        status: 'PLANNED',
-        actualMinutes: null,
-        category: normalizeCategory(box.category),
-        categoryId: normalizeCategoryId(box.categoryId),
-        skipReason: normalizeSkipReason(box.skipReason),
-        carryOverFromDate: fromDate,
-        carryOverFromBoxId: box.id,
+        createId,
       })
+      if (!nextBox) {
+        skipped += 1
+        return
+      }
+
+      nextBoxes.push(nextBox)
       moved += 1
     })
 
@@ -428,48 +370,26 @@ export const useDailyData = () => {
   }
 
   const addTimeBox = ({ content, sourceId, startSlot, endSlot, category = null, categoryId = null }) => {
-    const trimmed = String(content || '').trim()
-    if (!trimmed) return null
-
-    const normalizedStart = Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(startSlot) || 0))
-    const normalizedEnd = Math.max(
-      normalizedStart + 1,
-      Math.min(TOTAL_SLOTS, Number(endSlot) || normalizedStart + 1),
-    )
-
-    const id = createId()
+    let insertedId = null
 
     setData((prev) => {
-      const duplicateExists = prev.timeBoxes.some(
-        (box) =>
-          box.content === trimmed &&
-          (box.sourceId ?? null) === (sourceId ?? null) &&
-          box.startSlot === normalizedStart &&
-          box.endSlot === normalizedEnd &&
-          (box.categoryId ?? null) === normalizeCategoryId(categoryId),
+      const { insertedId: nextInsertedId, nextTimeBoxes } = addTimeBoxRecord(
+        prev.timeBoxes,
+        {
+          content,
+          sourceId,
+          startSlot,
+          endSlot,
+          category,
+          categoryId,
+        },
+        createId,
       )
-
-      if (duplicateExists) {
+      if (!nextInsertedId) {
         return prev
       }
 
-      const nextTimeBoxes = [
-        ...prev.timeBoxes,
-        {
-          id,
-          content: trimmed,
-          sourceId: sourceId ?? null,
-          startSlot: normalizedStart,
-          endSlot: normalizedEnd,
-          status: 'PLANNED',
-          actualMinutes: null,
-          category: normalizeCategory(category),
-          categoryId: normalizeCategoryId(categoryId),
-          skipReason: null,
-          timerStartedAt: null,
-          elapsedSeconds: 0,
-        },
-      ]
+      insertedId = nextInsertedId
 
       return {
         ...prev,
@@ -478,9 +398,12 @@ export const useDailyData = () => {
       }
     })
 
-    rememberFocus(normalizedStart)
+    if (insertedId) {
+      const resolvedStart = Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(startSlot) || 0))
+      rememberFocus(resolvedStart)
+    }
 
-    return id
+    return insertedId
   }
 
   const updateTimeBox = (id, changes) => {
@@ -489,40 +412,7 @@ export const useDailyData = () => {
     }
 
     setData((prev) => {
-      const nextTimeBoxes = prev.timeBoxes.map((box) => {
-        if (box.id !== id) {
-          return box
-        }
-
-        return {
-          ...box,
-          ...changes,
-          content:
-            typeof changes?.content === 'string' && changes.content.trim().length > 0
-              ? changes.content
-              : box.content,
-          category:
-            Object.prototype.hasOwnProperty.call(changes ?? {}, 'category')
-              ? normalizeCategory(changes?.category)
-              : box.category ?? null,
-          categoryId:
-            Object.prototype.hasOwnProperty.call(changes ?? {}, 'categoryId')
-              ? normalizeCategoryId(changes?.categoryId)
-              : box.categoryId ?? null,
-          skipReason:
-            Object.prototype.hasOwnProperty.call(changes ?? {}, 'skipReason')
-              ? normalizeSkipReason(changes?.skipReason)
-              : box.skipReason ?? null,
-          timerStartedAt:
-            Object.prototype.hasOwnProperty.call(changes ?? {}, 'timerStartedAt')
-              ? changes?.timerStartedAt ?? null
-              : box.timerStartedAt ?? null,
-          elapsedSeconds:
-            Object.prototype.hasOwnProperty.call(changes ?? {}, 'elapsedSeconds')
-              ? Number(changes?.elapsedSeconds) || 0
-              : box.elapsedSeconds ?? 0,
-        }
-      })
+      const nextTimeBoxes = updateTimeBoxRecord(prev.timeBoxes, id, changes)
 
       return {
         ...prev,
@@ -536,30 +426,7 @@ export const useDailyData = () => {
     const now = Date.now()
 
     setData((prev) => {
-      const nextTimeBoxes = prev.timeBoxes.map((box) => {
-        if (box.id === id) {
-          if (box.timerStartedAt) {
-            return box
-          }
-
-          return {
-            ...box,
-            status: box.status === 'SKIPPED' ? 'PLANNED' : box.status,
-            timerStartedAt: now,
-          }
-        }
-
-        if (!box.timerStartedAt) {
-          return box
-        }
-
-        return {
-          ...box,
-          timerStartedAt: null,
-          elapsedSeconds:
-            (Number(box.elapsedSeconds) || 0) + Math.max(0, Math.floor((now - box.timerStartedAt) / 1000)),
-        }
-      })
+      const nextTimeBoxes = startTimeBoxTimerRecord(prev.timeBoxes, id, now)
 
       return {
         ...prev,
@@ -572,18 +439,7 @@ export const useDailyData = () => {
   const pauseTimeBoxTimer = (id) => {
     const now = Date.now()
     setData((prev) => {
-      const nextTimeBoxes = prev.timeBoxes.map((box) => {
-        if (box.id !== id || !box.timerStartedAt) {
-          return box
-        }
-
-        return {
-          ...box,
-          timerStartedAt: null,
-          elapsedSeconds:
-            (Number(box.elapsedSeconds) || 0) + Math.max(0, Math.floor((now - box.timerStartedAt) / 1000)),
-        }
-      })
+      const nextTimeBoxes = pauseTimeBoxTimerRecord(prev.timeBoxes, id, now)
 
       return {
         ...prev,
@@ -596,26 +452,7 @@ export const useDailyData = () => {
   const completeTimeBoxByTimer = (id) => {
     const now = Date.now()
     setData((prev) => {
-      const nextTimeBoxes = prev.timeBoxes.map((box) => {
-        if (box.id !== id) {
-          return box
-        }
-
-        const totalSeconds =
-          (Number(box.elapsedSeconds) || 0) +
-          (box.timerStartedAt ? Math.max(0, Math.floor((now - box.timerStartedAt) / 1000)) : 0)
-
-        const actualMinutes = Math.max(1, Math.round(totalSeconds / 60))
-
-        return {
-          ...box,
-          status: 'COMPLETED',
-          actualMinutes,
-          skipReason: null,
-          elapsedSeconds: totalSeconds,
-          timerStartedAt: null,
-        }
-      })
+      const nextTimeBoxes = completeTimeBoxByTimerRecord(prev.timeBoxes, id, now)
 
       return {
         ...prev,
@@ -628,60 +465,43 @@ export const useDailyData = () => {
   const clearTimeBoxCategory = (categoryId) => {
     setData((prev) => ({
       ...prev,
-      timeBoxes: prev.timeBoxes.map((box) =>
-        box.categoryId === categoryId ? { ...box, categoryId: null } : box,
-      ),
+      timeBoxes: clearTimeBoxCategoryRecord(prev.timeBoxes, categoryId),
     }))
   }
 
   const removeTimeBox = (id) => {
-    setData((prev) => ({
-      ...prev,
-      taskCards: syncTaskCardLinks(
-        prev.taskCards,
-        prev.timeBoxes.filter((box) => box.id !== id),
-      ),
-      timeBoxes: prev.timeBoxes.filter((box) => box.id !== id),
-    }))
+    setData((prev) => {
+      const nextTimeBoxes = removeTimeBoxRecord(prev.timeBoxes, id)
+
+      return {
+        ...prev,
+        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
+        timeBoxes: nextTimeBoxes,
+      }
+    })
   }
 
   const restoreTimeBox = (timeBox) => {
-    const normalized = normalizeRestoredTimeBox(timeBox)
-    if (!normalized) {
-      return false
-    }
-
     let restored = false
-    setData((prev) => {
-      const existingIndex = prev.timeBoxes.findIndex((box) => box.id === normalized.id)
-      const conflictExists = hasOverlap(prev.timeBoxes, normalized, normalized.id)
 
-      if (conflictExists && existingIndex < 0) {
+    setData((prev) => {
+      const { restored: didRestore, nextTimeBoxes } = restoreTimeBoxRecord(prev.timeBoxes, timeBox)
+      if (!didRestore) {
         return prev
       }
 
-      if (existingIndex >= 0) {
-        const next = [...prev.timeBoxes]
-        next[existingIndex] = normalized
-        restored = true
+      restored = didRestore
 
-        return {
-          ...prev,
-          taskCards: syncTaskCardLinks(prev.taskCards, next),
-          timeBoxes: next,
-        }
-      }
-
-      restored = true
       return {
         ...prev,
-        taskCards: syncTaskCardLinks(prev.taskCards, [...prev.timeBoxes, normalized]),
-        timeBoxes: [...prev.timeBoxes, normalized],
+        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
+        timeBoxes: nextTimeBoxes,
       }
     })
 
     if (restored) {
-      rememberFocus(normalized.startSlot)
+      const resolvedStart = Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(timeBox?.startSlot) || 0))
+      rememberFocus(resolvedStart)
     }
 
     return restored
