@@ -1,4 +1,4 @@
-import { normalizeBoardCard, syncBoardCardsWithTimeBoxes } from '../boardCard'
+import { normalizeBoardCard } from '../boardCard'
 import { normalizeStackCanvasState } from '../stackCanvasState'
 import { sortBrainDumpItems } from '../brainDumpPriority'
 import { TOTAL_SLOTS } from '../timeSlot'
@@ -47,6 +47,37 @@ const normalizeTimeBox = (box) => ({
 
 const normalizeBrainDumpItem = (item, index = 0) => normalizeBoardCard(item, index)
 
+const areLinkedIdsEqual = (left = [], right = []) =>
+  left.length === right.length && left.every((value, index) => value === right[index])
+
+const syncPersistedBrainDumpWithPersistedTimeBoxes = (brainDump = [], timeBoxes = []) => {
+  const linkedMap = new Map()
+
+  ;[...timeBoxes]
+    .sort((left, right) => left.startSlot - right.startSlot)
+    .forEach((box) => {
+      if (typeof box?.sourceId !== 'string' || box.sourceId.trim().length === 0) {
+        return
+      }
+
+      const next = linkedMap.get(box.sourceId) || []
+      next.push(box.id)
+      linkedMap.set(box.sourceId, next)
+    })
+
+  return brainDump.map((item) => {
+    const linkedTimeBoxIds = linkedMap.get(item.id) || []
+    if (areLinkedIdsEqual(item.linkedTimeBoxIds || [], linkedTimeBoxIds)) {
+      return item
+    }
+
+    return {
+      ...item,
+      linkedTimeBoxIds,
+    }
+  })
+}
+
 export const hasMeaningfulPersistedDayData = (dayData) => {
   const safeDay = dayData && typeof dayData === 'object' ? dayData : {}
   return (
@@ -75,7 +106,7 @@ export const migratePersistedDayData = (dateStr, rawData) => {
     ...createEmptyDay(dateStr),
     schemaVersion: PLANNER_SCHEMA_VERSION,
     date: dateStr,
-    brainDump: syncBoardCardsWithTimeBoxes(normalizedBrainDump, normalizedTimeBoxes),
+    brainDump: syncPersistedBrainDumpWithPersistedTimeBoxes(normalizedBrainDump, normalizedTimeBoxes),
     bigThree: Array.isArray(safeData.bigThree) ? safeData.bigThree : [],
     timeBoxes: normalizedTimeBoxes,
     stackCanvasState: normalizeStackCanvasState(persistedStackCanvasState),

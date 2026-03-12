@@ -721,7 +721,8 @@ function App() {
       const done = data.timeBoxes.some(
         (box) =>
           box.status === 'COMPLETED' &&
-          (box.sourceId === item.id || (box.sourceId == null && box.content === item.content)),
+          ((item.taskId && box.taskId === item.taskId) ||
+            (item.taskId == null && box.taskId == null && box.content === item.content)),
       )
 
       return done ? 'DONE' : 'PENDING'
@@ -815,7 +816,7 @@ function App() {
 
     addTimeBox({
       content: action.content,
-      sourceId: null,
+      taskId: null,
       startSlot,
       endSlot: Math.min(TOTAL_SLOTS, startSlot + action.durationSlots),
     })
@@ -845,7 +846,7 @@ function App() {
       const nextBox = {
         id: crypto.randomUUID(),
         content: box.content,
-        sourceId: box.sourceId ?? null,
+        taskId: box.taskId ?? null,
         startSlot,
         endSlot: startSlot + durationSlots,
         status: 'PLANNED',
@@ -1104,7 +1105,7 @@ function App() {
       const endSlot = Math.min(startSlot + DEFAULT_BOX_SLOTS, TOTAL_SLOTS)
       const newBox = {
         content: activeData.title ?? activeData.content,
-        sourceId: activeData.id,
+        taskId: activeData.type === 'BIG_THREE' ? activeData.taskId ?? null : activeData.id,
         startSlot,
         endSlot,
       }
@@ -1283,7 +1284,7 @@ function App() {
 
     addTimeBox({
       content: `${source.content} (복제)`,
-      sourceId: source.sourceId ?? source.id,
+      taskId: source.taskId ?? null,
       startSlot,
       endSlot: Math.min(TOTAL_SLOTS, startSlot + duration),
       category: source.category ?? null,
@@ -1299,7 +1300,7 @@ function App() {
     durationSlots = 1,
     startSlot = null,
     categoryId = null,
-    sourceId = null,
+    taskId = null,
   }) => {
     if (typeof dateStr !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
       return false
@@ -1328,7 +1329,7 @@ function App() {
 
     const newBox = {
       content: trimmedContent,
-      sourceId,
+      taskId,
       startSlot: resolvedStart,
       endSlot: Math.min(TOTAL_SLOTS, resolvedStart + safeDuration),
       categoryId: categoryId || null,

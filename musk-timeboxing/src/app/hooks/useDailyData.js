@@ -369,7 +369,7 @@ export const useDailyData = () => {
     }))
   }
 
-  const addTimeBox = ({ content, sourceId, startSlot, endSlot, category = null, categoryId = null }) => {
+  const addTimeBox = ({ content, taskId, startSlot, endSlot, category = null, categoryId = null }) => {
     let insertedId = null
 
     setData((prev) => {
@@ -377,7 +377,7 @@ export const useDailyData = () => {
         prev.timeBoxes,
         {
           content,
-          sourceId,
+          taskId,
           startSlot,
           endSlot,
           category,

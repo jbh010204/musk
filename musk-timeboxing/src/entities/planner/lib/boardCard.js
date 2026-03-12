@@ -73,13 +73,13 @@ export const syncBoardCardsWithTimeBoxes = (brainDump = [], timeBoxes = []) => {
   ;[...timeBoxes]
     .sort((left, right) => left.startSlot - right.startSlot)
     .forEach((box) => {
-      if (typeof box?.sourceId !== 'string' || box.sourceId.trim().length === 0) {
+      if (typeof box?.taskId !== 'string' || box.taskId.trim().length === 0) {
         return
       }
 
-      const next = linkedMap.get(box.sourceId) || []
+      const next = linkedMap.get(box.taskId) || []
       next.push(box.id)
-      linkedMap.set(box.sourceId, next)
+      linkedMap.set(box.taskId, next)
     })
 
   return brainDump.map((item) => {

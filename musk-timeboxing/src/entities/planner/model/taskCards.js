@@ -1,7 +1,6 @@
 import {
   DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
   getNextBoardStackOrder,
-  normalizeBoardCard,
   normalizeBoardCategoryId,
   normalizeBoardEstimatedSlots,
   normalizeBoardLinkedTimeBoxIds,
@@ -46,52 +45,6 @@ export const normalizeTaskCard = (taskCard, fallbackIndex = 0) => {
     note: normalizeBoardNote(taskCard?.note),
     origin: normalizeTaskCardOrigin(taskCard?.origin),
   }
-}
-
-export const fromPersistedTaskCard = (taskCard, fallbackIndex = 0) => {
-  const normalized = normalizeBoardCard(taskCard, fallbackIndex)
-  if (!normalized) {
-    return null
-  }
-
-  return normalizeTaskCard(
-    {
-      id: normalized.id,
-      title: normalized.content,
-      isDone: normalized.isDone,
-      priority: normalized.priority,
-      categoryId: normalized.categoryId,
-      stackOrder: normalized.stackOrder,
-      estimateSlots: normalized.estimatedSlots,
-      linkedTimeBoxIds: normalized.linkedTimeBoxIds,
-      note: normalized.note,
-      origin: normalized.createdFrom,
-    },
-    fallbackIndex,
-  )
-}
-
-export const toPersistedTaskCard = (taskCard, fallbackIndex = 0) => {
-  const normalized = normalizeTaskCard(taskCard, fallbackIndex)
-  if (!normalized) {
-    return null
-  }
-
-  return normalizeBoardCard(
-    {
-      id: normalized.id,
-      content: normalized.title,
-      isDone: normalized.isDone,
-      priority: normalized.priority,
-      categoryId: normalized.categoryId,
-      stackOrder: normalized.stackOrder,
-      estimatedSlots: normalized.estimateSlots,
-      linkedTimeBoxIds: normalized.linkedTimeBoxIds,
-      note: normalized.note,
-      createdFrom: normalized.origin,
-    },
-    fallbackIndex,
-  )
 }
 
 export const createTaskCardRecord = (taskCards = [], input = {}) =>

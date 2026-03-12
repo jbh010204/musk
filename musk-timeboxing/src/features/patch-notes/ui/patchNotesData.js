@@ -399,7 +399,7 @@ export const PATCH_NOTES = [
       'Planning Board 1차 MVP 위에 실제 편성기를 붙여, 보드 카드를 30분 시간표 슬롯에 끼워 넣으면 곧바로 일간 타임라인의 timeBox가 생성되고 카드 쪽 `linkedTimeBoxIds` badge도 함께 맞춰지도록 연결했습니다.',
     focus: [
       '편성기는 이제 placeholder가 아니라 좌측 카드 큐와 우측 30분 시간표 그리드로 동작하며, 카드 선택 후 슬롯 클릭 또는 드래그로 바로 배치 가능',
-      '`sourceId = boardCard.id`와 `categoryId`를 그대로 timeBox에 내려 보내 보드 카드와 실제 일정이 같은 원본을 공유',
+      '내부 모델에서는 `taskId = boardCard.id`와 `categoryId`를 같이 내려 보내, 보드 카드와 실제 일정이 같은 원본을 공유하도록 정리',
       'timeBox 생성/수정/삭제/복원 시마다 `linkedTimeBoxIds`를 자동 재계산해 보드/편성기 badge가 즉시 일관되게 바뀌도록 고정',
     ],
     improvements: [

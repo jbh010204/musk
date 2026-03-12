@@ -85,12 +85,12 @@ function PlannerWorkspace({
       return
     }
 
-    const sourceCard = slot.sourceId
-      ? taskCards.find((item) => item.id === slot.sourceId) || null
+    const sourceCard = slot.taskId
+      ? taskCards.find((item) => item.id === slot.taskId) || null
       : null
 
     if (sourceCard) {
-      syncSelection([slot.sourceId], slot.sourceId, slot.id)
+      syncSelection([slot.taskId], slot.taskId, slot.id)
       return
     }
 

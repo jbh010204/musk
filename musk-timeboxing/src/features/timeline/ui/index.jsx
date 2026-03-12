@@ -256,7 +256,7 @@ function Timeline({
 
   const createBox = ({
     content,
-    sourceId = null,
+    taskId = null,
     startSlot,
     durationSlots = DEFAULT_BOX_SLOTS,
     category = null,
@@ -265,7 +265,7 @@ function Timeline({
     const duration = Math.max(1, Math.min(TOTAL_SLOTS, Number(durationSlots) || DEFAULT_BOX_SLOTS))
     const newBox = {
       content,
-      sourceId,
+      taskId,
       startSlot,
       endSlot: Math.min(startSlot + duration, TOTAL_SLOTS),
     }
@@ -292,7 +292,7 @@ function Timeline({
     const categoryMeta = card.categoryId ? categoryMap.get(card.categoryId) : null
     return createBox({
       content: card.title,
-      sourceId: card.id,
+      taskId: card.id,
       startSlot,
       durationSlots: card.estimateSlots || DEFAULT_BOX_SLOTS,
       categoryId: card.categoryId ?? null,
@@ -324,7 +324,7 @@ function Timeline({
       const categoryMeta = card.categoryId ? categoryMap.get(card.categoryId) : null
       const candidate = {
         content: card.title,
-        sourceId: card.id,
+        taskId: card.id,
         startSlot: cursor,
         endSlot,
         categoryId: card.categoryId ?? null,
@@ -389,8 +389,8 @@ function Timeline({
       return false
     }
 
-    if (item.sourceId) {
-      const sourceCard = taskCards.find((entry) => entry.id === item.sourceId) || null
+    if (item.taskId) {
+      const sourceCard = taskCards.find((entry) => entry.id === item.taskId) || null
       if (sourceCard) {
         return handleScheduleBoardCard(sourceCard.id, startSlot)
       }
@@ -398,7 +398,7 @@ function Timeline({
 
     return createBox({
       content: item.content,
-      sourceId: item.sourceId ?? null,
+      taskId: null,
       startSlot,
       durationSlots: DEFAULT_BOX_SLOTS,
     })

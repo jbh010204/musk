@@ -26,7 +26,7 @@ const normalizeElapsedSeconds = (value) => (Number.isFinite(value) ? Math.max(0,
 
 const normalizeTimerStartedAt = (value) => (Number.isFinite(value) ? Number(value) : null)
 
-const normalizeSourceId = (value) => {
+const normalizeTaskId = (value) => {
   if (typeof value === 'string') {
     const trimmed = value.trim()
     return trimmed.length > 0 ? trimmed : null
@@ -47,7 +47,7 @@ export const normalizeTimeBoxRecord = (timeBox, createId = defaultCreateId) => {
   return {
     id: typeof timeBox?.id === 'string' ? timeBox.id : createId(),
     content,
-    sourceId: normalizeSourceId(timeBox?.sourceId),
+    taskId: normalizeTaskId(timeBox?.taskId),
     startSlot,
     endSlot,
     status: normalizeStatus(timeBox?.status),
@@ -106,7 +106,7 @@ export const addTimeBoxRecord = (timeBoxes = [], input = {}, createId = defaultC
   const duplicateExists = timeBoxes.some(
     (timeBox) =>
       timeBox.content === normalized.content &&
-      (timeBox.sourceId ?? null) === (normalized.sourceId ?? null) &&
+      (timeBox.taskId ?? null) === (normalized.taskId ?? null) &&
       timeBox.startSlot === normalized.startSlot &&
       timeBox.endSlot === normalized.endSlot &&
       (timeBox.categoryId ?? null) === (normalized.categoryId ?? null),

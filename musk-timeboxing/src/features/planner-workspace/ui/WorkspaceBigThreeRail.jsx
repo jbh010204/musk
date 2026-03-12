@@ -70,7 +70,7 @@ function WorkspaceBigThreeRail({
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         {[0, 1, 2].map((slotIndex) => {
           const slot = bigThree[slotIndex] ?? null
-          const sourceCard = slot?.sourceId ? sourceCardMap.get(slot.sourceId) || null : null
+          const sourceCard = slot?.taskId ? sourceCardMap.get(slot.taskId) || null : null
           const isSelected =
             selectedBigThreeId === slot?.id ||
             Boolean(sourceCard && selectedCardId === sourceCard.id)

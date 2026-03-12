@@ -19,6 +19,7 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
           type: 'BIG_THREE',
           id: slot.id,
           content: slot.content,
+          taskId: slot.taskId ?? null,
         }
       : null,
   })

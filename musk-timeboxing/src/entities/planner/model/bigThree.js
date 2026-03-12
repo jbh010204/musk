@@ -6,16 +6,38 @@ const defaultCreateId = () => crypto.randomUUID()
 
 const normalizeText = (value) => String(value || '').trim()
 
+const normalizeTaskId = (value) => {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+export const normalizeBigThreeRecord = (item, createId = defaultCreateId) => {
+  const content = normalizeText(item?.content)
+  if (!content) {
+    return null
+  }
+
+  return {
+    id: typeof item?.id === 'string' ? item.id : createId(),
+    content,
+    taskId: normalizeTaskId(item?.taskId),
+  }
+}
+
 const createLinkedBigThreeRecord = (taskCard, createId = defaultCreateId) => ({
   id: createId(),
   content: taskCard.title,
-  sourceId: taskCard.id,
+  taskId: taskCard.id,
 })
 
 const createManualBigThreeRecord = (content, createId = defaultCreateId) => ({
   id: createId(),
   content,
-  sourceId: null,
+  taskId: null,
 })
 
 export const addTaskCardToBigThree = (
@@ -51,15 +73,15 @@ export const addManyTaskCardsToBigThree = (
 
   const remainSlots = MAX_BIG_THREE_ITEMS - bigThree.length
   const uniqueIds = [...new Set(taskCardIds.filter((taskCardId) => typeof taskCardId === 'string' && taskCardId.trim().length > 0))]
-  const existingSourceIds = new Set(
+  const existingTaskIds = new Set(
     bigThree
-      .map((item) => item.sourceId)
-      .filter((sourceId) => typeof sourceId === 'string' && sourceId.length > 0),
+      .map((item) => item.taskId)
+      .filter((taskId) => typeof taskId === 'string' && taskId.length > 0),
   )
   const candidates = uniqueIds
     .map((taskCardId) => taskCards.find((item) => item.id === taskCardId) || null)
     .filter(Boolean)
-    .filter((taskCard) => !existingSourceIds.has(taskCard.id))
+    .filter((taskCard) => !existingTaskIds.has(taskCard.id))
     .slice(0, remainSlots)
 
   if (candidates.length === 0) {
@@ -82,12 +104,12 @@ export const autofillBigThreeFromTaskCards = (
   }
 
   const remainSlots = MAX_BIG_THREE_ITEMS - bigThree.length
-  const existingSourceIds = new Set(
+  const existingTaskIds = new Set(
     bigThree
-      .map((item) => item.sourceId)
-      .filter((sourceId) => typeof sourceId === 'string' && sourceId.length > 0),
+      .map((item) => item.taskId)
+      .filter((taskId) => typeof taskId === 'string' && taskId.length > 0),
   )
-  const candidates = taskCards.filter((taskCard) => !existingSourceIds.has(taskCard.id))
+  const candidates = taskCards.filter((taskCard) => !existingTaskIds.has(taskCard.id))
   const prioritizedCandidates = sortBrainDumpItems(candidates)
   const selectedCandidates = prioritizedCandidates.slice(0, remainSlots)
 
