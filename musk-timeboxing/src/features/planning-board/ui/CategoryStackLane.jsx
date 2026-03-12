@@ -19,6 +19,7 @@ function CategoryStackLane({
   onScheduleDragStart = () => {},
   onScheduleDragEnd = () => {},
   headerActions = null,
+  leadingContent = null,
   collapsed = false,
   collapsedMessage = '접힌 상태입니다.',
 }) {
@@ -72,6 +73,7 @@ function CategoryStackLane({
 
         <SortableContext items={lane.items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
+            {leadingContent}
             {collapsed ? (
               <div className="rounded-2xl px-3 py-6 text-center text-sm text-slate-400 dark:text-slate-500">
                 {collapsedMessage}

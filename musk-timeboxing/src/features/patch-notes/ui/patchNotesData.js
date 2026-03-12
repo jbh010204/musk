@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.22.7',
+    date: '2026-03-12',
+    title: 'Workspace cues: armed dock, inline create, selection bar',
+    summary:
+      '설명 문구 대신 상태 변화로 다음 행동을 읽게 만드는 방향으로 워크스페이스를 다듬었습니다. 도크는 선택 카드 기준으로 arm되고, 카드 생성은 각 스택의 빈 슬롯에서 바로 시작되며, 선택 액션은 상단 selection bar로 모았습니다.',
+    focus: [
+      '카테고리 도크가 데이터 존재를 보여주는 장식이 아니라, 현재 선택한 카드를 여기로 보낼 수 있다는 목적지 표지판으로 동작하도록 armed state를 강화',
+      'Inbox와 Active Stack 모두 별도 생성 버튼 대신 ghost slot 기반 inline create를 지원해 생성 위치가 곧 소속이 되도록 정리',
+      '선택 카드 액션을 카드 내부 chrome 대신 상단 selection bar로 올리고, 중복 단축키 발화에 대해서는 timeBox 생성 경로를 idempotent하게 고정',
+    ],
+    improvements: [
+      '`PlanningCanvas.jsx`, `CanvasSelectionBar.jsx`, `CanvasInlineCreateSlot.jsx`를 추가/수정해 dock armed state, inline create, compact selection actions를 도입',
+      '`CategoryStackLane.jsx`, `BoardCard.jsx`, `categoryNodePresentation.js`를 조정해 카드 내부 조작 노이즈를 줄이고, 도크/스택이 더 직접적으로 행동을 암시하게 정리',
+      '`useDailyData.js`, `planning-canvas.spec.js`, `planner-workspace.spec.js`를 갱신해 중복 scheduling 방지와 새 생성/선택 흐름 회귀를 고정',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planning-canvas + planner-workspace 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.22.6',
     date: '2026-03-12',
     title: 'Workspace flow: inbox tools + keyboard shortcuts',

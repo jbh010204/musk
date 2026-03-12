@@ -476,6 +476,19 @@ export const useDailyData = () => {
     const id = createId()
 
     setData((prev) => {
+      const duplicateExists = prev.timeBoxes.some(
+        (box) =>
+          box.content === trimmed &&
+          (box.sourceId ?? null) === (sourceId ?? null) &&
+          box.startSlot === normalizedStart &&
+          box.endSlot === normalizedEnd &&
+          (box.categoryId ?? null) === normalizeCategoryId(categoryId),
+      )
+
+      if (duplicateExists) {
+        return prev
+      }
+
       const nextTimeBoxes = [
         ...prev.timeBoxes,
         {

@@ -73,7 +73,9 @@
 
 - Big3 Focus Strip: 핵심 3개 확정
 - StackCanvas: 상단 Category Dock + Inbox / Active Category Stack 구조
-  - 카드가 있는 카테고리 노드는 category color 기반 gradient glow로 먼저 눈에 띄게 한다.
+  - 카드가 선택되면 Category Dock 전체가 armed state로 깨어나고, 목적지 도크는 category color 기반 gradient glow로 더 강하게 반응한다.
+  - Inbox와 Active Stack은 각자 상단 ghost slot에서 inline create를 지원해 별도 생성 CTA 없이 바로 카드 생성이 시작된다.
+  - 선택 카드 액션은 카드 내부 chrome보다 상단 Selection Bar에 모아 `이동/Big3/첫 빈 슬롯`을 처리한다.
   - Inbox는 검색/상태 필터/접기를 지원하고, 다중 선택 카드에 대한 keyboard shortcut 진입점이 된다.
 - Timeline Rail: 선택 대상 슬롯 클릭 배치 중심
   - rail width, label width, slot height는 workspace layout token으로 관리해 읽기 밀도를 한 번에 조정할 수 있게 한다.
@@ -84,3 +86,4 @@
 - zoom/pan 엔진
 - canvas 내부 time grid
 - 세로 전체 카테고리 스택 나열
+- 설명 문구에 의존하는 조작 학습

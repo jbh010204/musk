@@ -145,6 +145,7 @@
 - `W4` Big3 compact focus strip 전환
 - `W5` Category Dock glow presentation + timeline rail density token 정리
 - `W6` Inbox search/filter/collapse + keyboard shortcut flow
+- `W7` Dock armed state + inline create slot + selection bar 전환
 - `P6` tldraw 제거 및 문서 교체
 
 완료:
@@ -165,6 +166,9 @@
 - `W2` Category Dock + Active Stack 전환
 - `W3` Timeline Rail click-first interaction 정리
 - `W4` Big3 compact focus strip 전환
+- `W5` Category Dock glow presentation + timeline rail density token 정리
+- `W6` Inbox search/filter/collapse + keyboard shortcut flow
+- `W7` Dock armed state + inline create slot + selection bar 전환
 - `P6` tldraw 제거 및 문서 교체
 
 ### T1. FSD 전환 1단계 (폴더 구조 개편 기반)

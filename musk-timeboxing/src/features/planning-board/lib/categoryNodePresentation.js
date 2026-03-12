@@ -31,6 +31,7 @@ export const getCategoryNodePresentation = ({
 }) => {
   const hasCards = count > 0
   const isHighlighted = isOver || isArmed || isActive
+  const showGradient = hasCards || isArmed || isActive
   const glowAlpha = isHighlighted ? 0.34 : hasCards ? 0.2 : 0
   const edgeAlpha = isHighlighted ? 0.2 : hasCards ? 0.12 : 0.04
 
@@ -41,10 +42,12 @@ export const getCategoryNodePresentation = ({
       ? 'scale-[1.04] border-transparent shadow-xl'
       : hasCards
         ? 'border-slate-300/70 shadow-lg dark:border-slate-700/70'
-        : 'border-slate-300/80 dark:border-slate-700/80',
+        : isArmed
+          ? 'scale-[1.02] border-transparent shadow-lg'
+          : 'border-slate-300/80 dark:border-slate-700/80',
     style: {
-      backgroundImage: hasCards
-        ? `radial-gradient(circle at 50% 15%, ${hexToRgba(color, isHighlighted ? 0.28 : 0.22)} 0%, transparent 52%), linear-gradient(180deg, ${hexToRgba(color, isHighlighted ? 0.24 : 0.16)} 0%, ${hexToRgba(color, 0.05)} 100%)`
+      backgroundImage: showGradient
+        ? `radial-gradient(circle at 50% 15%, ${hexToRgba(color, isHighlighted ? 0.28 : 0.18)} 0%, transparent 52%), linear-gradient(180deg, ${hexToRgba(color, isHighlighted ? 0.24 : hasCards ? 0.16 : 0.1)} 0%, ${hexToRgba(color, 0.05)} 100%)`
         : undefined,
       boxShadow:
         glowAlpha > 0

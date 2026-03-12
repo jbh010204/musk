@@ -502,7 +502,7 @@ test('planner workspace can search, filter, and collapse inbox cards', async ({ 
   await expect(page.locator('[data-testid="planning-board-card-workspace-inbox-card-2"]:visible')).toHaveCount(0)
 
   await page.locator('[data-testid="planning-canvas-inbox-search"]:visible').first().fill('')
-  await page.locator('[data-testid="planning-canvas-inbox-filter-SCHEDULED"]:visible').first().click()
+  await page.locator('[data-testid="planning-canvas-inbox-filter"]:visible').first().selectOption('SCHEDULED')
   await expect(page.locator('[data-testid="planning-board-card-workspace-inbox-card-2"]:visible').first()).toBeVisible()
   await expect(page.locator('[data-testid="planning-board-card-workspace-inbox-card-1"]:visible')).toHaveCount(0)
 
@@ -587,19 +587,44 @@ test('planner workspace supports keyboard shortcuts for move, big3, and first-op
   await page.reload()
 
   await page.locator('[data-testid="planning-board-card-select-toggle-workspace-shortcut-card"]:visible').first().click()
-  await page.locator('[data-testid="planning-canvas-view"]:visible').first().click()
-
-  await page.keyboard.press(']')
+  await expect(page.locator('[data-testid="planning-canvas-selection-bar"]:visible').first()).toBeVisible()
+  await page.evaluate(() => {
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: ']',
+        code: 'BracketRight',
+        bubbles: true,
+      }),
+    )
+  })
   await expect(page.locator('[data-testid="planning-board-lane-cat-focus"]:visible').first()).toContainText(
     '단축키 플로우 테스트',
   )
 
-  await page.keyboard.press('Shift+B')
+  await page.evaluate(() => {
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'B',
+        code: 'KeyB',
+        shiftKey: true,
+        bubbles: true,
+      }),
+    )
+  })
   await expect(page.locator('[data-testid="workspace-bigthree-slot-0"]:visible').first()).toContainText(
     '단축키 플로우 테스트',
   )
 
-  await page.keyboard.press('Shift+Enter')
+  await page.evaluate(() => {
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        shiftKey: true,
+        bubbles: true,
+      }),
+    )
+  })
   await expect(page.locator('[data-testid^="composer-block-"]:visible')).toHaveCount(1)
   await expect(page.locator('[data-testid="planning-board-card-workspace-shortcut-card"]:visible').first()).toContainText(
     '예정 1',

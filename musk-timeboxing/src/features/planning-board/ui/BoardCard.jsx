@@ -32,7 +32,7 @@ function BoardCard({
       ref={setNodeRef}
       data-testid={`planning-board-card-${item.id}`}
       onClick={() => onSelect(item)}
-      className={`rounded-2xl bg-white/90 p-4 shadow-sm transition-all dark:bg-slate-900/85 ${
+      className={`group rounded-2xl bg-white/90 p-4 shadow-sm transition-all dark:bg-slate-900/85 ${
         isDragging ? 'opacity-60 shadow-lg' : ''
       } ${isSelected ? 'ring-2 ring-indigo-400' : ''
       } ${!isSelected && isMultiSelected ? 'ring-2 ring-sky-300/80' : ''
@@ -78,20 +78,20 @@ function BoardCard({
             className={`rounded-full px-2 py-1 text-xs font-medium transition-colors ${
               isMultiSelected
                 ? 'bg-sky-500/15 text-sky-700 dark:text-sky-300'
-                : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+                : 'text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-100'
             }`}
             onClick={(event) => {
               event.stopPropagation()
               onToggleSelect(item)
             }}
           >
-            {isMultiSelected ? '선택됨' : '선택'}
+            {isMultiSelected ? '✓' : '○'}
           </button>
           {sortable ? (
             <>
               <IconButton
                 aria-label="카드 수정"
-                className="text-sm"
+                className="text-sm text-slate-400 transition-opacity group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-200"
                 onClick={(event) => {
                   event.stopPropagation()
                   onEdit(item)
@@ -103,7 +103,7 @@ function BoardCard({
                 variant="ghost"
                 size="icon"
                 aria-label="카드 이동 핸들"
-                className="cursor-grab rounded-full text-slate-400 active:cursor-grabbing"
+                className="cursor-grab rounded-full text-slate-400 transition-opacity group-hover:text-slate-600 active:cursor-grabbing dark:text-slate-500 dark:group-hover:text-slate-200"
                 {...attributes}
                 {...listeners}
               >
@@ -117,7 +117,7 @@ function BoardCard({
               draggable
               data-testid={`planning-board-card-schedule-handle-${item.id}`}
               aria-label="일정 배치 드래그"
-              className="rounded-full px-2 py-1 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-400/10"
+              className="rounded-full px-2 py-1 text-[11px] font-medium text-indigo-600 transition-colors hover:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-400/10"
               onClick={(event) => {
                 event.stopPropagation()
                 onSelect(item)

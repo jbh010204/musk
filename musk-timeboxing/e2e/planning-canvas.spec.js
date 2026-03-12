@@ -32,11 +32,8 @@ test('planning canvas creates a card and keeps it after reload', async ({ page }
   await expect(page.locator('[data-testid="planning-canvas-view"]:visible').first()).toBeVisible()
 
   await page.locator('[data-testid="planning-canvas-open-create"]:visible').first().click()
-  await page.locator('#board-card-content').fill('스택 캔버스 카드 생성')
-  await page.selectOption('#board-card-category', 'cat-backend')
-  await page.selectOption('#board-card-duration', '4')
-  await page.locator('#board-card-note').fill('tldraw 없이 캔버스 안에서 생성합니다.')
-  await page.locator('.ui-modal-card').last().getByRole('button', { name: '추가', exact: true }).click()
+  await page.locator('[data-testid="planning-canvas-open-create-input"]:visible').first().fill('스택 캔버스 카드 생성')
+  await page.locator('[data-testid="planning-canvas-open-create-input"]:visible').first().press('Enter')
 
   await expect(page.locator('[data-testid="planning-board-lane-cat-backend"]:visible').first()).toContainText(
     '스택 캔버스 카드 생성',
@@ -54,6 +51,7 @@ test('planning canvas creates a card and keeps it after reload', async ({ page }
   }, setup.today)
 
   expect(stored.brainDump.some((item) => item.content === '스택 캔버스 카드 생성')).toBe(true)
+  expect(stored.brainDump.find((item) => item.content === '스택 캔버스 카드 생성')?.categoryId).toBe('cat-backend')
   expect(stored.stackCanvasState.version).toBe(2)
 })
 
