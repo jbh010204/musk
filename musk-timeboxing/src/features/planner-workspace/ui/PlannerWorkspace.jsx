@@ -12,13 +12,13 @@ function PlannerWorkspace({
   addBoardCard,
   updateBrainDumpItem,
   applyBrainDumpBoardLayout,
-  updateBoardCanvas,
+  updateStackCanvasState,
   onOpenCategoryManager,
   onScheduleBoardCard,
   onJumpToDay,
 }) {
   const [nativeDraggingCardId, setNativeDraggingCardId] = useState(null)
-  const selectedCardId = data.boardCanvas?.selectedCardId ?? null
+  const selectedCardId = data.stackCanvasState?.selectedCardId ?? null
   const selectedCard = useMemo(
     () => brainDumpItems.find((item) => item.id === selectedCardId) || null,
     [brainDumpItems, selectedCardId],
@@ -30,7 +30,7 @@ function PlannerWorkspace({
   const handleSelectCard = (nextId) => {
     const nextCard = nextId ? brainDumpItems.find((item) => item.id === nextId) || null : null
 
-    updateBoardCanvas({
+    updateStackCanvasState({
       selectedCardId: nextId,
       focusedLaneId: nextCard?.categoryId || UNCATEGORIZED_BOARD_LANE,
     })
@@ -46,11 +46,11 @@ function PlannerWorkspace({
         <PlanningCanvas
           key={`${currentDate}-workspace`}
           currentDate={currentDate}
-          boardCanvas={data.boardCanvas}
+          stackCanvasState={data.stackCanvasState}
           brainDumpItems={brainDumpItems}
           categories={categories}
           timeBoxes={data.timeBoxes}
-          onUpdateBoardCanvas={updateBoardCanvas}
+          onUpdateStackCanvasState={updateStackCanvasState}
           onCreateCard={addBoardCard}
           onUpdateCard={updateBrainDumpItem}
           onApplyLayout={applyBrainDumpBoardLayout}

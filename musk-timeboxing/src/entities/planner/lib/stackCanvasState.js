@@ -1,10 +1,10 @@
 import { deriveTaskCardStatus } from '../model'
 import { UNCATEGORIZED_BOARD_LANE } from './boardCard'
 
-export const BOARD_CANVAS_VERSION = 2
+export const STACK_CANVAS_STATE_VERSION = 2
 
-export const createEmptyBoardCanvas = () => ({
-  version: BOARD_CANVAS_VERSION,
+export const createEmptyStackCanvasState = () => ({
+  version: STACK_CANVAS_STATE_VERSION,
   layoutMode: 'stack',
   selectedCardId: null,
   focusedLaneId: UNCATEGORIZED_BOARD_LANE,
@@ -14,12 +14,12 @@ export const createEmptyBoardCanvas = () => ({
 
 const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 
-export const normalizeBoardCanvas = (value) => {
+export const normalizeStackCanvasState = (value) => {
   const safeValue = isObject(value) ? value : {}
   const hadLegacySnapshot = isObject(safeValue.document) || isObject(safeValue.session)
 
   return {
-    version: BOARD_CANVAS_VERSION,
+    version: STACK_CANVAS_STATE_VERSION,
     layoutMode: 'stack',
     selectedCardId:
       typeof safeValue.selectedCardId === 'string' && safeValue.selectedCardId.trim().length > 0
@@ -34,4 +34,4 @@ export const normalizeBoardCanvas = (value) => {
   }
 }
 
-export const getBoardCardCanvasStatus = (item, timeBoxes = []) => deriveTaskCardStatus(item, timeBoxes)
+export const getTaskCardStackCanvasStatus = (item, timeBoxes = []) => deriveTaskCardStatus(item, timeBoxes)

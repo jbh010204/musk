@@ -94,7 +94,7 @@ npm run build
 - `캔버스`: custom `Stack Canvas`
   - 브레인 덤프 원본 카드를 직접 생성/선택/카테고리 스택 이동하는 작업면입니다.
   - 무한 화이트보드가 아니라, 미분류와 leaf category stack을 한 화면에서 다루는 planner 전용 canvas입니다.
-  - 카드 선택 상태는 `boardCanvas.selectedCardId`로만 가볍게 저장하고, 도메인 원본은 계속 `brainDump`가 유지합니다.
+  - 카드 선택 상태는 `stackCanvasState.selectedCardId`로만 가볍게 저장하고, 도메인 원본은 계속 `brainDump`가 유지합니다.
 - `편성기`: 캔버스 카드를 시간표로 보내기 위한 단계
   - 좌측 카드 큐에서 카드를 선택하거나 드래그해 우측 30분 시간표 슬롯에 배치하면 즉시 오늘 타임라인의 timeBox가 생성됨
   - 카드의 예상 길이(`estimatedSlots`)를 기본 블록 길이로 사용하고, 생성된 일정은 `linkedTimeBoxIds`로 다시 보드/편성기 상태와 연결됨

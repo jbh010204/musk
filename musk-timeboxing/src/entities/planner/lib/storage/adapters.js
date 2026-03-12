@@ -10,7 +10,7 @@ export const toPlannerDayModel = (persistedDay) => {
     taskCards: Array.isArray(safeDay.brainDump) ? safeDay.brainDump : [],
     bigThree: Array.isArray(safeDay.bigThree) ? safeDay.bigThree : [],
     timeBoxes: Array.isArray(safeDay.timeBoxes) ? safeDay.timeBoxes : [],
-    boardCanvas: safeDay.boardCanvas ?? createEmptyDay(safeDay.date ?? '').boardCanvas,
+    stackCanvasState: safeDay.stackCanvasState ?? createEmptyDay(safeDay.date ?? '').stackCanvasState,
   }
 }
 
@@ -20,7 +20,7 @@ export const fromPlannerDayModel = (dayModel) => ({
   brainDump: Array.isArray(dayModel?.taskCards) ? dayModel.taskCards : [],
   bigThree: Array.isArray(dayModel?.bigThree) ? dayModel.bigThree : [],
   timeBoxes: Array.isArray(dayModel?.timeBoxes) ? dayModel.timeBoxes : [],
-  boardCanvas: dayModel?.boardCanvas ?? createEmptyDay(dayModel?.date ?? '').boardCanvas,
+  stackCanvasState: dayModel?.stackCanvasState ?? createEmptyDay(dayModel?.date ?? '').stackCanvasState,
 })
 
 export const normalizePlannerDayInput = (dateStr, input) =>

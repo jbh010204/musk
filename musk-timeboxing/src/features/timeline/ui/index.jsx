@@ -97,7 +97,7 @@ function Timeline({
   addBoardCard = () => false,
   updateBrainDumpItem = () => {},
   applyBrainDumpBoardLayout = () => {},
-  updateBoardCanvas = () => {},
+  updateStackCanvasState = () => {},
   updateTimeBox,
   onTimerStart = () => {},
   onTimerPause = () => {},
@@ -481,7 +481,7 @@ function Timeline({
           addBoardCard={addBoardCard}
           updateBrainDumpItem={updateBrainDumpItem}
           applyBrainDumpBoardLayout={applyBrainDumpBoardLayout}
-          updateBoardCanvas={updateBoardCanvas}
+          updateStackCanvasState={updateStackCanvasState}
           onOpenCategoryManager={onOpenCategoryManager}
           onScheduleBoardCard={handleScheduleBoardCard}
           onJumpToDay={() => setViewMode('DAY')}
@@ -670,11 +670,11 @@ function Timeline({
         <PlanningCanvas
           key={currentDate}
           currentDate={currentDate}
-          boardCanvas={data.boardCanvas}
+          stackCanvasState={data.stackCanvasState}
           brainDumpItems={brainDumpItems}
           categories={categories}
           timeBoxes={data.timeBoxes}
-          onUpdateBoardCanvas={updateBoardCanvas}
+          onUpdateStackCanvasState={updateStackCanvasState}
           onCreateCard={addBoardCard}
           onUpdateCard={updateBrainDumpItem}
           onApplyLayout={applyBrainDumpBoardLayout}

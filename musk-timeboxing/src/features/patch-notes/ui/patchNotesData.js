@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.22.0',
+    date: '2026-03-12',
+    title: 'Storage cleanup: boardCanvas -> stackCanvasState',
+    summary:
+      '캔버스 상태 필드명을 현재 역할에 맞춰 `stackCanvasState`로 정리하고, 기존 `boardCanvas` 로컬 저장 데이터는 로드 시 자동으로 새 스키마로 승격되도록 맞췄습니다.',
+    focus: [
+      '내부 모델, hook 액션, workspace/canvas prop 이름을 `stackCanvasState` 기준으로 통일',
+      '기존 localStorage에 남아 있는 `boardCanvas`는 migration에서 읽고, 재저장 시 새 필드명으로만 기록',
+      'planning-canvas E2E에 legacy `boardCanvas` -> `stackCanvasState` 승격 회귀를 추가',
+    ],
+    improvements: [
+      '`stackCanvasState.js`, storage adapter/migration, `useDailyData.js`, `App.jsx`, `Timeline/index.jsx`가 새 필드명을 기준으로 동작하도록 정리',
+      '`planning-canvas.spec.js`에 legacy key를 seed한 뒤 reload 후 새 key로 저장되는 시나리오를 추가',
+      '`README.md`, `CATEGORY_TREE_TS_REFACTOR_PLAN.md`, `TASK_EXECUTION_BOARD.md`에서 현재 계약 명칭을 새 이름으로 동기화',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planning-canvas 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.21.9',
     date: '2026-03-12',
     title: 'Workspace direct scheduling: 캔버스 카드 -> Timeline Rail 직접 드래그',
@@ -50,13 +72,13 @@ export const PATCH_NOTES = [
       '자유 화이트보드 엔진이 플래너 UX와 맞지 않는다는 판단에 따라 tldraw 기반 Planning Canvas를 중단하고, 카드 생성/카테고리 스택 이동에 집중한 custom Stack Canvas와 우측 Timeline Rail 구조로 전환했습니다.',
     focus: [
       '캔버스 안에서는 카드 생성, 선택, 카테고리 스택 이동만 담당하고, 시간표 배치는 우측 Timeline Rail에서 계속 처리',
-      '`boardCanvas` persisted 상태는 이제 `selectedCardId`, `focusedLaneId` 같은 lightweight UI state만 저장하고 tldraw snapshot은 더 이상 쓰지 않음',
+      '`stackCanvasState` persisted 상태는 이제 `selectedCardId`, `focusedLaneId` 같은 lightweight UI state만 저장하고 tldraw snapshot은 더 이상 쓰지 않음',
       '워크스페이스도 `Stack Canvas + Timeline Rail` 2열 흐름으로 단순화해 실제 작업 경로를 줄임',
     ],
     improvements: [
       '`PlanningCanvas.jsx`를 custom Stack Canvas로 재구성하고 `BoardCardEditorModal`, `CategoryStackLane`을 재사용해 카드 생성/분류를 canvas 안으로 이동',
       '`ScheduleComposer.jsx`에 `hideQueue`, 외부 선택 카드 입력을 추가해 workspace에서 canvas 선택 카드만 바로 일정으로 배치할 수 있게 조정',
-      '`boardCanvas.js`를 lightweight UI state normalize 계층으로 교체하고 `docs/STACK_CANVAS_PIVOT_PLAN.md`를 추가',
+      '`stackCanvasState.js`를 lightweight UI state normalize 계층으로 교체하고 `docs/STACK_CANVAS_PIVOT_PLAN.md`를 추가',
       '`CanvasInspector.jsx`, `plannerCanvasShapes.jsx`, `docs/TLDRAW_CANVAS_ARCHITECTURE.md`를 제거하고 `tldraw` dependency를 uninstall',
       '`planning-canvas.spec.js`, `planner-workspace.spec.js`를 stack canvas 흐름 기준으로 갱신',
     ],
@@ -147,7 +169,7 @@ export const PATCH_NOTES = [
     ],
     improvements: [
       '`plannerCanvasShapes.jsx`를 추가해 `planner-category-node`, `planner-task-card` custom shape와 selection bridge를 도입',
-      '`boardCanvas.js`에서 stable shape id, custom shape projection, 카드 상태 파생(`TODO/SCHEDULED/PARTIAL/COMPLETED/SKIPPED`)을 담당하도록 확장',
+      '`stackCanvasState.js`에서 stable shape id, custom shape projection, 카드 상태 파생(`TODO/SCHEDULED/PARTIAL/COMPLETED/SKIPPED`)을 담당하도록 확장',
       '`PlanningCanvas.jsx`에 projection sync, legacy shell snapshot 보정, 우측 inspector 레이아웃, card update 연결을 추가',
       '`CanvasInspector.jsx`를 신설하고 `planning-canvas.spec.js`를 확장해 snapshot 저장 + inspector 편집 회귀를 함께 고정',
     ],
@@ -164,15 +186,15 @@ export const PATCH_NOTES = [
     summary:
       'Planning Board를 그대로 대체하기 전에, tldraw 기반 무한 캔버스를 별도 CANVAS 뷰로 병행 도입하고 날짜별 snapshot 저장/복원과 초기 auto-layout migration까지 먼저 연결했습니다.',
     focus: [
-      'source of truth는 계속 brainDump에 두고, 캔버스는 위치/카메라/session 같은 시각 상태만 `boardCanvas` snapshot으로 저장',
+      'source of truth는 계속 brainDump에 두고, 캔버스는 위치/카메라/session 같은 시각 상태만 `stackCanvasState` snapshot으로 저장',
       '기존 보드 카드가 있는 날짜는 첫 진입 시 카테고리 노드와 카드 shape를 자동 배치해 빈 캔버스가 아니라 현재 상태를 즉시 투영',
       'tldraw 기본 UI는 숨기고 planner toolbar만 남겨 플래너 흐름에 맞는 shell을 우선 고정',
     ],
     improvements: [
       '`tldraw@4.4.1`을 exact version으로 고정하고 `docs/TLDRAW_CANVAS_ARCHITECTURE.md`에 버전 정책, 저장 구조, 제외 범위를 문서화',
-      '`storage.js`, `useDailyData.js`에 `boardCanvas` 스키마와 normalize/update 경로를 추가해 export/import 및 날짜별 persistence와 같은 계층으로 통합',
+      '`storage.js`, `useDailyData.js`에 `stackCanvasState` 스키마와 normalize/update 경로를 추가해 export/import 및 날짜별 persistence와 같은 계층으로 통합',
       '`PlanningCanvas.jsx`를 신설해 CANVAS view 진입, snapshot debounce 저장, 자동 배치, 보드/카테고리/편성기 전환 액션을 연결',
-      '`planning-canvas.spec.js`로 첫 진입 auto-layout 후 localStorage에 `boardCanvas.document/session`이 남는지 회귀를 추가',
+      '`planning-canvas.spec.js`로 첫 진입 auto-layout 후 legacy canvas snapshot 필드가 localStorage에 저장되는지 회귀를 추가',
     ],
     validation: [
       'lint/build 통과',

@@ -1,5 +1,5 @@
 import { normalizeBoardCard, syncBoardCardsWithTimeBoxes } from '../boardCard'
-import { normalizeBoardCanvas } from '../boardCanvas'
+import { normalizeStackCanvasState } from '../stackCanvasState'
 import { sortBrainDumpItems } from '../brainDumpPriority'
 import { TOTAL_SLOTS } from '../timeSlot'
 import { normalizeCategoryRecords } from '../../model'
@@ -53,12 +53,17 @@ export const hasMeaningfulPersistedDayData = (dayData) => {
     (Array.isArray(safeDay.brainDump) && safeDay.brainDump.length > 0) ||
     (Array.isArray(safeDay.bigThree) && safeDay.bigThree.length > 0) ||
     (Array.isArray(safeDay.timeBoxes) && safeDay.timeBoxes.length > 0) ||
+    Boolean(safeDay.stackCanvasState?.document) ||
     Boolean(safeDay.boardCanvas?.document)
   )
 }
 
 export const migratePersistedDayData = (dateStr, rawData) => {
   const safeData = rawData && typeof rawData === 'object' ? rawData : {}
+  const persistedStackCanvasState =
+    safeData.stackCanvasState && typeof safeData.stackCanvasState === 'object'
+      ? safeData.stackCanvasState
+      : safeData.boardCanvas
   const normalizedTimeBoxes = Array.isArray(safeData.timeBoxes) ? safeData.timeBoxes.map(normalizeTimeBox) : []
   const normalizedBrainDump = Array.isArray(safeData.brainDump)
     ? sortBrainDumpItems(
@@ -73,7 +78,7 @@ export const migratePersistedDayData = (dateStr, rawData) => {
     brainDump: syncBoardCardsWithTimeBoxes(normalizedBrainDump, normalizedTimeBoxes),
     bigThree: Array.isArray(safeData.bigThree) ? safeData.bigThree : [],
     timeBoxes: normalizedTimeBoxes,
-    boardCanvas: normalizeBoardCanvas(safeData.boardCanvas),
+    stackCanvasState: normalizeStackCanvasState(persistedStackCanvasState),
   }
 }
 

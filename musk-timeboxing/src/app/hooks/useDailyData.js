@@ -10,7 +10,7 @@ import {
   loadDay,
   loadLastActiveDate,
   loadLastFocus,
-  normalizeBoardCanvas,
+  normalizeStackCanvasState,
   removeTaskCardRecord,
   restoreTaskCardRecord,
   saveDay,
@@ -693,15 +693,15 @@ export const useDailyData = () => {
     setData(loadDay(currentDate))
   }
 
-  const updateBoardCanvas = (nextBoardCanvas) => {
+  const updateStackCanvasState = (nextStackCanvasState) => {
     setData((prev) => {
       const resolved =
-        typeof nextBoardCanvas === 'function' ? nextBoardCanvas(prev.boardCanvas) : nextBoardCanvas
+        typeof nextStackCanvasState === 'function' ? nextStackCanvasState(prev.stackCanvasState) : nextStackCanvasState
 
       return {
         ...prev,
-        boardCanvas: normalizeBoardCanvas({
-          ...prev.boardCanvas,
+        stackCanvasState: normalizeStackCanvasState({
+          ...prev.stackCanvasState,
           ...resolved,
           lastSyncedAt: Date.now(),
         }),
@@ -736,7 +736,7 @@ export const useDailyData = () => {
     removeTimeBox,
     restoreTimeBox,
     clearTimeBoxCategory,
-    updateBoardCanvas,
+    updateStackCanvasState,
     reloadCurrentDay,
   }
 }

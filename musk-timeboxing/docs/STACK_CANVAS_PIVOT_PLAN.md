@@ -9,7 +9,7 @@
 1. `taskCard`는 계속 source of truth다.
 2. 캔버스는 자유 화이트보드가 아니라 구조화된 스택 작업면이다.
 3. 타임라인 배치는 캔버스 밖 우측 rail에서 처리한다.
-4. `boardCanvas` persisted 필드는 당분간 유지하되, tldraw snapshot이 아니라 lightweight UI state만 저장한다.
+4. `stackCanvasState` persisted 필드는 당분간 유지하되, tldraw snapshot이 아니라 lightweight UI state만 저장한다.
 
 ## 범위
 
@@ -34,7 +34,7 @@
 - workspace 목표 레이아웃 고정
 
 ### P2. StackCanvas 데이터 계약
-- `boardCanvas.version = 2`
+- `stackCanvasState.version = 2`
 - `layoutMode = 'stack'`
 - `selectedCardId`
 - `focusedLaneId`

@@ -110,7 +110,7 @@
   - `T79` 보드 카드 -> 시간표 배치로 timeBox 생성
   - `T80` linkedTimeBoxIds 자동 동기화 및 회귀 검증
   - `T84` tldraw Planning Canvas 아키텍처 문서화
-  - `T85` boardCanvas 스키마 확장 및 migration 추가
+  - `T85` stackCanvasState 스키마 확장 및 migration 추가
   - `T86` CANVAS view와 PlanningCanvas shell 도입
   - `T87` custom category node shape 구현
   - `T88` custom task card shape 구현
@@ -132,7 +132,7 @@
 - `R5` unified workspace 재구성
   - 좌측 rail / 중앙 canvas / 우측 time grid 계약으로 화면 통합
 - `P1` StackCanvas pivot 문서화
-- `P2` lightweight boardCanvas 상태 계약 정의
+- `P2` lightweight stackCanvasState 상태 계약 정의
 - `P3` StackCanvas shell 구현
 - `P4` StackCanvas 카드 생성/카테고리 DnD
 - `P5` StackCanvas -> Timeline Rail 연결
@@ -146,10 +146,11 @@
 - `R4` category tree model + leaf-only selection guard(1차)
 - `R5` unified workspace 재구성(1차)
 - `P1` StackCanvas pivot 문서화
-- `P2` lightweight boardCanvas 상태 계약 정의
+- `P2` lightweight stackCanvasState 상태 계약 정의
 - `P3` StackCanvas shell 구현
 - `P4` StackCanvas 카드 생성/카테고리 DnD
 - `P5` StackCanvas -> Timeline Rail 연결
+- `P5a` StackCanvas 카드 -> Timeline Rail 직접 드래그 배치
 - `P6` tldraw 제거 및 문서 교체
 
 ### T1. FSD 전환 1단계 (폴더 구조 개편 기반)

@@ -9,7 +9,7 @@
 - 중앙 메인 작업면은 custom `StackCanvas`
 - 카드 생성과 카테고리 스택 이동은 canvas 안에서 처리
 - 시간표 배치는 canvas 밖 우측 `Timeline Rail`에서 처리
-- `boardCanvas`는 tldraw snapshot이 아니라 lightweight UI state만 유지
+- `stackCanvasState`는 tldraw snapshot이 아니라 lightweight UI state만 유지
 
 상세 전환 계획은 [STACK_CANVAS_PIVOT_PLAN.md](/Users/bohyeong/Desktop/공부/project/musk/musk-timeboxing/docs/STACK_CANVAS_PIVOT_PLAN.md)에 별도 기록한다.
 
@@ -93,7 +93,7 @@ payload shape가 컴파일 단계에서 고정되지 않기 때문에 화면이 
 
 - `src/entities/planner/lib/storage.js`
 - `src/app/hooks/useDailyData.js`
-- `src/entities/planner/lib/boardCanvas.js`
+- `src/entities/planner/lib/stackCanvasState.js`
 - `src/features/planning-canvas/ui/PlanningCanvas.jsx`
 
 정규화와 저장 계약이 여러 곳에 흩어져 있어 스키마 변경 시 누락 위험이 높다.
@@ -267,7 +267,7 @@ payload shape가 컴파일 단계에서 고정되지 않기 때문에 화면이 
 예시:
 
 - `schemaVersion: 3 -> 4`
-- `boardCanvas` 누락 보정
+- `stackCanvasState` 누락 보정
 - category에 `parentId`, `order` 기본값 보정
 
 ### 2. adapter
@@ -366,10 +366,11 @@ export interface TimeBox {
   elapsedSeconds: number
 }
 
-export interface BoardCanvasState {
+export interface StackCanvasState {
   version: number
-  document: object | null
-  session: object | null
+  layoutMode: 'stack'
+  selectedCardId: TaskId | null
+  focusedLaneId: CategoryId | 'uncategorized'
   migratedFromLegacyBoard: boolean
   lastSyncedAt: number | null
 }
@@ -380,7 +381,7 @@ export interface PlannerDay {
   taskCards: TaskCard[]
   bigThree: BigThreeItem[]
   timeBoxes: TimeBox[]
-  boardCanvas: BoardCanvasState
+  stackCanvasState: StackCanvasState
 }
 
 export interface PlannerMeta {
@@ -442,7 +443,7 @@ export type PlannerDragPayload =
 반드시 확인할 것:
 
 - category에 `parentId`, `order`가 없을 때 기본값 부여
-- `boardCanvas`가 없는 구 스키마를 안전하게 hydrate
+- `stackCanvasState`가 없는 구 스키마를 안전하게 hydrate
 - `timeBox.sourceId`가 없는 데이터도 안전하게 normalize
 
 ## 카테고리 트리 규칙 초안
@@ -654,7 +655,7 @@ src/entities/planner/
     categoryTree.ts
     taskCards.ts
     timeBoxes.ts
-    boardCanvas.ts
+    stackCanvasState.ts
     plannerReducer.ts
     plannerCommands.ts
     index.ts
@@ -713,7 +714,7 @@ persisted schema와 internal domain model 사이 경계를 먼저 고정한다.
 ### 우선 파일
 
 - `src/entities/planner/lib/storage.js` 또는 분해 후 `storage/`
-- `src/entities/planner/lib/boardCanvas.js`
+- `src/entities/planner/lib/stackCanvasState.js`
 - `src/entities/planner/lib/boardCard.js`
 
 ### 완료 기준

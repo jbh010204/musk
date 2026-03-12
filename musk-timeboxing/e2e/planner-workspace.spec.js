@@ -44,7 +44,7 @@ test('planner workspace composes board canvas and composer in one view', async (
         ],
         bigThree: [],
         timeBoxes: [],
-        boardCanvas: {
+        stackCanvasState: {
           version: 2,
           layoutMode: 'stack',
           selectedCardId: null,
@@ -85,7 +85,7 @@ test('planner workspace composes board canvas and composer in one view', async (
     return (
       parsed?.timeBoxes?.length === 1 &&
       parsed?.brainDump?.find((item) => item.id === 'workspace-card-001')?.linkedTimeBoxIds?.length === 1 &&
-      parsed?.boardCanvas?.selectedCardId === null
+      parsed?.stackCanvasState?.selectedCardId === null
     )
   }, setup.today)
 })
@@ -134,7 +134,7 @@ test('planner workspace can drag a canvas card directly into the timeline rail',
         ],
         bigThree: [],
         timeBoxes: [],
-        boardCanvas: {
+        stackCanvasState: {
           version: 2,
           layoutMode: 'stack',
           selectedCardId: null,

@@ -475,7 +475,7 @@ function App() {
     removeTimeBox,
     restoreTimeBox,
     clearTimeBoxCategory,
-    updateBoardCanvas,
+    updateStackCanvasState,
     reloadCurrentDay,
   } = useDailyData()
   const {
@@ -1402,7 +1402,7 @@ function App() {
       addBoardCard={addBoardCard}
       updateBrainDumpItem={updateBrainDumpItem}
       applyBrainDumpBoardLayout={applyBrainDumpBoardLayout}
-      updateBoardCanvas={updateBoardCanvas}
+      updateStackCanvasState={updateStackCanvasState}
       updateTimeBox={handleUpdateTimeBox}
       onTimerStart={startTimeBoxTimer}
       onTimerPause={pauseTimeBoxTimer}

@@ -1,4 +1,4 @@
-import { createEmptyBoardCanvas } from '../boardCanvas'
+import { createEmptyStackCanvasState } from '../stackCanvasState'
 
 export const PLANNER_SCHEMA_VERSION = 4
 export const PLANNER_META_KEY = 'musk-planner-meta'
@@ -15,7 +15,7 @@ export const createEmptyDay = (dateStr) => ({
   brainDump: [],
   bigThree: [],
   timeBoxes: [],
-  boardCanvas: createEmptyBoardCanvas(),
+  stackCanvasState: createEmptyStackCanvasState(),
 })
 
 export const createEmptyMeta = () => ({

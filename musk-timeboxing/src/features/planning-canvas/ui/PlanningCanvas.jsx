@@ -13,7 +13,7 @@ import {
   buildBoardLayoutEntries,
   getCategoryColor,
   getCategoryLabel,
-  getBoardCardCanvasStatus,
+  getTaskCardStackCanvasStatus,
   groupBoardCardsByCategory,
   UNCATEGORIZED_BOARD_LANE,
 } from '../../../entities/planner'
@@ -44,11 +44,11 @@ const createLaneState = (lanes) =>
   }))
 
 function PlanningCanvas({
-  boardCanvas,
+  stackCanvasState,
   brainDumpItems = [],
   categories = [],
   timeBoxes = [],
-  onUpdateBoardCanvas = () => {},
+  onUpdateStackCanvasState = () => {},
   onCreateCard = () => false,
   onUpdateCard = () => {},
   onApplyLayout = () => {},
@@ -64,7 +64,7 @@ function PlanningCanvas({
   const [editingCard, setEditingCard] = useState(null)
   const [activeCardId, setActiveCardId] = useState(null)
   const [internalSelectedCardId, setInternalSelectedCardId] = useState(
-    controlledSelectedCardId ?? boardCanvas?.selectedCardId ?? null,
+    controlledSelectedCardId ?? stackCanvasState?.selectedCardId ?? null,
   )
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
   const lanes = useMemo(() => groupBoardCardsByCategory(brainDumpItems, categories), [brainDumpItems, categories])
@@ -95,7 +95,7 @@ function PlanningCanvas({
   const selectedCard = selectedCardId ? cardMap.get(selectedCardId) || null : null
   const scheduledCards = brainDumpItems.filter((item) => item.linkedTimeBoxIds?.length > 0).length
   const completedCards = brainDumpItems.filter(
-    (item) => getBoardCardCanvasStatus(item, timeBoxes) === 'COMPLETED',
+    (item) => getTaskCardStackCanvasStatus(item, timeBoxes) === 'COMPLETED',
   ).length
   const uncategorizedCount =
     visualLanes.find((lane) => lane.id === UNCATEGORIZED_BOARD_LANE)?.items.length || 0
@@ -130,7 +130,7 @@ function PlanningCanvas({
       setInternalSelectedCardId(nextId)
     }
 
-    onUpdateBoardCanvas({
+    onUpdateStackCanvasState({
       selectedCardId: nextId,
       focusedLaneId: nextCard?.categoryId || UNCATEGORIZED_BOARD_LANE,
     })
@@ -241,7 +241,7 @@ function PlanningCanvas({
     }
 
     moveCardToLane(selectedCardId, laneId)
-    onUpdateBoardCanvas({
+    onUpdateStackCanvasState({
       selectedCardId,
       focusedLaneId: laneId,
     })
