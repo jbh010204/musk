@@ -373,6 +373,48 @@ export const useDailyData = () => {
     return inserted
   }
 
+  const sendManyToBigThree = (brainDumpIds = []) => {
+    let insertedCount = 0
+
+    setData((prev) => {
+      if (prev.bigThree.length >= 3) {
+        return prev
+      }
+
+      const remainSlots = 3 - prev.bigThree.length
+      const uniqueIds = [...new Set(brainDumpIds.filter((itemId) => typeof itemId === 'string' && itemId.trim().length > 0))]
+      const existingSourceIds = new Set(
+        prev.bigThree
+          .map((item) => item.sourceId)
+          .filter((sourceId) => typeof sourceId === 'string' && sourceId.length > 0),
+      )
+      const candidates = uniqueIds
+        .map((itemId) => prev.brainDump.find((item) => item.id === itemId) || null)
+        .filter(Boolean)
+        .filter((item) => !existingSourceIds.has(item.id))
+        .slice(0, remainSlots)
+
+      if (candidates.length === 0) {
+        return prev
+      }
+
+      insertedCount = candidates.length
+      return {
+        ...prev,
+        bigThree: [
+          ...prev.bigThree,
+          ...candidates.map((source) => ({
+            id: createId(),
+            content: source.content,
+            sourceId: source.id,
+          })),
+        ],
+      }
+    })
+
+    return insertedCount
+  }
+
   const fillBigThreeFromBrainDump = () => {
     let insertedCount = 0
 
@@ -725,6 +767,7 @@ export const useDailyData = () => {
     applyBrainDumpBoardLayout,
     clearBrainDumpCategory,
     sendToBigThree,
+    sendManyToBigThree,
     fillBigThreeFromBrainDump,
     addBigThreeItem,
     removeBigThreeItem,

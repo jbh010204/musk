@@ -24,6 +24,7 @@ import {
   getPlannerPersistenceStatus,
   hasOverlap,
   loadDay,
+  loadLastViewMode,
   saveDay,
   slotDurationMinutes,
   subscribePlannerPersistenceStatus,
@@ -464,6 +465,7 @@ function App() {
     applyBrainDumpBoardLayout,
     clearBrainDumpCategory,
     sendToBigThree,
+    sendManyToBigThree,
     fillBigThreeFromBrainDump,
     addBigThreeItem,
     removeBigThreeItem,
@@ -518,6 +520,7 @@ function App() {
   )
 
   const { showToast, ToastContainer } = useToast()
+  const [timelineViewMode, setTimelineViewMode] = useState(() => loadLastViewMode())
   const [persistenceStatus, setPersistenceStatus] = useState(() => getPlannerPersistenceStatus())
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') {
@@ -772,6 +775,23 @@ function App() {
     }
 
     showToast('채울 브레인 덤프 항목이 없습니다')
+  }
+
+  const handleSendCardsToBigThree = (brainDumpIds = []) => {
+    const insertedCount = sendManyToBigThree(brainDumpIds)
+
+    if (insertedCount > 0) {
+      showToast(`선택 카드 ${insertedCount}개를 빅3에 추가했습니다`)
+      return insertedCount
+    }
+
+    if (data.bigThree.length >= 3) {
+      showToast('빅 3이 이미 가득 찼습니다')
+      return 0
+    }
+
+    showToast('빅3에 추가할 카드가 없습니다')
+    return 0
   }
 
   const applySkipSuggestionAction = () => {
@@ -1379,6 +1399,7 @@ function App() {
       currentDate={currentDate}
       categories={categories}
       brainDumpItems={data.brainDump}
+      bigThree={data.bigThree}
       templates={templates}
       weeklyReport={weeklyReport}
       weeklyPlanningPreview={weeklyPlanningPreview}
@@ -1386,6 +1407,7 @@ function App() {
       monthCalendar={monthCalendar}
       isInsightsLoading={isTimelineInsightsLoading}
       onJumpToDate={goToDate}
+      onViewModeChange={setTimelineViewMode}
       initialFocusSlot={lastFocus?.date === currentDate ? lastFocus.slot : null}
       suggestionMessage={dailySuggestion?.forDate === currentDate ? dailySuggestion.message : null}
       suggestionAction={dailySuggestion?.forDate === currentDate ? dailySuggestion.action : null}
@@ -1400,6 +1422,9 @@ function App() {
       onToggleFocusMode={() => setIsTimelineFocusMode((prev) => !prev)}
       addTimeBox={addTimeBox}
       addBoardCard={addBoardCard}
+      addBigThreeItem={addBigThreeItem}
+      removeBigThreeItem={removeBigThreeItem}
+      onSendCardsToBigThree={handleSendCardsToBigThree}
       updateBrainDumpItem={updateBrainDumpItem}
       applyBrainDumpBoardLayout={applyBrainDumpBoardLayout}
       updateStackCanvasState={updateStackCanvasState}
@@ -1453,7 +1478,7 @@ function App() {
           <div className="hidden min-h-0 flex-1 gap-6 overflow-hidden px-6 pb-6 md:flex">
             <aside className="ui-panel-subtle w-80 flex-shrink-0 overflow-y-auto">
               {dumpSection}
-              {bigThreeSection}
+              {timelineViewMode === 'WORKSPACE' ? null : bigThreeSection}
             </aside>
             <main className="ui-panel flex-1 overflow-y-auto">{timelineSection}</main>
           </div>

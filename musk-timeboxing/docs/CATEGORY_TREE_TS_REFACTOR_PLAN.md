@@ -371,6 +371,7 @@ export interface StackCanvasState {
   layoutMode: 'stack'
   selectedCardId: TaskId | null
   selectedCardIds: TaskId[]
+  selectedBigThreeId: BigThreeId | null
   focusedLaneId: CategoryId | 'uncategorized'
   migratedFromLegacyBoard: boolean
   lastSyncedAt: number | null

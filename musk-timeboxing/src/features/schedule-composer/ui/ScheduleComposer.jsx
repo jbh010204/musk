@@ -29,12 +29,15 @@ function ScheduleComposer({
   timeBoxes = [],
   onScheduleCard = () => false,
   onScheduleCards = () => false,
+  onScheduleBigThreeItem = () => false,
   onJumpToDay = () => {},
   onJumpToBoard = () => {},
   selectedCardId: controlledSelectedCardId = null,
   selectedCardIds: controlledSelectedCardIds = null,
+  selectedBigThreeItem = null,
   onSelectCard = null,
   onSelectCards = null,
+  onSelectBigThree = () => {},
   hideQueue = false,
   nativeDraggingCardId = null,
   onNativeDragEnd = () => {},
@@ -92,6 +95,7 @@ function ScheduleComposer({
       if (onSelectCards) {
         onSelectCards([])
       }
+      onSelectBigThree(null)
     }
     setNativeOverSlot(null)
     return success
@@ -113,6 +117,24 @@ function ScheduleComposer({
       if (onSelectCards) {
         onSelectCards([])
       }
+      onSelectBigThree(null)
+    }
+    setNativeOverSlot(null)
+    return success
+  }
+
+  const handleCreateFromBigThree = (bigThreeId, startSlot) => {
+    const success = onScheduleBigThreeItem(bigThreeId, startSlot)
+    if (success) {
+      if (onSelectCard) {
+        onSelectCard(null)
+      } else {
+        setInternalSelectedCardId(null)
+      }
+      if (onSelectCards) {
+        onSelectCards([])
+      }
+      onSelectBigThree(null)
     }
     setNativeOverSlot(null)
     return success
@@ -252,15 +274,21 @@ function ScheduleComposer({
                     : '30분 스냅 기준으로 즉시 타임박스를 만듭니다.'}
                 </p>
               </div>
-              {selectedCardId ? (
+              {selectedCardIds.length > 1 ? (
                 <span className="rounded-xl bg-indigo-500/15 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
-                  {selectedCardIds.length > 1
-                    ? `${selectedCardIds.length}개 선택 · 총 ${selectedDurationMinutes}분`
-                    : `선택됨: ${cardMap.get(selectedCardId)?.content}`}
+                  {selectedCardIds.length}개 선택 · 총 {selectedDurationMinutes}분
+                </span>
+              ) : selectedCardId ? (
+                <span className="rounded-xl bg-indigo-500/15 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                  선택됨: {cardMap.get(selectedCardId)?.content}
+                </span>
+              ) : selectedBigThreeItem ? (
+                <span className="rounded-xl bg-amber-500/15 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+                  Big3 선택: {selectedBigThreeItem.content}
                 </span>
               ) : hideQueue ? (
                 <span className="rounded-xl bg-slate-200/70 px-2.5 py-1 text-xs text-slate-500 dark:bg-slate-800/70 dark:text-slate-300">
-                  캔버스에서 카드를 선택하세요
+                  캔버스 또는 Big3에서 대상을 선택하세요
                 </span>
               ) : null}
             </div>
@@ -275,6 +303,9 @@ function ScheduleComposer({
                   }
 
                   if (!selectedCardId) {
+                    if (selectedBigThreeItem) {
+                      handleCreateFromBigThree(selectedBigThreeItem.id, slotIndex)
+                    }
                     return
                   }
 

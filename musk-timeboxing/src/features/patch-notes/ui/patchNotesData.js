@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.22.3',
+    date: '2026-03-12',
+    title: 'Workspace Big3 rail: 캔버스 정리 -> Big3 확정 -> 타임라인 배치',
+    summary:
+      '워크스페이스 안에 Big3 rail을 편입해 선택 카드 올리기, Big3 슬롯 선택, 우측 timeline rail 배치까지 한 화면에서 닫히도록 정리했습니다.',
+    focus: [
+      '`stackCanvasState`에 `selectedBigThreeId`를 추가해 카드 선택과 Big3 선택을 같은 workspace 상태 계층에서 관리',
+      '선택한 캔버스 카드를 Big3로 올리고, Big3 슬롯을 누르면 source card 또는 직접 입력 항목이 우측 rail 배치 대상으로 전환',
+      '워크스페이스 모드에서는 기존 좌측 Big3 섹션을 숨겨 중복 UI를 줄이고, 메인 영역의 좌 Big3 / 중 캔버스 / 우 타임라인 흐름을 강조',
+    ],
+    improvements: [
+      '`WorkspaceBigThreeRail.jsx`를 추가하고 `PlannerWorkspace.jsx`가 Big3 rail, canvas, composer를 3열 조합으로 묶도록 변경',
+      '`useDailyData.js`에 `sendManyToBigThree()`를 추가해 다중 선택 카드의 Big3 편입을 한 액션으로 처리',
+      '`ScheduleComposer.jsx`, `Timeline/index.jsx`에 Big3 슬롯 직접 배치 경로를 추가하고 `planner-workspace.spec.js`에 one-screen 회귀를 고정',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planner-workspace 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.22.2',
     date: '2026-03-12',
     title: 'Workspace bulk scheduling: 캔버스 카드 다중 선택 + 연속 배치',

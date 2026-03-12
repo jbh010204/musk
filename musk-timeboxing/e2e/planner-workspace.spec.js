@@ -89,6 +89,100 @@ test('planner workspace composes board canvas and composer in one view', async (
   }, setup.today)
 })
 
+test('planner workspace closes the loop from canvas selection to big3 rail and timeline scheduling', async ({
+  page,
+}) => {
+  await page.goto('/')
+
+  const setup = await page.evaluate(() => {
+    window.localStorage.clear()
+
+    const formatDate = (date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    const today = formatDate(new Date())
+    window.localStorage.setItem('musk-planner-last-date', today)
+    window.localStorage.setItem(
+      'musk-planner-meta',
+      JSON.stringify({
+        schemaVersion: 4,
+        categories: [{ id: 'cat-deep', name: 'Deep Work', color: '#6366f1', parentId: null, order: 0 }],
+        templates: [],
+      }),
+    )
+    window.localStorage.setItem(
+      `musk-planner-${today}`,
+      JSON.stringify({
+        schemaVersion: 4,
+        date: today,
+        brainDump: [
+          {
+            id: 'workspace-big3-card',
+            content: '워크스페이스 Big3 연결 테스트',
+            isDone: false,
+            priority: 0,
+            categoryId: 'cat-deep',
+            stackOrder: 0,
+            estimatedSlots: 2,
+            linkedTimeBoxIds: [],
+            note: '',
+            createdFrom: 'board',
+          },
+        ],
+        bigThree: [],
+        timeBoxes: [],
+        stackCanvasState: {
+          version: 2,
+          layoutMode: 'stack',
+          selectedCardId: null,
+          selectedCardIds: [],
+          selectedBigThreeId: null,
+          focusedLaneId: 'cat-deep',
+          migratedFromLegacyBoard: false,
+          lastSyncedAt: null,
+        },
+      }),
+    )
+
+    return { today }
+  })
+
+  await page.reload()
+
+  await page.locator('[data-testid="planning-board-card-workspace-big3-card"]:visible').first().click()
+  await page.locator('[data-testid="workspace-bigthree-add-selected"]:visible').first().click()
+
+  const bigThreeSlot = page.locator('[data-testid="workspace-bigthree-slot-0"]:visible').first()
+  await expect(bigThreeSlot).toContainText('워크스페이스 Big3 연결 테스트')
+  await bigThreeSlot.click()
+
+  await page.locator('[data-testid="composer-slot-6"]:visible').first().click()
+
+  await expect(page.locator('[data-testid^="composer-block-"]:visible')).toHaveCount(1)
+  await expect(page.locator('[data-testid="planning-board-card-workspace-big3-card"]:visible').first()).toContainText(
+    '예정 1',
+  )
+
+  await page.waitForFunction((today) => {
+    const raw = window.localStorage.getItem(`musk-planner-${today}`)
+    if (!raw) {
+      return false
+    }
+
+    const parsed = JSON.parse(raw)
+    return (
+      parsed?.bigThree?.length === 1 &&
+      parsed?.timeBoxes?.length === 1 &&
+      parsed?.stackCanvasState?.selectedBigThreeId === null &&
+      parsed?.brainDump?.find((item) => item.id === 'workspace-big3-card')?.linkedTimeBoxIds?.length === 1
+    )
+  }, setup.today)
+})
+
 test('planner workspace keeps the last selected timeline view after refresh', async ({ page }) => {
   await page.goto('/')
   await page.evaluate(() => window.localStorage.clear())

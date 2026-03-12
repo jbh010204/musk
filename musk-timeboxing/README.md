@@ -94,14 +94,15 @@ npm run build
 - `캔버스`: custom `Stack Canvas`
   - 브레인 덤프 원본 카드를 직접 생성/선택/카테고리 스택 이동하는 작업면입니다.
   - 무한 화이트보드가 아니라, 미분류와 leaf category stack을 한 화면에서 다루는 planner 전용 canvas입니다.
-  - 카드 선택 상태는 `stackCanvasState.selectedCardId`로만 가볍게 저장하고, 도메인 원본은 계속 `brainDump`가 유지합니다.
+  - 카드/Big3 선택 상태는 `stackCanvasState.selectedCardId`, `selectedCardIds`, `selectedBigThreeId`로만 가볍게 저장하고, 도메인 원본은 계속 `brainDump`와 `bigThree`가 유지합니다.
 - `편성기`: 캔버스 카드를 시간표로 보내기 위한 단계
   - 좌측 카드 큐에서 카드를 선택하거나 드래그해 우측 30분 시간표 슬롯에 배치하면 즉시 오늘 타임라인의 timeBox가 생성됨
   - 카드의 예상 길이(`estimatedSlots`)를 기본 블록 길이로 사용하고, 생성된 일정은 `linkedTimeBoxIds`로 다시 보드/편성기 상태와 연결됨
 - `워크스페이스`: 메인 작업 화면
-  - 중앙 `Stack Canvas`에서 카드를 만들고 분류한 뒤, 우측 `Timeline Rail`에서 선택한 카드를 바로 일정으로 배치합니다.
+  - 왼쪽 `Big3 Rail`, 중앙 `Stack Canvas`, 우측 `Timeline Rail`을 한 화면에 묶어 `캔버스 정리 -> Big3 확정 -> 일정 배치`를 같은 흐름으로 처리합니다.
   - 카드 우측 `일정` 핸들을 잡아 timeline rail 슬롯으로 직접 드래그해도 즉시 배치됩니다.
   - 카드의 `선택` 토글로 여러 장을 고른 뒤, timeline rail 슬롯을 한 번 눌러 선택 순서대로 연속 배치할 수 있습니다.
+  - 선택한 캔버스 카드를 Big3로 올리고, Big3 슬롯을 눌러 곧바로 우측 배치 대상으로 전환할 수 있습니다.
   - 보드/캔버스/편성기를 따로 왕복하는 대신 같은 메인 영역에서 연속적으로 처리하는 흐름입니다.
   - 마지막으로 선택한 일정 보기 모드는 새로고침 후에도 복원되며, 계획 카드만 있고 timeBox가 없는 날은 첫 진입을 `워크스페이스`로 시작합니다.
 - `일간`: 기존 타임라인 편집/드래그/완료 처리 중심 화면

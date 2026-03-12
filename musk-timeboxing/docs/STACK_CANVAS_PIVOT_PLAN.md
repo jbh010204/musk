@@ -38,6 +38,7 @@
 - `layoutMode = 'stack'`
 - `selectedCardId`
 - `selectedCardIds`
+- `selectedBigThreeId`
 - `focusedLaneId`
 - `migratedFromLegacyBoard`
 - `lastSyncedAt`

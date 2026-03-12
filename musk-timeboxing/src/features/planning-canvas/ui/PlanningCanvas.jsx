@@ -176,6 +176,7 @@ function PlanningCanvas({
     onUpdateStackCanvasState({
       selectedCardId: resolvedSelectedCardId,
       selectedCardIds: dedupedIds,
+      selectedBigThreeId: null,
       focusedLaneId: nextCard?.categoryId || UNCATEGORIZED_BOARD_LANE,
     })
   }

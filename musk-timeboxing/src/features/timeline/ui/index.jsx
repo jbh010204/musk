@@ -100,6 +100,7 @@ function Timeline({
   currentDate,
   categories,
   brainDumpItems = [],
+  bigThree = [],
   templates = [],
   weeklyReport,
   weeklyPlanningPreview = [],
@@ -107,6 +108,7 @@ function Timeline({
   monthCalendar = { monthLabel: '', cells: [] },
   isInsightsLoading = false,
   onJumpToDate = () => {},
+  onViewModeChange = () => {},
   initialFocusSlot = null,
   suggestionMessage = null,
   suggestionAction = null,
@@ -119,6 +121,9 @@ function Timeline({
   onTimelineScaleChange = () => {},
   addTimeBox,
   addBoardCard = () => false,
+  addBigThreeItem = () => false,
+  removeBigThreeItem = () => {},
+  onSendCardsToBigThree = () => 0,
   updateBrainDumpItem = () => {},
   applyBrainDumpBoardLayout = () => {},
   updateStackCanvasState = () => {},
@@ -211,6 +216,10 @@ function Timeline({
   useEffect(() => {
     saveLastViewMode(viewMode)
   }, [viewMode])
+
+  useEffect(() => {
+    onViewModeChange(viewMode)
+  }, [onViewModeChange, viewMode])
 
   const categoryLegend = useMemo(() => {
     const legendMap = new Map()
@@ -367,6 +376,27 @@ function Timeline({
 
     showToast(`${previewBoxes.length}개 일정을 연속 배치했습니다`)
     return true
+  }
+
+  const handleScheduleBigThreeItem = (bigThreeId, startSlot) => {
+    const item = data.bigThree.find((entry) => entry.id === bigThreeId)
+    if (!item) {
+      return false
+    }
+
+    if (item.sourceId) {
+      const sourceCard = brainDumpItems.find((entry) => entry.id === item.sourceId) || null
+      if (sourceCard) {
+        return handleScheduleBoardCard(sourceCard.id, startSlot)
+      }
+    }
+
+    return createBox({
+      content: item.content,
+      sourceId: item.sourceId ?? null,
+      startSlot,
+      durationSlots: DEFAULT_BOX_SLOTS,
+    })
   }
 
   const handleSlotClick = (slotIndex) => {
@@ -554,13 +584,18 @@ function Timeline({
           data={data}
           categories={categories}
           brainDumpItems={brainDumpItems}
+          bigThree={bigThree}
           addBoardCard={addBoardCard}
+          addBigThreeItem={addBigThreeItem}
+          removeBigThreeItem={removeBigThreeItem}
           updateBrainDumpItem={updateBrainDumpItem}
           applyBrainDumpBoardLayout={applyBrainDumpBoardLayout}
           updateStackCanvasState={updateStackCanvasState}
           onOpenCategoryManager={onOpenCategoryManager}
+          onSendCardsToBigThree={onSendCardsToBigThree}
           onScheduleBoardCard={handleScheduleBoardCard}
           onScheduleBoardCards={handleScheduleBoardCards}
+          onScheduleBigThreeItem={handleScheduleBigThreeItem}
           onJumpToDay={() => setViewMode('DAY')}
         />
       ) : null}

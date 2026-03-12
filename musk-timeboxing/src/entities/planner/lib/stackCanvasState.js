@@ -8,6 +8,7 @@ export const createEmptyStackCanvasState = () => ({
   layoutMode: 'stack',
   selectedCardId: null,
   selectedCardIds: [],
+  selectedBigThreeId: null,
   focusedLaneId: UNCATEGORIZED_BOARD_LANE,
   migratedFromLegacyBoard: false,
   lastSyncedAt: null,
@@ -36,6 +37,11 @@ export const normalizeStackCanvasState = (value) => {
     layoutMode: 'stack',
     selectedCardId,
     selectedCardIds: normalizedSelectedCardIds,
+    selectedBigThreeId:
+      typeof safeValue.selectedBigThreeId === 'string' &&
+      safeValue.selectedBigThreeId.trim().length > 0
+        ? safeValue.selectedBigThreeId
+        : null,
     focusedLaneId:
       typeof safeValue.focusedLaneId === 'string' && safeValue.focusedLaneId.trim().length > 0
         ? safeValue.focusedLaneId
