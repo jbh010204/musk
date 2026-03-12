@@ -7,6 +7,10 @@ function CategoryStackLane({
   lane,
   selectedCardId = null,
   selectedCardIds = [],
+  showNode = true,
+  compactNode = false,
+  isNodeActive = false,
+  emptyMessage = '카드를 이 노드로 드롭하면 여기 쌓입니다.',
   onEditCard = () => {},
   onSelectCard = () => {},
   onToggleCardSelect = () => {},
@@ -28,19 +32,23 @@ function CategoryStackLane({
       data-testid={`planning-board-lane-${lane.id}`}
       className="rounded-3xl bg-white/45 p-4 shadow-sm backdrop-blur-sm dark:bg-slate-950/35"
     >
-      <CategoryNode
-        laneId={lane.id}
-        label={lane.label}
-        color={lane.color}
-        count={lane.items.length}
-        isEmpty={lane.items.length === 0}
-        isArmed={Boolean(selectedCardId) || selectedCardIds.length > 0}
-        onClick={onSelectNode}
-      />
+      {showNode ? (
+        <CategoryNode
+          laneId={lane.id}
+          label={lane.label}
+          color={lane.color}
+          count={lane.items.length}
+          isEmpty={lane.items.length === 0}
+          isArmed={Boolean(selectedCardId) || selectedCardIds.length > 0}
+          isActive={isNodeActive}
+          compact={compactNode}
+          onClick={onSelectNode}
+        />
+      ) : null}
 
       <div
         ref={setNodeRef}
-        className={`mt-5 min-h-[200px] rounded-2xl border border-dashed p-3 transition-all ${
+        className={`${showNode ? 'mt-5' : ''} min-h-[220px] rounded-2xl border border-dashed p-3 transition-all ${
           isOver ? 'border-indigo-400 bg-indigo-500/5' : 'border-slate-300/70 bg-slate-50/70 dark:border-slate-700/70 dark:bg-slate-900/45'
         }`}
       >
@@ -60,7 +68,7 @@ function CategoryStackLane({
           <div className="space-y-3">
             {lane.items.length === 0 ? (
               <div className="rounded-2xl px-3 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-                카드를 이 노드로 드롭하면 여기 쌓입니다.
+                {emptyMessage}
               </div>
             ) : (
               lane.items.map((item) => (

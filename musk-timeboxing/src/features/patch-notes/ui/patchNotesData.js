@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.22.4',
+    date: '2026-03-12',
+    title: 'Workspace declutter: Category Dock + click-first rail',
+    summary:
+      '워크스페이스의 정보량을 줄이고, 세로 카테고리 나열 대신 상단 Category Dock과 Inbox/Active Stack 구조로 바꿨습니다. 우측 rail도 drag보다 슬롯 클릭을 기본 경로로 재정렬했습니다.',
+    focus: [
+      'Big3 full rail을 상단 compact focus strip로 축소하고, WORKSPACE 모드에서는 외부 사이드바를 접어 메인 폭을 확보',
+      'Stack Canvas는 상단 도크에서 바로 분류하고 본문은 Inbox와 현재 활성 카테고리 한 스택만 보여주도록 단순화',
+      'Timeline Rail은 선택 후 슬롯 클릭을 기본 상호작용으로 명확히 하고, workspace 회귀 테스트도 그 계약으로 갱신',
+    ],
+    improvements: [
+      '`PlanningCanvas.jsx`, `CategoryNode.jsx`, `CategoryStackLane.jsx`를 수정해 horizontal category dock + active lane 레이아웃으로 전환',
+      '`PlannerWorkspace.jsx`, `WorkspaceBigThreeRail.jsx`, `App.jsx`를 수정해 Big3 strip 상단 배치와 외부 rail 축소를 적용',
+      '`ScheduleComposer.jsx`, `planner-workspace.spec.js`, `README.md`를 현재 클릭 우선 워크플로에 맞춰 정리',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planner-workspace 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.22.3',
     date: '2026-03-12',
     title: 'Workspace Big3 rail: 캔버스 정리 -> Big3 확정 -> 타임라인 배치',

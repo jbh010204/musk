@@ -177,7 +177,7 @@ function ScheduleComposer({
               카드를 시간표에 배치합니다.
             </p>
             <p className={`mt-2 text-slate-500 dark:text-slate-400 ${embedded ? 'text-xs' : 'text-sm'}`}>
-              카드를 선택한 뒤 원하는 슬롯을 누르거나, 카드 자체를 시간표로 드래그해 배치합니다.
+              카드를 먼저 선택한 뒤 원하는 슬롯을 눌러 배치합니다.
             </p>
           </div>
 
@@ -270,7 +270,7 @@ function ScheduleComposer({
                 </p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   {hideQueue
-                    ? '캔버스에서 선택한 카드를 30분 스냅 기준으로 바로 일정에 넣습니다.'
+                    ? '왼쪽에서 대상을 하나 고른 뒤, 여기 슬롯을 눌러 30분 스냅으로 일정에 넣습니다.'
                     : '30분 스냅 기준으로 즉시 타임박스를 만듭니다.'}
                 </p>
               </div>

@@ -12,13 +12,13 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   buildBoardLayoutEntries,
   getCategoryColor,
-  getCategoryLabel,
   getTaskCardStackCanvasStatus,
   groupBoardCardsByCategory,
   UNCATEGORIZED_BOARD_LANE,
 } from '../../../entities/planner'
 import { Badge, Button, Card } from '../../../shared/ui'
 import BoardCardEditorModal from '../../planning-board/ui/BoardCardEditorModal'
+import CategoryNode from '../../planning-board/ui/CategoryNode'
 import CategoryStackLane from '../../planning-board/ui/CategoryStackLane'
 
 const resolveLaneIdFromOver = (overId, lanes) => {
@@ -82,6 +82,7 @@ function PlanningCanvas({
   const selectedCardIds = Array.isArray(controlledSelectedCardIds)
     ? controlledSelectedCardIds
     : internalSelectedCardIds
+  const focusedLaneId = stackCanvasState?.focusedLaneId ?? UNCATEGORIZED_BOARD_LANE
 
   const visualLanes = useMemo(
     () =>
@@ -102,13 +103,27 @@ function PlanningCanvas({
   )
 
   const activeCard = activeCardId ? cardMap.get(activeCardId) || null : null
-  const selectedCard = selectedCardId ? cardMap.get(selectedCardId) || null : null
   const scheduledCards = brainDumpItems.filter((item) => item.linkedTimeBoxIds?.length > 0).length
   const completedCards = brainDumpItems.filter(
     (item) => getTaskCardStackCanvasStatus(item, timeBoxes) === 'COMPLETED',
   ).length
   const uncategorizedCount =
     visualLanes.find((lane) => lane.id === UNCATEGORIZED_BOARD_LANE)?.items.length || 0
+  const dockLanes = useMemo(() => visualLanes, [visualLanes])
+  const uncategorizedLane =
+    visualLanes.find((lane) => lane.id === UNCATEGORIZED_BOARD_LANE) || visualLanes[0] || null
+  const activeLane = useMemo(() => {
+    const preferredLane =
+      focusedLaneId && focusedLaneId !== UNCATEGORIZED_BOARD_LANE
+        ? visualLanes.find((lane) => lane.id === focusedLaneId) || null
+        : null
+
+    if (preferredLane) {
+      return preferredLane
+    }
+
+    return visualLanes.find((lane) => lane.id !== UNCATEGORIZED_BOARD_LANE) || null
+  }, [focusedLaneId, visualLanes])
 
   useEffect(() => {
     setLaneState(createLaneState(lanes))
@@ -315,6 +330,9 @@ function PlanningCanvas({
   const handleSelectNode = (laneId) => {
     const armedCardIds = selectedCardIds.length > 0 ? selectedCardIds : selectedCardId ? [selectedCardId] : []
     if (armedCardIds.length === 0) {
+      onUpdateStackCanvasState({
+        focusedLaneId: laneId,
+      })
       return
     }
 
@@ -329,10 +347,19 @@ function PlanningCanvas({
   const handleSubmitEditor = (payload) => {
     if (editingCard?.id) {
       onUpdateCard(editingCard.id, payload)
+      onUpdateStackCanvasState({
+        focusedLaneId: payload.categoryId || UNCATEGORIZED_BOARD_LANE,
+      })
       return true
     }
 
-    return onCreateCard(payload)
+    const inserted = onCreateCard(payload)
+    if (inserted) {
+      onUpdateStackCanvasState({
+        focusedLaneId: payload.categoryId || UNCATEGORIZED_BOARD_LANE,
+      })
+    }
+    return inserted
   }
 
   const collisionStrategy = (args) => {
@@ -352,11 +379,8 @@ function PlanningCanvas({
             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               Stack Canvas
             </h3>
-            <p className={`mt-2 font-semibold text-slate-900 dark:text-slate-100 ${embedded ? 'text-base' : 'text-lg'}`}>
-              캔버스 안에서 카드를 만들고 카테고리 스택으로 분류합니다.
-            </p>
-            <p className={`mt-2 text-slate-500 dark:text-slate-400 ${embedded ? 'text-xs' : 'text-sm'}`}>
-              브레인 덤프 원본을 카드로 다루고, 드래그로 카테고리 스택을 옮긴 뒤 선택한 카드를 우측 타임라인에 배치합니다.
+            <p className={`mt-1 font-semibold text-slate-900 dark:text-slate-100 ${embedded ? 'text-base' : 'text-lg'}`}>
+              먼저 카드 생성과 분류만 빠르게 끝냅니다.
             </p>
           </div>
 
@@ -388,51 +412,11 @@ function PlanningCanvas({
           <Badge tone="neutral">전체 카드 {brainDumpItems.length}개</Badge>
           <Badge tone="neutral">미분류 {uncategorizedCount}개</Badge>
           <Badge tone="neutral">예정 연결 {scheduledCards}개</Badge>
-          <Badge tone="neutral">완료 {completedCards}개</Badge>
+          {completedCards > 0 ? <Badge tone="neutral">완료 {completedCards}개</Badge> : null}
           {selectedCardIds.length > 1 ? <Badge tone="neutral">다중 선택 {selectedCardIds.length}개</Badge> : null}
-        </div>
-
-        <div className="mt-4 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
-          {selectedCardIds.length > 1 ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-semibold">다중 선택:</span>
-              <span>{selectedCardIds.length}개 카드</span>
-              <span className="text-slate-400">·</span>
-              <span>
-                총{' '}
-                {selectedCardIds.reduce(
-                  (sum, itemId) => sum + ((cardMap.get(itemId)?.estimatedSlots || 1) * 30),
-                  0,
-                )}
-                분
-              </span>
-              <button
-                type="button"
-                className="rounded-xl px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100"
-                onClick={() => applySelection([], null)}
-              >
-                선택 해제
-              </button>
-            </div>
-          ) : selectedCard ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-semibold">선택됨:</span>
-              <span>{selectedCard.content}</span>
-              <span className="text-slate-400">·</span>
-              <span>{getCategoryLabel(categories.find((category) => category.id === selectedCard.categoryId), null) || '미분류'}</span>
-              <span className="text-slate-400">·</span>
-              <span>{selectedCard.estimatedSlots * 30}분</span>
-              <button
-                type="button"
-                className="rounded-xl px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100"
-                onClick={() => applySelection([], null)}
-              >
-                선택 해제
-              </button>
-            </div>
-          ) : (
-            '카드를 클릭해 선택하고, 같은 화면 오른쪽 시간표에서 원하는 슬롯을 눌러 일정으로 만듭니다.'
-          )}
+          <Badge tone="neutral">
+            활성 카테고리 {activeLane?.label || '없음'}
+          </Badge>
         </div>
       </Card>
 
@@ -448,22 +432,94 @@ function PlanningCanvas({
             data-testid="planning-canvas-surface"
             className={`rounded-[28px] bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.25)_1px,transparent_0)] bg-[length:24px_24px] ${embedded ? 'p-4' : 'p-5'} dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.35)_1px,transparent_0)]`}
           >
-            <div className={`grid gap-5 ${embedded ? 'grid-cols-1' : 'xl:grid-cols-3'}`}>
-            {visualLanes.map((lane) => (
-              <CategoryStackLane
-                key={lane.id}
-                lane={lane}
-                selectedCardId={selectedCardId}
-                selectedCardIds={selectedCardIds}
-                onEditCard={setEditingCard}
-                onSelectCard={(item) => setSelectedCard(item)}
-                onToggleCardSelect={(item) => toggleSelectedCard(item)}
-                onSelectNode={handleSelectNode}
-                scheduleDraggable={scheduleDraggable}
-                onScheduleDragStart={onScheduleDragStart}
-                onScheduleDragEnd={onScheduleDragEnd}
-              />
-              ))}
+            <div className="space-y-5">
+              <div className="rounded-3xl bg-white/55 p-4 shadow-sm backdrop-blur-sm dark:bg-slate-950/35">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Category Dock
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      카드를 아래로 길게 끌지 말고, 위 도크에서 바로 분류합니다.
+                    </p>
+                  </div>
+                  {selectedCardIds.length > 0 ? (
+                    <button
+                      type="button"
+                      className="rounded-xl px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                      onClick={() => applySelection([], null)}
+                    >
+                      선택 해제
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="overflow-x-auto">
+                  <div className="flex min-w-max items-start gap-3 pb-1">
+                    {dockLanes.map((lane) => (
+                      <CategoryNode
+                        key={lane.id}
+                        laneId={lane.id}
+                        label={lane.label}
+                        color={lane.color}
+                        count={lane.items.length}
+                        isEmpty={lane.items.length === 0}
+                        isArmed={Boolean(selectedCardId) || selectedCardIds.length > 0}
+                        isActive={
+                          lane.id === UNCATEGORIZED_BOARD_LANE
+                            ? focusedLaneId === UNCATEGORIZED_BOARD_LANE
+                            : activeLane?.id === lane.id
+                        }
+                        compact
+                        onClick={handleSelectNode}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-5 xl:grid-cols-[20rem_minmax(0,1fr)]">
+                {uncategorizedLane ? (
+                  <CategoryStackLane
+                    lane={uncategorizedLane}
+                    selectedCardId={selectedCardId}
+                    selectedCardIds={selectedCardIds}
+                    showNode={false}
+                    isNodeActive={focusedLaneId === UNCATEGORIZED_BOARD_LANE}
+                    emptyMessage="새 카드가 여기 들어옵니다. 위 도크를 눌러 바로 분류하세요."
+                    onEditCard={setEditingCard}
+                    onSelectCard={(item) => setSelectedCard(item)}
+                    onToggleCardSelect={(item) => toggleSelectedCard(item)}
+                    onSelectNode={handleSelectNode}
+                    scheduleDraggable={scheduleDraggable}
+                    onScheduleDragStart={onScheduleDragStart}
+                    onScheduleDragEnd={onScheduleDragEnd}
+                  />
+                ) : null}
+
+                {activeLane ? (
+                  <CategoryStackLane
+                    key={activeLane.id}
+                    lane={activeLane}
+                    selectedCardId={selectedCardId}
+                    selectedCardIds={selectedCardIds}
+                    showNode={false}
+                    isNodeActive
+                    emptyMessage="이 카테고리는 아직 비어 있습니다. Inbox 카드나 다른 카테고리 카드를 위 도크로 보내 보세요."
+                    onEditCard={setEditingCard}
+                    onSelectCard={(item) => setSelectedCard(item)}
+                    onToggleCardSelect={(item) => toggleSelectedCard(item)}
+                    onSelectNode={handleSelectNode}
+                    scheduleDraggable={scheduleDraggable}
+                    onScheduleDragStart={onScheduleDragStart}
+                    onScheduleDragEnd={onScheduleDragEnd}
+                  />
+                ) : (
+                  <div className="rounded-3xl bg-white/45 p-6 text-sm text-slate-500 shadow-sm backdrop-blur-sm dark:bg-slate-950/35 dark:text-slate-400">
+                    아직 카테고리가 없습니다. 먼저 카테고리를 만든 뒤, 위 도크에서 선택하면 해당 스택이 여기 열립니다.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </Card>

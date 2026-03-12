@@ -56,7 +56,7 @@
 
 ### P5. StackCanvas -> TimelineRail 연결
 - workspace에서 canvas card 선택
-- 우측 timeline rail 슬롯 클릭 또는 카드의 `일정` 핸들 직접 드래그로 `timeBox` 생성
+- 우측 timeline rail 슬롯 클릭을 기본 경로로 `timeBox` 생성
 - 성공 시 linked badge 동기화
 
 ### P6. tldraw 제거
@@ -67,16 +67,17 @@
 ## 목표 레이아웃
 
 ```text
-| App Left Rail | StackCanvas | Timeline Rail |
+| Big3 Focus Strip |
+| StackCanvas | Timeline Rail |
 ```
 
-- App Left Rail: Brain Dump, Big3, 날짜/리포트 등 기존 앱 rail
-- StackCanvas: 카드 생성/분류 중심
-- Timeline Rail: 선택 카드 일정 배치 중심
+- Big3 Focus Strip: 핵심 3개 확정
+- StackCanvas: 상단 Category Dock + Inbox / Active Category Stack 구조
+- Timeline Rail: 선택 대상 슬롯 클릭 배치 중심
 
 ## 비목표
 - 무한 캔버스
 - 자유 draw/freehand
 - zoom/pan 엔진
 - canvas 내부 time grid
-- canvas 내부 Big3 편집
+- 세로 전체 카테고리 스택 나열

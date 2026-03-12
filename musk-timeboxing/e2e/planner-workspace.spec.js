@@ -195,7 +195,7 @@ test('planner workspace keeps the last selected timeline view after refresh', as
   await expect(page.locator('[data-testid="timeline-view-week"][aria-pressed="true"]:visible').first()).toBeVisible()
 })
 
-test('planner workspace can drag a canvas card directly into the timeline rail', async ({ page }) => {
+test('planner workspace uses category dock and slot click as the primary scheduling flow', async ({ page }) => {
   await page.goto('/')
 
   await page.evaluate(() => {
@@ -226,10 +226,10 @@ test('planner workspace can drag a canvas card directly into the timeline rail',
         brainDump: [
           {
             id: 'workspace-drag-card',
-            content: '직접 드래그 배치 테스트',
+            content: '도크 분류 후 슬롯 클릭 배치',
             isDone: false,
             priority: 0,
-            categoryId: 'cat-focus',
+            categoryId: null,
             stackOrder: 0,
             estimatedSlots: 3,
             linkedTimeBoxIds: [],
@@ -254,17 +254,15 @@ test('planner workspace can drag a canvas card directly into the timeline rail',
   await page.reload()
   await page.locator('[data-testid="timeline-view-workspace"]:visible').first().click()
 
-  const dragHandle = page.locator('[data-testid="planning-board-card-schedule-handle-workspace-drag-card"]').first()
-  const targetSlot = page.locator('[data-testid="composer-slot-12"]:visible').first()
-  const dataTransfer = await page.evaluateHandle(() => new DataTransfer())
+  await page.locator('[data-testid="planning-board-card-workspace-drag-card"]:visible').first().click()
+  await page.locator('[data-testid="planning-board-node-cat-focus"]:visible').first().click()
+  await expect(page.locator('[data-testid="planning-board-lane-cat-focus"]:visible').first()).toContainText(
+    '도크 분류 후 슬롯 클릭 배치',
+  )
 
-  await dragHandle.dispatchEvent('dragstart', { dataTransfer })
-  await targetSlot.dispatchEvent('dragenter', { dataTransfer })
-  await targetSlot.dispatchEvent('dragover', { dataTransfer })
-  await targetSlot.dispatchEvent('drop', { dataTransfer })
-  await dragHandle.dispatchEvent('dragend', { dataTransfer })
+  await page.locator('[data-testid="composer-slot-12"]:visible').first().click()
 
-  await expect(page.locator('[data-testid^="composer-block-"]').first()).toContainText('직접 드래그 배치 테스트')
+  await expect(page.locator('[data-testid^="composer-block-"]').first()).toContainText('도크 분류 후 슬롯 클릭 배치')
   await expect(page.locator('[data-testid="planning-board-card-workspace-drag-card"]:visible').first()).toContainText(
     '예정 1',
   )
@@ -344,7 +342,7 @@ test('planner workspace can bulk schedule multiple selected canvas cards', async
   await page.locator('[data-testid="planning-board-card-select-toggle-workspace-bulk-card-1"]:visible').first().click()
   await page.locator('[data-testid="planning-board-card-select-toggle-workspace-bulk-card-2"]:visible').first().click()
 
-  await expect(page.getByText('카드 2개 선택됨').first()).toBeVisible()
+  await expect(page.getByText('다중 선택 2개').first()).toBeVisible()
   await page.locator('[data-testid="composer-slot-8"]:visible').first().click()
 
   await expect(page.locator('[data-testid^="composer-block-"]:visible')).toHaveCount(2)

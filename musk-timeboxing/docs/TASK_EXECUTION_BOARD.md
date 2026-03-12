@@ -139,6 +139,10 @@
 - `P5a` StackCanvas 카드 -> Timeline Rail 직접 드래그 배치
 - `P5b` StackCanvas 카드 다중 선택 -> Timeline Rail 연속 배치
 - `P5c` Workspace Big3 rail -> Timeline Rail one-screen 흐름
+- `W1` Workspace declutter
+- `W2` Category Dock + Active Stack 전환
+- `W3` Timeline Rail click-first interaction 정리
+- `W4` Big3 compact focus strip 전환
 - `P6` tldraw 제거 및 문서 교체
 
 완료:
@@ -155,6 +159,10 @@
 - `P5a` StackCanvas 카드 -> Timeline Rail 직접 드래그 배치
 - `P5b` StackCanvas 카드 다중 선택 -> Timeline Rail 연속 배치
 - `P5c` Workspace Big3 rail -> Timeline Rail one-screen 흐름
+- `W1` Workspace declutter
+- `W2` Category Dock + Active Stack 전환
+- `W3` Timeline Rail click-first interaction 정리
+- `W4` Big3 compact focus strip 전환
 - `P6` tldraw 제거 및 문서 교체
 
 ### T1. FSD 전환 1단계 (폴더 구조 개편 기반)
