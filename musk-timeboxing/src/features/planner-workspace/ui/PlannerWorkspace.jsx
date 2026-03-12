@@ -10,13 +10,13 @@ function PlannerWorkspace({
   currentDate,
   data,
   categories,
-  brainDumpItems,
+  taskCards,
   bigThree = [],
   addBoardCard,
   addBigThreeItem,
   removeBigThreeItem,
-  updateBrainDumpItem,
-  applyBrainDumpBoardLayout,
+  updateTaskCard,
+  applyTaskCardBoardLayout,
   updateStackCanvasState,
   onOpenCategoryManager,
   onSendCardsToBigThree,
@@ -60,7 +60,7 @@ function PlannerWorkspace({
           ? preferredId
           : dedupedIds.at(-1) ?? null
     const nextCard = resolvedSelectedCardId
-      ? brainDumpItems.find((item) => item.id === resolvedSelectedCardId) || null
+      ? taskCards.find((item) => item.id === resolvedSelectedCardId) || null
       : null
 
     updateStackCanvasState({
@@ -86,7 +86,7 @@ function PlannerWorkspace({
     }
 
     const sourceCard = slot.sourceId
-      ? brainDumpItems.find((item) => item.id === slot.sourceId) || null
+      ? taskCards.find((item) => item.id === slot.sourceId) || null
       : null
 
     if (sourceCard) {
@@ -114,7 +114,7 @@ function PlannerWorkspace({
       <Card className="overflow-hidden p-0" data-testid="workspace-shell">
         <WorkspaceBigThreeRail
           bigThree={bigThree}
-          brainDumpItems={brainDumpItems}
+          taskCards={taskCards}
           selectedCardId={selectedCardId}
           selectedCardIds={selectedCardIds}
           selectedBigThreeId={selectedBigThreeId}
@@ -138,13 +138,13 @@ function PlannerWorkspace({
               key={`${currentDate}-workspace`}
               currentDate={currentDate}
               stackCanvasState={data.stackCanvasState}
-              brainDumpItems={brainDumpItems}
+              taskCards={taskCards}
               categories={categories}
               timeBoxes={data.timeBoxes}
               onUpdateStackCanvasState={updateStackCanvasState}
               onCreateCard={addBoardCard}
-              onUpdateCard={updateBrainDumpItem}
-              onApplyLayout={applyBrainDumpBoardLayout}
+              onUpdateCard={updateTaskCard}
+              onApplyLayout={applyTaskCardBoardLayout}
               onOpenCategoryManager={onOpenCategoryManager}
               onOpenComposer={() => {}}
               selectedCardId={selectedCardId}

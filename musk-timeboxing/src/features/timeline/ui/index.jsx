@@ -43,7 +43,7 @@ const resolveInitialViewMode = (data) => {
     return persistedViewMode
   }
 
-  const hasPlanningCards = Array.isArray(data?.brainDump) && data.brainDump.length > 0
+  const hasPlanningCards = Array.isArray(data?.taskCards) && data.taskCards.length > 0
   const hasScheduledBoxes = Array.isArray(data?.timeBoxes) && data.timeBoxes.length > 0
 
   if (hasPlanningCards && !hasScheduledBoxes) {
@@ -97,7 +97,7 @@ function Timeline({
   data,
   currentDate,
   categories,
-  brainDumpItems = [],
+  taskCards = [],
   bigThree = [],
   templates = [],
   weeklyReport,
@@ -122,8 +122,8 @@ function Timeline({
   addBigThreeItem = () => false,
   removeBigThreeItem = () => {},
   onSendCardsToBigThree = () => 0,
-  updateBrainDumpItem = () => {},
-  applyBrainDumpBoardLayout = () => {},
+  updateTaskCard = () => {},
+  applyTaskCardBoardLayout = () => {},
   updateStackCanvasState = () => {},
   updateTimeBox,
   onTimerStart = () => {},
@@ -284,17 +284,17 @@ function Timeline({
   }
 
   const handleScheduleBoardCard = (cardId, startSlot) => {
-    const card = brainDumpItems.find((item) => item.id === cardId)
+    const card = taskCards.find((item) => item.id === cardId)
     if (!card) {
       return false
     }
 
     const categoryMeta = card.categoryId ? categoryMap.get(card.categoryId) : null
     return createBox({
-      content: card.content,
+      content: card.title,
       sourceId: card.id,
       startSlot,
-      durationSlots: card.estimatedSlots || DEFAULT_BOX_SLOTS,
+      durationSlots: card.estimateSlots || DEFAULT_BOX_SLOTS,
       categoryId: card.categoryId ?? null,
       category: categoryMeta?.name ?? null,
     })
@@ -302,7 +302,7 @@ function Timeline({
 
   const handleScheduleBoardCards = (cardIds, startSlot) => {
     const cards = cardIds
-      .map((cardId) => brainDumpItems.find((item) => item.id === cardId) || null)
+      .map((cardId) => taskCards.find((item) => item.id === cardId) || null)
       .filter(Boolean)
 
     if (cards.length === 0) {
@@ -313,7 +313,7 @@ function Timeline({
     let cursor = startSlot
 
     for (const card of cards) {
-      const duration = Math.max(1, Math.min(TOTAL_SLOTS, card.estimatedSlots || DEFAULT_BOX_SLOTS))
+      const duration = Math.max(1, Math.min(TOTAL_SLOTS, card.estimateSlots || DEFAULT_BOX_SLOTS))
       const endSlot = cursor + duration
 
       if (endSlot > TOTAL_SLOTS) {
@@ -323,7 +323,7 @@ function Timeline({
 
       const categoryMeta = card.categoryId ? categoryMap.get(card.categoryId) : null
       const candidate = {
-        content: card.content,
+        content: card.title,
         sourceId: card.id,
         startSlot: cursor,
         endSlot,
@@ -350,7 +350,7 @@ function Timeline({
 
   const handleScheduleBoardCardsToFirstOpen = (cardIds) => {
     const cards = cardIds
-      .map((cardId) => brainDumpItems.find((item) => item.id === cardId) || null)
+      .map((cardId) => taskCards.find((item) => item.id === cardId) || null)
       .filter(Boolean)
 
     if (cards.length === 0) {
@@ -359,7 +359,7 @@ function Timeline({
 
     if (cards.length === 1) {
       const card = cards[0]
-      const startSlot = findAvailableStartSlot(data.timeBoxes, 0, card.estimatedSlots || DEFAULT_BOX_SLOTS)
+      const startSlot = findAvailableStartSlot(data.timeBoxes, 0, card.estimateSlots || DEFAULT_BOX_SLOTS)
 
       if (startSlot == null) {
         showToast('선택한 카드를 배치할 빈 시간이 없습니다')
@@ -371,7 +371,7 @@ function Timeline({
 
     const startSlot = findContiguousStartSlot(
       data.timeBoxes,
-      cards.map((card) => card.estimatedSlots || DEFAULT_BOX_SLOTS),
+      cards.map((card) => card.estimateSlots || DEFAULT_BOX_SLOTS),
       0,
     )
 
@@ -390,7 +390,7 @@ function Timeline({
     }
 
     if (item.sourceId) {
-      const sourceCard = brainDumpItems.find((entry) => entry.id === item.sourceId) || null
+      const sourceCard = taskCards.find((entry) => entry.id === item.sourceId) || null
       if (sourceCard) {
         return handleScheduleBoardCard(sourceCard.id, startSlot)
       }
@@ -544,13 +544,13 @@ function Timeline({
           currentDate={currentDate}
           data={data}
           categories={categories}
-          brainDumpItems={brainDumpItems}
+          taskCards={taskCards}
           bigThree={bigThree}
           addBoardCard={addBoardCard}
           addBigThreeItem={addBigThreeItem}
           removeBigThreeItem={removeBigThreeItem}
-          updateBrainDumpItem={updateBrainDumpItem}
-          applyBrainDumpBoardLayout={applyBrainDumpBoardLayout}
+          updateTaskCard={updateTaskCard}
+          applyTaskCardBoardLayout={applyTaskCardBoardLayout}
           updateStackCanvasState={updateStackCanvasState}
           onOpenCategoryManager={onOpenCategoryManager}
           onSendCardsToBigThree={onSendCardsToBigThree}
@@ -753,13 +753,13 @@ function Timeline({
           key={currentDate}
           currentDate={currentDate}
           stackCanvasState={data.stackCanvasState}
-          brainDumpItems={brainDumpItems}
+          taskCards={taskCards}
           categories={categories}
           timeBoxes={data.timeBoxes}
           onUpdateStackCanvasState={updateStackCanvasState}
           onCreateCard={addBoardCard}
-          onUpdateCard={updateBrainDumpItem}
-          onApplyLayout={applyBrainDumpBoardLayout}
+          onUpdateCard={updateTaskCard}
+          onApplyLayout={applyTaskCardBoardLayout}
           onOpenCategoryManager={onOpenCategoryManager}
           onOpenComposer={() => setViewMode('COMPOSER')}
         />
@@ -767,7 +767,7 @@ function Timeline({
 
       {isComposerView ? (
         <ScheduleComposer
-          items={brainDumpItems}
+          items={taskCards}
           categories={categories}
           timeBoxes={sortedBoxes}
           onScheduleCard={handleScheduleBoardCard}

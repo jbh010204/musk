@@ -1,23 +1,27 @@
 import { useEffect, useState } from 'react'
 import {
   DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
+  addManualBigThreeItem,
+  addManyTaskCardsToBigThree,
   addTaskCardRecord,
-  applyTaskCardBoardLayout,
+  addTaskCardToBigThree,
+  applyTaskCardBoardLayout as applyTaskCardBoardLayoutCommand,
+  autofillBigThreeFromTaskCards,
   clearTaskCardCategory,
   cycleTaskCardPriority,
   findAvailableStartSlot,
   getMostRecentStoredDate,
   hasOverlap,
-  loadDay,
   loadLastActiveDate,
   loadLastFocus,
+  loadPlannerDayModel,
   normalizeStackCanvasState,
   removeTaskCardRecord,
+  removeBigThreeItemRecord,
   restoreTaskCardRecord,
-  saveDay,
   saveLastActiveDate,
   saveLastFocus,
-  sortBrainDumpItems,
+  savePlannerDayModel,
   syncTaskCardLinksWithTimeBoxes,
   TOTAL_SLOTS,
   updateTaskCardRecord,
@@ -101,17 +105,17 @@ const normalizeRestoredTimeBox = (box) => {
   }
 }
 
-const syncBrainDumpLinks = (brainDump, timeBoxes) => syncTaskCardLinksWithTimeBoxes(brainDump, timeBoxes)
+const syncTaskCardLinks = (taskCards, timeBoxes) => syncTaskCardLinksWithTimeBoxes(taskCards, timeBoxes)
 
 export const useDailyData = () => {
   const today = formatDate(new Date())
   const initialDate = loadLastActiveDate() ?? getMostRecentStoredDate() ?? today
   const [currentDate, setCurrentDate] = useState(initialDate)
-  const [data, setData] = useState(() => loadDay(initialDate))
+  const [data, setData] = useState(() => loadPlannerDayModel(initialDate))
   const [lastFocus, setLastFocus] = useState(() => loadLastFocus())
 
   useEffect(() => {
-    saveDay(currentDate, data)
+    savePlannerDayModel(currentDate, data)
   }, [currentDate, data])
 
   useEffect(() => {
@@ -134,8 +138,8 @@ export const useDailyData = () => {
   }
 
   const carryOverUnfinished = (fromDate, toDate) => {
-    const source = fromDate === currentDate ? data : loadDay(fromDate)
-    const target = loadDay(toDate)
+    const source = fromDate === currentDate ? data : loadPlannerDayModel(fromDate)
+    const target = loadPlannerDayModel(toDate)
     const nextBoxes = [...target.timeBoxes]
     const pendingBoxes = source.timeBoxes.filter((box) => box.status !== 'COMPLETED')
     let moved = 0
@@ -178,7 +182,7 @@ export const useDailyData = () => {
     })
 
     if (moved > 0) {
-      saveDay(toDate, {
+      savePlannerDayModel(toDate, {
         ...target,
         timeBoxes: nextBoxes,
       })
@@ -195,14 +199,14 @@ export const useDailyData = () => {
     const shouldCarry = options.autoCarry !== false
     const result = shouldCarry ? carryOverUnfinished(currentDate, nextDate) : { moved: 0, skipped: 0 }
     setCurrentDate(nextDate)
-    setData(loadDay(nextDate))
+    setData(loadPlannerDayModel(nextDate))
     return result
   }
 
   const goPrevDay = () => {
     const prevDate = shiftDate(currentDate, -1)
     setCurrentDate(prevDate)
-    setData(loadDay(prevDate))
+    setData(loadPlannerDayModel(prevDate))
   }
 
   const goToDate = (dateStr) => {
@@ -211,224 +215,182 @@ export const useDailyData = () => {
     }
 
     setCurrentDate(dateStr)
-    setData(loadDay(dateStr))
+    setData(loadPlannerDayModel(dateStr))
   }
 
-  const addBrainDumpItem = (content) => {
-    const trimmed = content.trim()
+  const addTaskCard = (title) => {
+    const trimmed = title.trim()
     if (!trimmed) return
 
     setData((prev) => ({
       ...prev,
-      brainDump: addTaskCardRecord(prev.brainDump, {
-        content: trimmed,
+      taskCards: addTaskCardRecord(prev.taskCards, {
+        title: trimmed,
         isDone: false,
         priority: 0,
         categoryId: null,
-        estimatedSlots: DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
+        estimateSlots: DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
         linkedTimeBoxIds: [],
         note: '',
-        createdFrom: 'list',
+        origin: 'list',
       }),
     }))
   }
 
-  const addBoardCard = ({ content, categoryId = null, estimatedSlots = 1, note = '' }) => {
-    const trimmed = String(content || '').trim()
+  const addBoardCard = ({ title, categoryId = null, estimateSlots = 1, note = '' }) => {
+    const trimmed = String(title || '').trim()
     if (!trimmed) {
       return false
     }
 
     setData((prev) => ({
       ...prev,
-      brainDump: addTaskCardRecord(prev.brainDump, {
-        content: trimmed,
+      taskCards: addTaskCardRecord(prev.taskCards, {
+        title: trimmed,
         isDone: false,
         priority: 0,
         categoryId,
-        estimatedSlots,
+        estimateSlots,
         linkedTimeBoxIds: [],
         note,
-        createdFrom: 'board',
+        origin: 'board',
       }),
     }))
 
     return true
   }
 
-  const removeBrainDumpItem = (id) => {
+  const removeTaskCard = (id) => {
     setData((prev) => ({
       ...prev,
-      brainDump: removeTaskCardRecord(prev.brainDump, id),
+      taskCards: removeTaskCardRecord(prev.taskCards, id),
     }))
   }
 
-  const restoreBrainDumpItem = (item, index = null) => {
+  const restoreTaskCard = (item, index = null) => {
     let restored = false
     setData((prev) => {
-      const nextBrainDump = restoreTaskCardRecord(prev.brainDump, item, index)
-      restored = nextBrainDump.length !== prev.brainDump.length
+      const nextTaskCards = restoreTaskCardRecord(prev.taskCards, item, index)
+      restored = nextTaskCards.length !== prev.taskCards.length
 
       return {
         ...prev,
-        brainDump: nextBrainDump,
+        taskCards: nextTaskCards,
       }
     })
 
     return restored
   }
 
-  const cycleBrainDumpItemPriority = (id) => {
+  const cycleTaskCardItemPriority = (id) => {
     let nextPriority = null
 
     setData((prev) => {
-      const { nextTaskCards, nextPriority: resolvedPriority } = cycleTaskCardPriority(prev.brainDump, id)
-      if (nextTaskCards === prev.brainDump) {
+      const { nextTaskCards, nextPriority: resolvedPriority } = cycleTaskCardPriority(prev.taskCards, id)
+      if (nextTaskCards === prev.taskCards) {
         return prev
       }
       nextPriority = resolvedPriority
 
       return {
         ...prev,
-        brainDump: nextTaskCards,
+        taskCards: nextTaskCards,
       }
     })
 
     return nextPriority
   }
 
-  const updateBrainDumpItem = (id, changes = {}) => {
+  const updateTaskCard = (id, changes = {}) => {
     setData((prev) => {
-      const nextBrainDump = updateTaskCardRecord(prev.brainDump, id, changes)
+      const nextTaskCards = updateTaskCardRecord(prev.taskCards, id, changes)
 
       return {
         ...prev,
-        brainDump: syncBrainDumpLinks(nextBrainDump, prev.timeBoxes),
+        taskCards: syncTaskCardLinks(nextTaskCards, prev.timeBoxes),
       }
     })
   }
 
-  const applyBrainDumpBoardLayout = (layoutEntries = []) => {
+  const applyTaskCardBoardLayout = (layoutEntries = []) => {
     setData((prev) => ({
       ...prev,
-      brainDump: applyTaskCardBoardLayout(prev.brainDump, layoutEntries),
+      taskCards: applyTaskCardBoardLayoutCommand(prev.taskCards, layoutEntries),
     }))
   }
 
-  const clearBrainDumpCategory = (categoryId) => {
+  const clearTaskCardCategoryState = (categoryId) => {
     setData((prev) => ({
       ...prev,
-      brainDump: syncBrainDumpLinks(clearTaskCardCategory(prev.brainDump, categoryId), prev.timeBoxes),
+      taskCards: syncTaskCardLinks(clearTaskCardCategory(prev.taskCards, categoryId), prev.timeBoxes),
     }))
   }
 
-  const sendToBigThree = (brainDumpId) => {
+  const sendToBigThree = (taskCardId) => {
     let inserted = false
 
     setData((prev) => {
-      if (prev.bigThree.length >= 3) {
+      const { inserted: didInsert, nextBigThree } = addTaskCardToBigThree(
+        prev.bigThree,
+        prev.taskCards,
+        taskCardId,
+        createId,
+      )
+      if (!didInsert) {
         return prev
       }
 
-      const source = prev.brainDump.find((item) => item.id === brainDumpId)
-      if (!source) {
-        return prev
-      }
-
-      inserted = true
+      inserted = didInsert
       return {
         ...prev,
-        bigThree: [
-          ...prev.bigThree,
-          {
-            id: createId(),
-            content: source.content,
-            sourceId: source.id,
-          },
-        ],
+        bigThree: nextBigThree,
       }
     })
 
     return inserted
   }
 
-  const sendManyToBigThree = (brainDumpIds = []) => {
+  const sendManyToBigThree = (taskCardIds = []) => {
     let insertedCount = 0
 
     setData((prev) => {
-      if (prev.bigThree.length >= 3) {
-        return prev
-      }
-
-      const remainSlots = 3 - prev.bigThree.length
-      const uniqueIds = [...new Set(brainDumpIds.filter((itemId) => typeof itemId === 'string' && itemId.trim().length > 0))]
-      const existingSourceIds = new Set(
-        prev.bigThree
-          .map((item) => item.sourceId)
-          .filter((sourceId) => typeof sourceId === 'string' && sourceId.length > 0),
+      const { insertedCount: nextInsertedCount, nextBigThree } = addManyTaskCardsToBigThree(
+        prev.bigThree,
+        prev.taskCards,
+        taskCardIds,
+        createId,
       )
-      const candidates = uniqueIds
-        .map((itemId) => prev.brainDump.find((item) => item.id === itemId) || null)
-        .filter(Boolean)
-        .filter((item) => !existingSourceIds.has(item.id))
-        .slice(0, remainSlots)
-
-      if (candidates.length === 0) {
+      if (nextInsertedCount === 0) {
         return prev
       }
 
-      insertedCount = candidates.length
+      insertedCount = nextInsertedCount
       return {
         ...prev,
-        bigThree: [
-          ...prev.bigThree,
-          ...candidates.map((source) => ({
-            id: createId(),
-            content: source.content,
-            sourceId: source.id,
-          })),
-        ],
+        bigThree: nextBigThree,
       }
     })
 
     return insertedCount
   }
 
-  const fillBigThreeFromBrainDump = () => {
+  const fillBigThreeFromTaskCards = () => {
     let insertedCount = 0
 
     setData((prev) => {
-      if (prev.bigThree.length >= 3 || prev.brainDump.length === 0) {
-        return prev
-      }
-
-      const remainSlots = 3 - prev.bigThree.length
-      const existingSourceIds = new Set(
-        prev.bigThree
-          .map((item) => item.sourceId)
-          .filter((sourceId) => typeof sourceId === 'string' && sourceId.length > 0),
+      const { insertedCount: nextInsertedCount, nextBigThree } = autofillBigThreeFromTaskCards(
+        prev.bigThree,
+        prev.taskCards,
+        createId,
       )
-      const candidates = prev.brainDump
-        .filter((item) => !existingSourceIds.has(item.id))
-      const prioritizedCandidates = sortBrainDumpItems(candidates)
-      const selectedCandidates = prioritizedCandidates
-        .slice(0, remainSlots)
-
-      if (selectedCandidates.length === 0) {
+      if (nextInsertedCount === 0) {
         return prev
       }
 
-      insertedCount = selectedCandidates.length
+      insertedCount = nextInsertedCount
       return {
         ...prev,
-        bigThree: [
-          ...prev.bigThree,
-          ...selectedCandidates.map((source) => ({
-            id: createId(),
-            content: source.content,
-            sourceId: source.id,
-          })),
-        ],
+        bigThree: nextBigThree,
       }
     })
 
@@ -436,20 +398,22 @@ export const useDailyData = () => {
   }
 
   const addBigThreeItem = (content) => {
-    const trimmed = content.trim()
-    if (!trimmed) return false
-
     let inserted = false
 
     setData((prev) => {
-      if (prev.bigThree.length >= 3) {
+      const { inserted: didInsert, nextBigThree } = addManualBigThreeItem(
+        prev.bigThree,
+        content,
+        createId,
+      )
+      if (!didInsert) {
         return prev
       }
 
-      inserted = true
+      inserted = didInsert
       return {
         ...prev,
-        bigThree: [...prev.bigThree, { id: createId(), content: trimmed, sourceId: null }],
+        bigThree: nextBigThree,
       }
     })
 
@@ -459,7 +423,7 @@ export const useDailyData = () => {
   const removeBigThreeItem = (id) => {
     setData((prev) => ({
       ...prev,
-      bigThree: prev.bigThree.filter((item) => item.id !== id),
+      bigThree: removeBigThreeItemRecord(prev.bigThree, id),
     }))
   }
 
@@ -509,7 +473,7 @@ export const useDailyData = () => {
 
       return {
         ...prev,
-        brainDump: syncBrainDumpLinks(prev.brainDump, nextTimeBoxes),
+        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
         timeBoxes: nextTimeBoxes,
       }
     })
@@ -562,7 +526,7 @@ export const useDailyData = () => {
 
       return {
         ...prev,
-        brainDump: syncBrainDumpLinks(prev.brainDump, nextTimeBoxes),
+        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
         timeBoxes: nextTimeBoxes,
       }
     })
@@ -599,7 +563,7 @@ export const useDailyData = () => {
 
       return {
         ...prev,
-        brainDump: syncBrainDumpLinks(prev.brainDump, nextTimeBoxes),
+        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
         timeBoxes: nextTimeBoxes,
       }
     })
@@ -623,7 +587,7 @@ export const useDailyData = () => {
 
       return {
         ...prev,
-        brainDump: syncBrainDumpLinks(prev.brainDump, nextTimeBoxes),
+        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
         timeBoxes: nextTimeBoxes,
       }
     })
@@ -655,7 +619,7 @@ export const useDailyData = () => {
 
       return {
         ...prev,
-        brainDump: syncBrainDumpLinks(prev.brainDump, nextTimeBoxes),
+        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
         timeBoxes: nextTimeBoxes,
       }
     })
@@ -673,8 +637,8 @@ export const useDailyData = () => {
   const removeTimeBox = (id) => {
     setData((prev) => ({
       ...prev,
-      brainDump: syncBrainDumpLinks(
-        prev.brainDump,
+      taskCards: syncTaskCardLinks(
+        prev.taskCards,
         prev.timeBoxes.filter((box) => box.id !== id),
       ),
       timeBoxes: prev.timeBoxes.filter((box) => box.id !== id),
@@ -703,7 +667,7 @@ export const useDailyData = () => {
 
         return {
           ...prev,
-          brainDump: syncBrainDumpLinks(prev.brainDump, next),
+          taskCards: syncTaskCardLinks(prev.taskCards, next),
           timeBoxes: next,
         }
       }
@@ -711,7 +675,7 @@ export const useDailyData = () => {
       restored = true
       return {
         ...prev,
-        brainDump: syncBrainDumpLinks(prev.brainDump, [...prev.timeBoxes, normalized]),
+        taskCards: syncTaskCardLinks(prev.taskCards, [...prev.timeBoxes, normalized]),
         timeBoxes: [...prev.timeBoxes, normalized],
       }
     })
@@ -724,7 +688,7 @@ export const useDailyData = () => {
   }
 
   const reloadCurrentDay = () => {
-    setData(loadDay(currentDate))
+    setData(loadPlannerDayModel(currentDate))
   }
 
   const updateStackCanvasState = (nextStackCanvasState) => {
@@ -750,17 +714,17 @@ export const useDailyData = () => {
     goNextDay,
     goPrevDay,
     goToDate,
-    addBrainDumpItem,
+    addTaskCard,
     addBoardCard,
-    removeBrainDumpItem,
-    restoreBrainDumpItem,
-    cycleBrainDumpItemPriority,
-    updateBrainDumpItem,
-    applyBrainDumpBoardLayout,
-    clearBrainDumpCategory,
+    removeTaskCard,
+    restoreTaskCard,
+    cycleTaskCardItemPriority,
+    updateTaskCard,
+    applyTaskCardBoardLayout,
+    clearTaskCardCategoryState,
     sendToBigThree,
     sendManyToBigThree,
-    fillBigThreeFromBrainDump,
+    fillBigThreeFromTaskCards,
     addBigThreeItem,
     removeBigThreeItem,
     addTimeBox,

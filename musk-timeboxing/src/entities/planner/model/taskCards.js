@@ -12,31 +12,102 @@ import { cycleBrainDumpPriority, normalizeBrainDumpPriority, sortBrainDumpItems 
 
 const createId = () => crypto.randomUUID()
 
-export const normalizeTaskCard = (taskCard, fallbackIndex = 0) =>
-  normalizeBoardCard(
+const normalizeTaskCardTitle = (value) => {
+  if (typeof value !== 'string') {
+    return ''
+  }
+
+  return value.trim()
+}
+
+const normalizeTaskCardOrigin = (value) =>
+  value === 'board' ? 'board' : 'list'
+
+export const normalizeTaskCard = (taskCard, fallbackIndex = 0) => {
+  const title = normalizeTaskCardTitle(taskCard?.title)
+  if (!title) {
+    return null
+  }
+
+  return {
+    id: typeof taskCard?.id === 'string' ? taskCard.id : createId(),
+    title,
+    isDone: Boolean(taskCard?.isDone),
+    priority: normalizeBrainDumpPriority(taskCard?.priority),
+    categoryId: normalizeBoardCategoryId(taskCard?.categoryId),
+    stackOrder:
+      Number.isInteger(taskCard?.stackOrder)
+        ? taskCard.stackOrder
+        : fallbackIndex,
+    estimateSlots: normalizeBoardEstimatedSlots(
+      taskCard?.estimateSlots ?? DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
+    ),
+    linkedTimeBoxIds: normalizeBoardLinkedTimeBoxIds(taskCard?.linkedTimeBoxIds),
+    note: normalizeBoardNote(taskCard?.note),
+    origin: normalizeTaskCardOrigin(taskCard?.origin),
+  }
+}
+
+export const fromPersistedTaskCard = (taskCard, fallbackIndex = 0) => {
+  const normalized = normalizeBoardCard(taskCard, fallbackIndex)
+  if (!normalized) {
+    return null
+  }
+
+  return normalizeTaskCard(
     {
-      ...taskCard,
-      id: typeof taskCard?.id === 'string' ? taskCard.id : createId(),
-      priority: normalizeBrainDumpPriority(taskCard?.priority),
+      id: normalized.id,
+      title: normalized.content,
+      isDone: normalized.isDone,
+      priority: normalized.priority,
+      categoryId: normalized.categoryId,
+      stackOrder: normalized.stackOrder,
+      estimateSlots: normalized.estimatedSlots,
+      linkedTimeBoxIds: normalized.linkedTimeBoxIds,
+      note: normalized.note,
+      origin: normalized.createdFrom,
     },
     fallbackIndex,
   )
+}
+
+export const toPersistedTaskCard = (taskCard, fallbackIndex = 0) => {
+  const normalized = normalizeTaskCard(taskCard, fallbackIndex)
+  if (!normalized) {
+    return null
+  }
+
+  return normalizeBoardCard(
+    {
+      id: normalized.id,
+      content: normalized.title,
+      isDone: normalized.isDone,
+      priority: normalized.priority,
+      categoryId: normalized.categoryId,
+      stackOrder: normalized.stackOrder,
+      estimatedSlots: normalized.estimateSlots,
+      linkedTimeBoxIds: normalized.linkedTimeBoxIds,
+      note: normalized.note,
+      createdFrom: normalized.origin,
+    },
+    fallbackIndex,
+  )
+}
 
 export const createTaskCardRecord = (taskCards = [], input = {}) =>
   normalizeTaskCard({
     id: input.id,
-    content: String(input.content || '').trim(),
+    title: String(input.title || '').trim(),
     isDone: Boolean(input.isDone),
     priority: normalizeBrainDumpPriority(input.priority),
     categoryId: normalizeBoardCategoryId(input.categoryId),
-    stackOrder:
-      Number.isInteger(input.stackOrder) ? input.stackOrder : getNextBoardStackOrder(taskCards),
-    estimatedSlots: normalizeBoardEstimatedSlots(
-      input.estimatedSlots ?? DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
+    stackOrder: Number.isInteger(input.stackOrder) ? input.stackOrder : getNextBoardStackOrder(taskCards),
+    estimateSlots: normalizeBoardEstimatedSlots(
+      input.estimateSlots ?? DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
     ),
     linkedTimeBoxIds: normalizeBoardLinkedTimeBoxIds(input.linkedTimeBoxIds),
     note: normalizeBoardNote(input.note),
-    createdFrom: input.createdFrom,
+    origin: input.origin,
   })
 
 export const addTaskCardRecord = (taskCards = [], input = {}) => {
@@ -77,18 +148,18 @@ export const updateTaskCardRecord = (taskCards = [], taskId, changes = {}) =>
         {
           ...taskCard,
           ...changes,
-          content:
-            typeof changes?.content === 'string' && changes.content.trim().length > 0
-              ? changes.content
-              : taskCard.content,
+          title:
+            typeof changes?.title === 'string' && changes.title.trim().length > 0
+              ? changes.title
+              : taskCard.title,
           categoryId:
             Object.prototype.hasOwnProperty.call(changes ?? {}, 'categoryId')
               ? normalizeBoardCategoryId(changes?.categoryId)
               : taskCard.categoryId ?? null,
-          estimatedSlots:
-            Object.prototype.hasOwnProperty.call(changes ?? {}, 'estimatedSlots')
-              ? normalizeBoardEstimatedSlots(changes?.estimatedSlots)
-              : taskCard.estimatedSlots ?? DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
+          estimateSlots:
+            Object.prototype.hasOwnProperty.call(changes ?? {}, 'estimateSlots')
+              ? normalizeBoardEstimatedSlots(changes?.estimateSlots)
+              : taskCard.estimateSlots ?? DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
           note:
             Object.prototype.hasOwnProperty.call(changes ?? {}, 'note')
               ? normalizeBoardNote(changes?.note)
@@ -97,6 +168,10 @@ export const updateTaskCardRecord = (taskCards = [], taskId, changes = {}) =>
             Object.prototype.hasOwnProperty.call(changes ?? {}, 'linkedTimeBoxIds')
               ? normalizeBoardLinkedTimeBoxIds(changes?.linkedTimeBoxIds)
               : taskCard.linkedTimeBoxIds ?? [],
+          origin:
+            Object.prototype.hasOwnProperty.call(changes ?? {}, 'origin')
+              ? normalizeTaskCardOrigin(changes?.origin)
+              : taskCard.origin ?? 'list',
         },
         index,
       ) ?? taskCard

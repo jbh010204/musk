@@ -2,7 +2,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Button, IconButton } from '../../../shared/ui'
 
-const formatDurationLabel = (estimatedSlots = 1) => `${estimatedSlots * 30}분`
+const formatDurationLabel = (estimateSlots = 1) => `${estimateSlots * 30}분`
 
 function BoardCard({
   item,
@@ -52,7 +52,7 @@ function BoardCard({
                 border: `1px solid ${color}55`,
               }}
             >
-              {formatDurationLabel(item.estimatedSlots)}
+              {formatDurationLabel(item.estimateSlots)}
             </span>
             {item.linkedTimeBoxIds?.length > 0 ? (
               <span className="rounded-xl bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
@@ -61,7 +61,7 @@ function BoardCard({
             ) : null}
           </div>
           <p className="mt-3 text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">
-            {item.content}
+            {item.title}
           </p>
           {item.note ? (
             <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">

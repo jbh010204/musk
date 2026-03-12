@@ -51,7 +51,7 @@ function BrainDumpItem({ item, onRemove, onCyclePriority, onSendToBigThree }) {
     data: {
       type: 'BRAIN_DUMP',
       id: item.id,
-      content: item.content,
+      title: item.title,
     },
   })
 
@@ -102,10 +102,10 @@ function BrainDumpItem({ item, onRemove, onCyclePriority, onSendToBigThree }) {
             className="w-full cursor-grab rounded-xl px-1.5 py-1 text-left text-sm leading-5 active:cursor-grabbing hover:bg-slate-50 disabled:cursor-not-allowed dark:hover:bg-slate-700/65"
             {...listeners}
             {...attributes}
-            title={item.content}
+            title={item.title}
           >
             <span className="block overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
-              {item.content}
+              {item.title}
             </span>
           </button>
         </div>

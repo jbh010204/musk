@@ -67,7 +67,7 @@ function ScheduleComposer({
     [timeBoxes],
   )
   const selectedDurationMinutes = selectedCardIds.reduce(
-    (sum, itemId) => sum + ((cardMap.get(itemId)?.estimatedSlots || 1) * 30),
+    (sum, itemId) => sum + ((cardMap.get(itemId)?.estimateSlots || 1) * 30),
     0,
   )
 
@@ -79,7 +79,7 @@ function ScheduleComposer({
 
     const nextBox = {
       startSlot,
-      endSlot: startSlot + card.estimatedSlots,
+      endSlot: startSlot + card.estimateSlots,
     }
 
     if (hasOverlap(timeBoxes, nextBox)) {
@@ -281,7 +281,7 @@ function ScheduleComposer({
                 </span>
               ) : selectedCardId ? (
                 <span className="rounded-xl bg-indigo-500/15 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
-                  선택됨: {cardMap.get(selectedCardId)?.content}
+                  선택됨: {cardMap.get(selectedCardId)?.title}
                 </span>
               ) : selectedBigThreeItem ? (
                 <span className="rounded-xl bg-amber-500/15 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">

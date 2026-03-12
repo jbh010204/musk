@@ -3,7 +3,7 @@ import { Button } from '../../../shared/ui'
 
 function WorkspaceBigThreeRail({
   bigThree = [],
-  brainDumpItems = [],
+  taskCards = [],
   selectedCardIds = [],
   selectedCardId = null,
   selectedBigThreeId = null,
@@ -16,8 +16,8 @@ function WorkspaceBigThreeRail({
   const [draft, setDraft] = useState('')
   const [isComposing, setIsComposing] = useState(false)
   const sourceCardMap = useMemo(
-    () => new Map(brainDumpItems.map((item) => [item.id, item])),
-    [brainDumpItems],
+    () => new Map(taskCards.map((item) => [item.id, item])),
+    [taskCards],
   )
   const remainingSlots = Math.max(0, 3 - bigThree.length)
 
@@ -165,7 +165,7 @@ function WorkspaceBigThreeRail({
                     {sourceCard ? (
                       <>
                         <span className="rounded-full bg-indigo-500/15 px-2 py-0.5 font-medium text-indigo-700 dark:text-indigo-300">
-                          {sourceCard.estimatedSlots * 30}분
+                          {sourceCard.estimateSlots * 30}분
                         </span>
                         <span>예정 {sourceCard.linkedTimeBoxIds?.length || 0}</span>
                       </>

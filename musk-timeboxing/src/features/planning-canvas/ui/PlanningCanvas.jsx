@@ -48,7 +48,7 @@ const createLaneState = (lanes) =>
 
 function PlanningCanvas({
   stackCanvasState,
-  brainDumpItems = [],
+  taskCards = [],
   categories = [],
   timeBoxes = [],
   onUpdateStackCanvasState = () => {},
@@ -80,9 +80,9 @@ function PlanningCanvas({
       : stackCanvasState?.selectedCardIds ?? [],
   )
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
-  const lanes = useMemo(() => groupBoardCardsByCategory(brainDumpItems, categories), [brainDumpItems, categories])
+  const lanes = useMemo(() => groupBoardCardsByCategory(taskCards, categories), [taskCards, categories])
   const [laneState, setLaneState] = useState(() => createLaneState(lanes))
-  const cardMap = useMemo(() => new Map(brainDumpItems.map((item) => [item.id, item])), [brainDumpItems])
+  const cardMap = useMemo(() => new Map(taskCards.map((item) => [item.id, item])), [taskCards])
   const laneMap = useMemo(() => new Map(lanes.map((lane) => [lane.id, lane])), [lanes])
   const selectedCardId = controlledSelectedCardId ?? internalSelectedCardId
   const selectedCardIds = Array.isArray(controlledSelectedCardIds)
@@ -111,8 +111,8 @@ function PlanningCanvas({
   )
 
   const activeCard = activeCardId ? cardMap.get(activeCardId) || null : null
-  const scheduledCards = brainDumpItems.filter((item) => item.linkedTimeBoxIds?.length > 0).length
-  const completedCards = brainDumpItems.filter(
+  const scheduledCards = taskCards.filter((item) => item.linkedTimeBoxIds?.length > 0).length
+  const completedCards = taskCards.filter(
     (item) => getTaskCardStackCanvasStatus(item, timeBoxes) === 'COMPLETED',
   ).length
   const uncategorizedCount =
@@ -407,10 +407,10 @@ function PlanningCanvas({
     return inserted
   }
 
-  const handleInlineCreate = ({ content, estimatedSlots = 1, categoryId = null }) =>
+  const handleInlineCreate = ({ title, estimateSlots = 1, categoryId = null }) =>
     onCreateCard({
-      content,
-      estimatedSlots,
+      title,
+      estimateSlots,
       categoryId,
       note: '',
     })
@@ -484,7 +484,7 @@ function PlanningCanvas({
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
-            전체 {brainDumpItems.length}
+            전체 {taskCards.length}
           </span>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
             미분류 {uncategorizedCount}
@@ -629,10 +629,10 @@ function PlanningCanvas({
                   title="Inbox에 추가"
                   placeholder="미분류 일정 내용을 적고 Enter"
                   color={inboxLane?.color}
-                  onCreate={({ content, estimatedSlots }) =>
+                  onCreate={({ title, estimateSlots }) =>
                     handleInlineCreate({
-                      content,
-                      estimatedSlots,
+                      title,
+                      estimateSlots,
                       categoryId: null,
                     })
                   }
@@ -664,10 +664,10 @@ function PlanningCanvas({
                   title={`${activeLane.label}에 추가`}
                   placeholder="이 스택에 바로 일정 추가"
                   color={activeLane.color}
-                  onCreate={({ content, estimatedSlots }) =>
+                  onCreate={({ title, estimateSlots }) =>
                     handleInlineCreate({
-                      content,
-                      estimatedSlots,
+                      title,
+                      estimateSlots,
                       categoryId: activeLane.id === UNCATEGORIZED_BOARD_LANE ? null : activeLane.id,
                     })
                   }
@@ -740,7 +740,7 @@ function PlanningCanvas({
                   </span>
                 </div>
                 <p className="mt-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {activeCard.content}
+                  {activeCard.title}
                 </p>
               </div>
             </div>

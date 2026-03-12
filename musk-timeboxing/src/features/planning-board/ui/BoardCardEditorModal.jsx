@@ -20,24 +20,24 @@ function BoardCardEditorModal({
   )
   const isEdit = Boolean(initialCard?.id)
   const initialDuration = useMemo(
-    () => String(initialCard?.estimatedSlots ?? 1),
-    [initialCard?.estimatedSlots],
+    () => String(initialCard?.estimateSlots ?? 1),
+    [initialCard?.estimateSlots],
   )
-  const [content, setContent] = useState(initialCard?.content ?? '')
+  const [title, setTitle] = useState(initialCard?.title ?? '')
   const [categoryId, setCategoryId] = useState(initialCard?.categoryId ?? '')
-  const [estimatedSlots, setEstimatedSlots] = useState(initialDuration)
+  const [estimateSlots, setEstimateSlots] = useState(initialDuration)
   const [note, setNote] = useState(initialCard?.note ?? '')
 
   const handleSubmit = () => {
-    const trimmed = content.trim()
+    const trimmed = title.trim()
     if (!trimmed) {
       return
     }
 
     const result = onSubmit({
-      content: trimmed,
+      title: trimmed,
       categoryId,
-      estimatedSlots: Number(estimatedSlots),
+      estimateSlots: Number(estimateSlots),
       note,
     })
 
@@ -69,8 +69,8 @@ function BoardCardEditorModal({
             <input
               id="board-card-content"
               type="text"
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
               className="ui-input"
               placeholder="예: 리준쉐량 디코 답장하기"
             />
@@ -102,8 +102,8 @@ function BoardCardEditorModal({
               </label>
               <select
                 id="board-card-duration"
-                value={estimatedSlots}
-                onChange={(event) => setEstimatedSlots(event.target.value)}
+                value={estimateSlots}
+                onChange={(event) => setEstimateSlots(event.target.value)}
                 className="ui-select"
               >
                 {DURATION_OPTIONS.map((option) => (

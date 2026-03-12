@@ -23,9 +23,9 @@ import {
   getCategoryViewModels,
   getPlannerPersistenceStatus,
   hasOverlap,
-  loadDay,
+  loadPlannerDayModel,
   loadLastViewMode,
-  saveDay,
+  savePlannerDayModel,
   slotDurationMinutes,
   subscribePlannerPersistenceStatus,
   TOTAL_SLOTS,
@@ -169,7 +169,7 @@ const buildWeeklyReport = ({ currentDate, currentDayData }) => {
     const date = new Date(startDate)
     date.setDate(startDate.getDate() + index)
     const dateStr = formatDate(date)
-    const dayData = dateStr === currentDate ? currentDayData : loadDay(dateStr)
+    const dayData = dateStr === currentDate ? currentDayData : loadPlannerDayModel(dateStr)
     const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
     const dayTotal = timeBoxes.length
     const dayCompleted = timeBoxes.filter((box) => box.status === 'COMPLETED').length
@@ -215,7 +215,7 @@ const buildWeeklyReport = ({ currentDate, currentDayData }) => {
   Array.from({ length: 7 }).forEach((_, index) => {
     const date = new Date(startDate)
     date.setDate(startDate.getDate() - 7 + index)
-    const dayData = loadDay(formatDate(date))
+    const dayData = loadPlannerDayModel(formatDate(date))
     const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
 
     timeBoxes.forEach((box) => {
@@ -299,7 +299,7 @@ const buildWeeklyPlanningPreview = ({ currentDate, currentDayData }) => {
     const date = new Date(startDate)
     date.setDate(startDate.getDate() + offset)
     const dateStr = formatDate(date)
-    const dayData = dateStr === currentDate ? currentDayData : loadDay(dateStr)
+    const dayData = dateStr === currentDate ? currentDayData : loadPlannerDayModel(dateStr)
     const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
     const sorted = [...timeBoxes].sort((a, b) => a.startSlot - b.startSlot)
     const previewItems = sorted.slice(0, 3).map((box) => ({
@@ -456,17 +456,17 @@ function App() {
     goNextDay: goNextDayRaw,
     goPrevDay: goPrevDayRaw,
     goToDate: goToDateRaw,
-    addBrainDumpItem,
+    addTaskCard,
     addBoardCard,
-    removeBrainDumpItem,
-    restoreBrainDumpItem,
-    cycleBrainDumpItemPriority,
-    updateBrainDumpItem,
-    applyBrainDumpBoardLayout,
-    clearBrainDumpCategory,
+    removeTaskCard,
+    restoreTaskCard,
+    cycleTaskCardItemPriority,
+    updateTaskCard,
+    applyTaskCardBoardLayout,
+    clearTaskCardCategoryState,
     sendToBigThree,
     sendManyToBigThree,
-    fillBigThreeFromBrainDump,
+    fillBigThreeFromTaskCards,
     addBigThreeItem,
     removeBigThreeItem,
     addTimeBox,
@@ -492,7 +492,7 @@ function App() {
   const lockedParentIds = useMemo(() => {
     const usedIds = new Set()
 
-    data.brainDump.forEach((item) => {
+    data.taskCards.forEach((item) => {
       if (item.categoryId) {
         usedIds.add(item.categoryId)
       }
@@ -509,7 +509,7 @@ function App() {
     })
 
     return usedIds
-  }, [data.brainDump, data.timeBoxes, templates])
+  }, [data.taskCards, data.timeBoxes, templates])
   const categories = useMemo(
     () =>
       getCategoryViewModels(rawCategories).map((category) => ({
@@ -680,7 +680,7 @@ function App() {
       const date = new Date(startDate)
       date.setDate(startDate.getDate() + index)
       const dateStr = formatDate(date)
-      const dayData = dateStr === currentDate ? data : loadDay(dateStr)
+      const dayData = dateStr === currentDate ? data : loadPlannerDayModel(dateStr)
       const summary = summarizeDay(dayData)
 
       return {
@@ -738,33 +738,33 @@ function App() {
     }
   }, [data.bigThree, data.timeBoxes])
 
-  const handleSendToBigThree = (brainDumpId) => {
-    const success = sendToBigThree(brainDumpId)
+  const handleSendToBigThree = (taskCardId) => {
+    const success = sendToBigThree(taskCardId)
 
     if (!success) {
       showToast('빅 3이 이미 가득 찼습니다')
     }
   }
 
-  const handleRemoveBrainDumpItem = (id) => {
-    const removedIndex = data.brainDump.findIndex((item) => item.id === id)
-    const removedItem = removedIndex >= 0 ? data.brainDump[removedIndex] : null
+  const handleRemoveTaskCard = (id) => {
+    const removedIndex = data.taskCards.findIndex((item) => item.id === id)
+    const removedItem = removedIndex >= 0 ? data.taskCards[removedIndex] : null
 
     if (!removedItem) {
       return
     }
 
-    removeBrainDumpItem(id)
+    removeTaskCard(id)
     showToast('브레인 덤프를 삭제했습니다', UNDO_TOAST_MS, {
       actionLabel: '되돌리기',
       onAction: () => {
-        restoreBrainDumpItem(removedItem, removedIndex)
+        restoreTaskCard(removedItem, removedIndex)
       },
     })
   }
 
-  const handleFillBigThreeFromBrainDump = () => {
-    const insertedCount = fillBigThreeFromBrainDump()
+  const handleFillBigThreeFromTaskCards = () => {
+    const insertedCount = fillBigThreeFromTaskCards()
 
     if (insertedCount > 0) {
       showToast(`우선순위 상위 ${insertedCount}개를 빅3로 채웠습니다`)
@@ -779,8 +779,8 @@ function App() {
     showToast('채울 브레인 덤프 항목이 없습니다')
   }
 
-  const handleSendCardsToBigThree = (brainDumpIds = []) => {
-    const insertedCount = sendManyToBigThree(brainDumpIds)
+  const handleSendCardsToBigThree = (taskCardIds = []) => {
+    const insertedCount = sendManyToBigThree(taskCardIds)
 
     if (insertedCount > 0) {
       showToast(`선택 카드 ${insertedCount}개를 빅3에 추가했습니다`)
@@ -824,7 +824,7 @@ function App() {
 
   const buildReschedulePlan = () => {
     const targetDate = shiftDate(currentDate, 1)
-    const targetDay = loadDay(targetDate)
+    const targetDay = loadPlannerDayModel(targetDate)
     const planBaseBoxes = [...targetDay.timeBoxes]
     const pending = [...data.timeBoxes]
       .filter((box) => box.status !== 'COMPLETED')
@@ -877,7 +877,7 @@ function App() {
       return
     }
 
-    const targetDay = loadDay(plan.targetDate)
+    const targetDay = loadPlannerDayModel(plan.targetDate)
     const deduped = plan.planned.filter(
       (candidate) =>
         !targetDay.timeBoxes.some(
@@ -897,7 +897,7 @@ function App() {
       timeBoxes: [...targetDay.timeBoxes, ...deduped],
     }
 
-    saveDay(plan.targetDate, merged)
+    savePlannerDayModel(plan.targetDate, merged)
     setCrossDateRevision((prev) => prev + 1)
     showToast(`다음 날(${plan.targetDate})로 ${deduped.length}건 재배치했습니다`, 2600)
     setIsRescheduleModalOpen(false)
@@ -951,7 +951,7 @@ function App() {
       startPointerTracking()
       setActiveDragPreview({
         type: payload.type,
-        content: payload.content,
+        content: payload.title ?? payload.content,
       })
       updateDropPreviewFromPointer(pointer)
       return
@@ -1103,7 +1103,7 @@ function App() {
 
       const endSlot = Math.min(startSlot + DEFAULT_BOX_SLOTS, TOTAL_SLOTS)
       const newBox = {
-        content: activeData.content,
+        content: activeData.title ?? activeData.content,
         sourceId: activeData.id,
         startSlot,
         endSlot,
@@ -1154,7 +1154,7 @@ function App() {
     }
 
     clearTimeBoxCategory(id)
-    clearBrainDumpCategory(id)
+    clearTaskCardCategoryState(id)
     clearTemplateCategory(id)
     showToast('카테고리를 삭제했습니다')
     return result
@@ -1312,7 +1312,7 @@ function App() {
     }
 
     const safeDuration = Math.max(1, Math.min(TOTAL_SLOTS, Number(durationSlots) || 1))
-    const targetDay = dateStr === currentDate ? data : loadDay(dateStr)
+    const targetDay = dateStr === currentDate ? data : loadPlannerDayModel(dateStr)
     const requestedStart = Number.isInteger(startSlot)
       ? clamp(Number(startSlot), 0, TOTAL_SLOTS - safeDuration)
       : null
@@ -1342,7 +1342,7 @@ function App() {
     if (dateStr === currentDate) {
       addTimeBox(newBox)
     } else {
-      saveDay(dateStr, {
+      savePlannerDayModel(dateStr, {
         ...targetDay,
         timeBoxes: [
           ...targetDay.timeBoxes,
@@ -1377,13 +1377,13 @@ function App() {
 
   const dumpSection = (
     <BrainDump
-      items={data.brainDump}
+      items={data.taskCards}
       bigThreeCount={data.bigThree.length}
-      onAdd={addBrainDumpItem}
-      onRemove={handleRemoveBrainDumpItem}
-      onCyclePriority={cycleBrainDumpItemPriority}
+      onAdd={addTaskCard}
+      onRemove={handleRemoveTaskCard}
+      onCyclePriority={cycleTaskCardItemPriority}
       onSendToBigThree={handleSendToBigThree}
-      onFillBigThree={handleFillBigThreeFromBrainDump}
+      onFillBigThree={handleFillBigThreeFromTaskCards}
     />
   )
 
@@ -1400,7 +1400,7 @@ function App() {
       data={data}
       currentDate={currentDate}
       categories={categories}
-      brainDumpItems={data.brainDump}
+      taskCards={data.taskCards}
       bigThree={data.bigThree}
       templates={templates}
       weeklyReport={weeklyReport}
@@ -1427,8 +1427,8 @@ function App() {
       addBigThreeItem={addBigThreeItem}
       removeBigThreeItem={removeBigThreeItem}
       onSendCardsToBigThree={handleSendCardsToBigThree}
-      updateBrainDumpItem={updateBrainDumpItem}
-      applyBrainDumpBoardLayout={applyBrainDumpBoardLayout}
+      updateTaskCard={updateTaskCard}
+      applyTaskCardBoardLayout={applyTaskCardBoardLayout}
       updateStackCanvasState={updateStackCanvasState}
       updateTimeBox={handleUpdateTimeBox}
       onTimerStart={startTimeBoxTimer}

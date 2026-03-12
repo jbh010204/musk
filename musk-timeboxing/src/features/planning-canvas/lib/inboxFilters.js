@@ -17,7 +17,7 @@ const matchesQuery = (item, query) => {
     return true
   }
 
-  return `${item.content} ${item.note || ''}`.toLowerCase().includes(normalized)
+  return `${item.title} ${item.note || ''}`.toLowerCase().includes(normalized)
 }
 
 export const filterInboxItems = (items = [], { query = '', filter = 'ALL', timeBoxes = [] } = {}) =>

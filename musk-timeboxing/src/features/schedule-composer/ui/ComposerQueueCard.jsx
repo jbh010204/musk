@@ -33,7 +33,7 @@ function ComposerQueueCard({ item, color = '#94a3b8', isSelected = false, onSele
             border: `1px solid ${color}55`,
           }}
         >
-          {item.estimatedSlots * 30}분
+          {item.estimateSlots * 30}분
         </span>
         {item.linkedTimeBoxIds?.length > 0 ? (
           <span className="rounded-xl bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
@@ -46,7 +46,7 @@ function ComposerQueueCard({ item, color = '#94a3b8', isSelected = false, onSele
         )}
       </div>
       <p className="mt-3 text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">
-        {item.content}
+        {item.title}
       </p>
       {item.note ? (
         <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">{item.note}</p>

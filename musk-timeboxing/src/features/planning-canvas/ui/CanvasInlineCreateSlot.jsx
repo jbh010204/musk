@@ -11,17 +11,17 @@ function CanvasInlineCreateSlot({
   title,
   placeholder,
   color = '#94a3b8',
-  defaultEstimatedSlots = 1,
+  defaultEstimateSlots = 1,
   onCreate = () => false,
 }) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState('')
-  const [estimatedSlots, setEstimatedSlots] = useState(defaultEstimatedSlots)
+  const [estimateSlots, setEstimateSlots] = useState(defaultEstimateSlots)
   const [isComposing, setIsComposing] = useState(false)
 
   const reset = () => {
     setDraft('')
-    setEstimatedSlots(defaultEstimatedSlots)
+    setEstimateSlots(defaultEstimateSlots)
     setIsEditing(false)
   }
 
@@ -33,8 +33,8 @@ function CanvasInlineCreateSlot({
     }
 
     const created = onCreate({
-      content: trimmed,
-      estimatedSlots,
+      title: trimmed,
+      estimateSlots,
     })
 
     if (created) {
@@ -79,11 +79,11 @@ function CanvasInlineCreateSlot({
               key={option.slots}
               type="button"
               className={`rounded-lg px-2 py-1 text-[11px] transition-colors ${
-                estimatedSlots === option.slots
+                estimateSlots === option.slots
                   ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-slate-100'
                   : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
               }`}
-              onClick={() => setEstimatedSlots(option.slots)}
+              onClick={() => setEstimateSlots(option.slots)}
             >
               {option.label}
             </button>
