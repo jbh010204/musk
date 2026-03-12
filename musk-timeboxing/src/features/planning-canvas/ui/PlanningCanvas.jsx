@@ -440,7 +440,7 @@ function PlanningCanvas({
                       Category Dock
                     </p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                      카드를 아래로 길게 끌지 말고, 위 도크에서 바로 분류합니다.
+                      카드가 쌓인 도크는 그라데이션 glow로 먼저 드러납니다. 선택한 카드는 여기서 바로 분류합니다.
                     </p>
                   </div>
                   {selectedCardIds.length > 0 ? (

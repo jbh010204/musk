@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.22.5',
+    date: '2026-03-12',
+    title: 'Workspace polish: glowing dock states + roomier timeline rail',
+    summary:
+      '카드가 쌓인 Category Dock이 카테고리 색 기반 gradient glow로 먼저 드러나도록 하고, 우측 Timeline Rail도 조금 더 넓고 크게 보여 읽기 밀도를 높였습니다.',
+    focus: [
+      '도크 노드의 시각 상태를 별도 presentation helper로 분리해 카드 존재/활성/드롭 가능 상태를 같은 토큰 계층에서 표현',
+      'Timeline Rail의 폭, 라벨 폭, 슬롯 높이, 블록 inset을 workspace layout token으로 묶어 유지보수 시 한 번에 조정 가능하게 정리',
+      '워크스페이스 설명 문구와 문서를 현재 dock glow + roomier rail 계약에 맞춰 동기화',
+    ],
+    improvements: [
+      '`categoryNodePresentation.js`, `CategoryNode.jsx`, `PlanningCanvas.jsx`를 수정해 카드가 있는 도크가 그라데이션 glow로 보이고 active/armed 상태가 더 분명하게 드러나도록 조정',
+      '`workspaceLayout.js`, `ComposerTimeGrid.jsx`, `ScheduleComposer.jsx`, `PlannerWorkspace.jsx`를 수정해 우측 rail 치수를 토큰화하고 슬롯/블록 배치를 더 넓게 재조정',
+      '`README.md`, `STACK_CANVAS_PIVOT_PLAN.md`, `TASK_EXECUTION_BOARD.md`를 현재 시각 계약에 맞춰 갱신',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planner-workspace 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.22.4',
     date: '2026-03-12',
     title: 'Workspace declutter: Category Dock + click-first rail',

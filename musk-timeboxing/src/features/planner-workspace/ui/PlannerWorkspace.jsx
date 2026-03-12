@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { UNCATEGORIZED_BOARD_LANE } from '../../../entities/planner'
 import PlanningCanvas from '../../planning-canvas'
 import ScheduleComposer from '../../schedule-composer'
+import { WORKSPACE_LAYOUT } from '../lib/workspaceLayout'
 import WorkspaceBigThreeRail from './WorkspaceBigThreeRail'
 
 function PlannerWorkspace({
@@ -108,7 +109,10 @@ function PlannerWorkspace({
         onSendSelectedCardsToBigThree={onSendCardsToBigThree}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+      <div
+        className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,var(--workspace-timeline-rail))]"
+        style={{ '--workspace-timeline-rail': WORKSPACE_LAYOUT.timelineRailWidth }}
+      >
         <PlanningCanvas
           key={`${currentDate}-workspace`}
           currentDate={currentDate}

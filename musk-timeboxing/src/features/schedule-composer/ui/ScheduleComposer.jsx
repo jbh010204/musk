@@ -9,10 +9,11 @@ import {
   slotToTime,
 } from '../../../entities/planner'
 import { Button, Card } from '../../../shared/ui'
+import { WORKSPACE_LAYOUT } from '../../planner-workspace/lib/workspaceLayout'
 import ComposerQueueCard from './ComposerQueueCard'
 import ComposerTimeGrid from './ComposerTimeGrid'
 
-const SLOT_HEIGHT = 32
+const SLOT_HEIGHT = WORKSPACE_LAYOUT.composerSlotHeightPx
 
 const resolveSlotFromOver = (overId) => {
   if (typeof overId !== 'string' || !overId.startsWith('composer-slot-')) {
@@ -294,7 +295,7 @@ function ScheduleComposer({
             </div>
 
             <div className="overflow-x-auto">
-              <div className={`relative ${embedded ? 'min-w-[420px]' : 'min-w-[520px]'}`}>
+              <div className="relative" style={{ minWidth: embedded ? '100%' : WORKSPACE_LAYOUT.composerMinWidth }}>
               <ComposerTimeGrid
                 onSlotClick={(slotIndex) => {
                   if (selectedCardIds.length > 1) {
@@ -324,7 +325,13 @@ function ScheduleComposer({
                 nativeDragActive={nativeDragActive}
               />
 
-              <div className="pointer-events-none absolute inset-y-0 left-16 right-2">
+              <div
+                className="pointer-events-none absolute inset-y-0"
+                style={{
+                  left: WORKSPACE_LAYOUT.composerLabelWidthPx,
+                  right: WORKSPACE_LAYOUT.composerBlocksInsetRightPx,
+                }}
+              >
                 {visibleTimeBoxes.map((box) => {
                   const categoryMeta = box.categoryId
                     ? categories.find((category) => category.id === box.categoryId)

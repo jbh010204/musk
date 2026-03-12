@@ -1,4 +1,5 @@
 import { useDroppable } from '@dnd-kit/core'
+import { getCategoryNodePresentation } from '../lib/categoryNodePresentation'
 
 function CategoryNode({
   laneId,
@@ -18,6 +19,13 @@ function CategoryNode({
       laneId,
     },
   })
+  const presentation = getCategoryNodePresentation({
+    color,
+    count,
+    isOver,
+    isArmed,
+    isActive,
+  })
 
   return (
     <div
@@ -34,15 +42,9 @@ function CategoryNode({
       }}
       aria-pressed={isActive}
       className={`relative flex flex-col items-center justify-center rounded-full border border-dashed bg-white/70 px-3 text-center shadow-sm transition-all dark:bg-slate-900/80 ${
-        compact ? 'h-20 w-20' : 'mx-auto h-24 w-24'
-      } ${
-        isOver || isArmed || isActive
-          ? 'scale-[1.03] border-indigo-400 shadow-lg'
-          : 'border-slate-300/80 dark:border-slate-700/80'
-      } ${isEmpty ? 'opacity-90' : ''} ${isArmed || isActive ? 'cursor-pointer' : ''}`}
-      style={{
-        boxShadow: isOver || isArmed || isActive ? `0 0 0 3px ${color}33` : undefined,
-      }}
+        compact ? 'h-[5.5rem] w-[5.5rem]' : 'mx-auto h-24 w-24'
+      } ${presentation.className} ${isEmpty ? 'opacity-90' : ''} ${isArmed || isActive ? 'cursor-pointer' : ''}`}
+      style={presentation.style}
     >
       <span
         className={`rounded-full ${compact ? 'mb-1.5 h-2.5 w-2.5' : 'mb-2 h-3 w-3'}`}

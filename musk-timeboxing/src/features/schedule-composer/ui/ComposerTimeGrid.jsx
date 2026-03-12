@@ -1,5 +1,6 @@
 import { useDroppable } from '@dnd-kit/core'
 import { slotToTime, TOTAL_SLOTS } from '../../../entities/planner'
+import { WORKSPACE_LAYOUT } from '../../planner-workspace/lib/workspaceLayout'
 
 function ComposerSlotRow({
   slotIndex,
@@ -21,8 +22,17 @@ function ComposerSlotRow({
   const showLabel = label.endsWith(':00')
 
   return (
-    <div className="flex border-b border-slate-200 dark:border-slate-800" style={{ height: 32 }}>
-      <div className="w-16 shrink-0 px-2 text-right text-xs text-slate-500 dark:text-slate-400" style={{ lineHeight: '32px' }}>
+    <div
+      className="flex border-b border-slate-200 dark:border-slate-800"
+      style={{ height: WORKSPACE_LAYOUT.composerSlotHeightPx }}
+    >
+      <div
+        className="shrink-0 px-2 text-right text-xs text-slate-500 dark:text-slate-400"
+        style={{
+          width: WORKSPACE_LAYOUT.composerLabelWidthPx,
+          lineHeight: `${WORKSPACE_LAYOUT.composerSlotHeightPx}px`,
+        }}
+      >
         {showLabel ? label : ''}
       </div>
       <button
@@ -90,8 +100,14 @@ function ComposerTimeGrid({
           nativeDragActive={nativeDragActive}
         />
       ))}
-      <div className="flex" style={{ height: 32 }}>
-        <div className="w-16 shrink-0 px-2 text-right text-xs text-slate-500 dark:text-slate-400" style={{ lineHeight: '32px' }}>
+      <div className="flex" style={{ height: WORKSPACE_LAYOUT.composerSlotHeightPx }}>
+        <div
+          className="shrink-0 px-2 text-right text-xs text-slate-500 dark:text-slate-400"
+          style={{
+            width: WORKSPACE_LAYOUT.composerLabelWidthPx,
+            lineHeight: `${WORKSPACE_LAYOUT.composerSlotHeightPx}px`,
+          }}
+        >
           24:00
         </div>
         <div className="flex-1" />

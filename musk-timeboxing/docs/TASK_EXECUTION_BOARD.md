@@ -143,6 +143,7 @@
 - `W2` Category Dock + Active Stack 전환
 - `W3` Timeline Rail click-first interaction 정리
 - `W4` Big3 compact focus strip 전환
+- `W5` Category Dock glow presentation + timeline rail density token 정리
 - `P6` tldraw 제거 및 문서 교체
 
 완료:

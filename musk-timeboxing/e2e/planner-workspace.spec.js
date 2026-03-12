@@ -345,6 +345,23 @@ test('planner workspace can bulk schedule multiple selected canvas cards', async
   await expect(page.getByText('다중 선택 2개').first()).toBeVisible()
   await page.locator('[data-testid="composer-slot-8"]:visible').first().click()
 
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const dayKey = Object.keys(window.localStorage).find((key) =>
+          /^musk-planner-\d{4}-\d{2}-\d{2}$/.test(key),
+        )
+
+        if (!dayKey) {
+          return 0
+        }
+
+        const stored = JSON.parse(window.localStorage.getItem(dayKey) || '{}')
+        return Array.isArray(stored.timeBoxes) ? stored.timeBoxes.length : 0
+      }),
+    )
+    .toBe(2)
+
   await expect(page.locator('[data-testid^="composer-block-"]:visible')).toHaveCount(2)
   await expect(page.locator('[data-testid="planning-board-card-workspace-bulk-card-1"]:visible').first()).toContainText(
     '예정 1',
