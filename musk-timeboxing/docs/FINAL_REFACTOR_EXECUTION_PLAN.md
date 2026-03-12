@@ -30,19 +30,21 @@
 - `storage/migrations.js`
 - `storage/adapters.js`
 - `model/taskCards.js`
+- `model/timeBoxes.js`
 - persisted `brainDump -> taskCards` internal adapter 경계
 - internal task card naming(`title`, `estimateSlots`, `origin`) 도입
 - `model/categoryTree.js`
 - `model/selectors.js`
 - `model/bigThree.js`
+- internal `sourceId -> taskId` adapter boundary
 - `boardCanvas -> stackCanvasState` 전환
 
 아직 큰 덩어리로 남아 있는 곳:
 
 - `src/app/hooks/useDailyData.js`
 - `src/App.jsx`
-- timebox command / timer / restore 분리
-- `sourceId -> taskId` 링크 naming 정리
+- workspace / selection command 정리
+- DnD payload 통합
 
 ## 작업 원칙
 
@@ -71,7 +73,7 @@
 
 ## 남은 실행 단계
 
-## Step 1. Big3 command 분리
+## Step 1. Big3 command 분리 [Done]
 
 목표:
 
@@ -93,11 +95,12 @@
 
 - hook 내부의 Big3 관련 `setData` 분기가 command 호출형으로 바뀜
 
-## Step 2. TimeBox command 분리
+## Step 2. TimeBox command 분리 + taskId boundary [Done]
 
 목표:
 
 - timebox CRUD / timer / restore / category clear를 model command로 이동
+- internal link naming을 `taskId`로 고정하고 persisted `sourceId`는 storage adapter로 한정
 
 대상:
 
@@ -118,6 +121,7 @@
 
 - `useDailyData.js`에서 timebox mutation이 순수 함수 조합으로 줄어듦
 - task card sync는 hook 안이 아니라 timebox command 결과에서 함께 보장됨
+- `sourceId`는 storage boundary 외부에서 더 이상 직접 읽지 않음
 
 ## Step 3. DailyData를 reducer adapter처럼 축소
 
@@ -228,10 +232,10 @@
 
 이번 턴에서 바로 시작할 범위:
 
-1. 이 문서 추가
-2. `model/bigThree.js` 생성
-3. `useDailyData.js`의 Big3 mutation을 command 호출형으로 전환
-4. 관련 lint / build / Big3 E2E 확인
+1. `useDailyData.js`를 reducer adapter 수준으로 축소
+2. workspace / selection helper를 model 또는 feature helper로 이동
+3. `App.jsx`의 파생 계산과 DnD payload 계약을 분리
+4. 관련 lint / build / workspace E2E 확인
 
 ## 검증 기준
 
