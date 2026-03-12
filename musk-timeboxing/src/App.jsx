@@ -18,8 +18,11 @@ import Timeline, { RescheduleAssistantModal } from './features/timeline'
 import QuickAddModal from './features/timeline/ui/QuickAddModal'
 import { useCategoryMeta, useDailyData, useTemplateMeta, useToast } from './app/hooks'
 import {
+  applyTimeBoxReschedulePlan,
   buildMonthCalendarSnapshot,
   buildWeekCalendarSnapshot,
+  buildTimeBoxReschedulePlan,
+  deriveBigThreeProgress,
   getCategoryViewModels,
   getPlannerPersistenceStatus,
   hasOverlap,
@@ -711,33 +714,10 @@ function App() {
     currentDayData: data,
     categories,
   })
-  const bigThreeProgress = useMemo(() => {
-    const statuses = [0, 1, 2].map((index) => {
-      const item = data.bigThree[index]
-      if (!item) {
-        return 'EMPTY'
-      }
-
-      const done = data.timeBoxes.some(
-        (box) =>
-          box.status === 'COMPLETED' &&
-          ((item.taskId && box.taskId === item.taskId) ||
-            (item.taskId == null && box.taskId == null && box.content === item.content)),
-      )
-
-      return done ? 'DONE' : 'PENDING'
-    })
-
-    const completedCount = statuses.filter((status) => status === 'DONE').length
-    const filledCount = statuses.filter((status) => status !== 'EMPTY').length
-
-    return {
-      statuses,
-      completedCount,
-      filledCount,
-      isPerfect: completedCount === 3,
-    }
-  }, [data.bigThree, data.timeBoxes])
+  const bigThreeProgress = useMemo(
+    () => deriveBigThreeProgress(data.bigThree, data.timeBoxes),
+    [data.bigThree, data.timeBoxes],
+  )
 
   const handleSendToBigThree = (taskCardId) => {
     const success = sendToBigThree(taskCardId)
@@ -826,50 +806,12 @@ function App() {
   const buildReschedulePlan = () => {
     const targetDate = shiftDate(currentDate, 1)
     const targetDay = loadPlannerDayModel(targetDate)
-    const planBaseBoxes = [...targetDay.timeBoxes]
-    const pending = [...data.timeBoxes]
-      .filter((box) => box.status !== 'COMPLETED')
-      .sort((a, b) => a.startSlot - b.startSlot)
-
-    const planned = []
-    const skipped = []
-
-    pending.forEach((box) => {
-      const durationSlots = Math.max(1, box.endSlot - box.startSlot)
-      const startSlot = findAvailableStartSlot(planBaseBoxes, box.startSlot, durationSlots)
-
-      if (startSlot == null) {
-        skipped.push(box)
-        return
-      }
-
-      const nextBox = {
-        id: crypto.randomUUID(),
-        content: box.content,
-        taskId: box.taskId ?? null,
-        startSlot,
-        endSlot: startSlot + durationSlots,
-        status: 'PLANNED',
-        actualMinutes: null,
-        category: box.category ?? null,
-        categoryId: box.categoryId ?? null,
-        skipReason: null,
-        carryOverFromDate: currentDate,
-        carryOverFromBoxId: box.id,
-        timerStartedAt: null,
-        elapsedSeconds: 0,
-      }
-
-      planned.push(nextBox)
-      planBaseBoxes.push(nextBox)
-    })
-
-    return {
-      fromDate: currentDate,
+    return buildTimeBoxReschedulePlan({
+      currentDate,
       targetDate,
-      planned,
-      skipped,
-    }
+      timeBoxes: data.timeBoxes,
+      targetTimeBoxes: targetDay.timeBoxes,
+    })
   }
 
   const applyReschedulePlan = (plan) => {
@@ -879,15 +821,8 @@ function App() {
     }
 
     const targetDay = loadPlannerDayModel(plan.targetDate)
-    const deduped = plan.planned.filter(
-      (candidate) =>
-        !targetDay.timeBoxes.some(
-          (existing) =>
-            existing.carryOverFromDate === candidate.carryOverFromDate &&
-            existing.carryOverFromBoxId === candidate.carryOverFromBoxId,
-        ),
-    )
-    if (deduped.length === 0) {
+    const { appliedCount, nextTimeBoxes } = applyTimeBoxReschedulePlan(targetDay.timeBoxes, plan)
+    if (appliedCount === 0) {
       showToast('이미 재배치된 일정입니다')
       setIsRescheduleModalOpen(false)
       return
@@ -895,12 +830,12 @@ function App() {
 
     const merged = {
       ...targetDay,
-      timeBoxes: [...targetDay.timeBoxes, ...deduped],
+      timeBoxes: nextTimeBoxes,
     }
 
     savePlannerDayModel(plan.targetDate, merged)
     setCrossDateRevision((prev) => prev + 1)
-    showToast(`다음 날(${plan.targetDate})로 ${deduped.length}건 재배치했습니다`, 2600)
+    showToast(`다음 날(${plan.targetDate})로 ${appliedCount}건 재배치했습니다`, 2600)
     setIsRescheduleModalOpen(false)
   }
 

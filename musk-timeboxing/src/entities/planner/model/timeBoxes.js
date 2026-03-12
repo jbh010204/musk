@@ -1,4 +1,5 @@
 import { hasOverlap, TOTAL_SLOTS } from '../lib/timeSlot'
+import { findAvailableStartSlot } from '../lib/timeBoxPlacement'
 
 const defaultCreateId = () => crypto.randomUUID()
 
@@ -262,3 +263,89 @@ export const completeTimeBoxByTimerRecord = (timeBoxes = [], timeBoxId, now = Da
       timerStartedAt: null,
     }
   })
+
+export const buildTimeBoxReschedulePlan = ({
+  currentDate,
+  targetDate,
+  timeBoxes = [],
+  targetTimeBoxes = [],
+  createId = defaultCreateId,
+} = {}) => {
+  const planBaseBoxes = [...targetTimeBoxes]
+  const pending = [...timeBoxes]
+    .filter((timeBox) => timeBox.status !== 'COMPLETED')
+    .sort((left, right) => left.startSlot - right.startSlot)
+
+  const planned = []
+  const skipped = []
+
+  pending.forEach((timeBox) => {
+    const durationSlots = Math.max(1, timeBox.endSlot - timeBox.startSlot)
+    const startSlot = findAvailableStartSlot(planBaseBoxes, timeBox.startSlot, durationSlots)
+
+    if (startSlot == null) {
+      skipped.push(timeBox)
+      return
+    }
+
+    const nextTimeBox = normalizeTimeBoxRecord(
+      {
+        ...timeBox,
+        id: undefined,
+        taskId: timeBox.taskId ?? null,
+        startSlot,
+        endSlot: startSlot + durationSlots,
+        status: 'PLANNED',
+        actualMinutes: null,
+        skipReason: null,
+        carryOverFromDate: currentDate ?? null,
+        carryOverFromBoxId: timeBox.id,
+        timerStartedAt: null,
+        elapsedSeconds: 0,
+      },
+      createId,
+    )
+
+    if (!nextTimeBox) {
+      skipped.push(timeBox)
+      return
+    }
+
+    planned.push(nextTimeBox)
+    planBaseBoxes.push(nextTimeBox)
+  })
+
+  return {
+    fromDate: currentDate ?? null,
+    targetDate: targetDate ?? null,
+    planned,
+    skipped,
+  }
+}
+
+export const applyTimeBoxReschedulePlan = (targetTimeBoxes = [], plan = {}) => {
+  const planned = Array.isArray(plan?.planned) ? plan.planned.filter(Boolean) : []
+  if (planned.length === 0) {
+    return {
+      appliedCount: 0,
+      nextTimeBoxes: targetTimeBoxes,
+      dedupedPlanned: [],
+    }
+  }
+
+  const dedupedPlanned = planned.filter(
+    (candidate) =>
+      !targetTimeBoxes.some(
+        (existing) =>
+          existing.carryOverFromDate === candidate.carryOverFromDate &&
+          existing.carryOverFromBoxId === candidate.carryOverFromBoxId,
+      ),
+  )
+
+  return {
+    appliedCount: dedupedPlanned.length,
+    nextTimeBoxes:
+      dedupedPlanned.length > 0 ? [...targetTimeBoxes, ...dedupedPlanned] : targetTimeBoxes,
+    dedupedPlanned,
+  }
+}
