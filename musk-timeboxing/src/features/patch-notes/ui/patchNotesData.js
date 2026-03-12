@@ -1,5 +1,26 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.22.1',
+    date: '2026-03-12',
+    title: 'Workspace preference: 마지막 일정 보기 복원',
+    summary:
+      '타임라인 상단 보기 모드가 새로고침 후에도 유지되도록 저장하고, 계획 카드만 있고 timeBox가 없는 날은 첫 진입을 `WORKSPACE`로 시작하도록 기본 진입 정책을 조정했습니다.',
+    focus: [
+      '사용자가 고른 `WORKSPACE/CANVAS/COMPOSER/DAY/WEEK/MONTH` 뷰를 localStorage와 snapshot export 경로에 같이 저장',
+      '기존처럼 무조건 `DAY`로 시작하지 않고, 일정이 아직 배치되지 않은 planning day는 `WORKSPACE`를 우선 진입점으로 사용',
+      'planner-workspace E2E에 기본 워크스페이스 진입과 마지막 보기 복원 회귀를 추가',
+    ],
+    improvements: [
+      '`storage/index.js`에 `lastViewMode` load/save 경로를 추가하고 snapshot export/import에 포함',
+      '`Timeline/index.jsx`가 persisted view를 복원하고, persisted 값이 없을 때는 `brainDump 있음 + timeBox 없음` 조건에서 `WORKSPACE`를 기본으로 선택',
+      '`planner-workspace.spec.js`가 workspace 기본 진입과 week view 복원 시나리오를 검증',
+    ],
+    validation: [
+      'lint/build 통과',
+      'E2E 전체 회귀 통과 (57 passed)',
+    ],
+  },
+  {
     version: 'v0.22.0',
     date: '2026-03-12',
     title: 'Storage cleanup: boardCanvas -> stackCanvasState',

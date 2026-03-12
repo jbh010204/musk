@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getCategoryColor, getCategoryLabel, hasOverlap, slotToTime, TOTAL_SLOTS } from '../../../entities/planner'
+import {
+  getCategoryColor,
+  getCategoryLabel,
+  hasOverlap,
+  loadLastViewMode,
+  saveLastViewMode,
+  slotToTime,
+  TOTAL_SLOTS,
+} from '../../../entities/planner'
 import PlanningCanvas from '../../planning-canvas'
 import PlannerWorkspace from '../../planner-workspace'
 import ScheduleComposer from '../../schedule-composer'
@@ -30,6 +38,22 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'COMPLETED', label: '완료' },
   { value: 'SKIPPED', label: '스킵' },
 ]
+
+const resolveInitialViewMode = (data) => {
+  const persistedViewMode = loadLastViewMode()
+  if (persistedViewMode) {
+    return persistedViewMode
+  }
+
+  const hasPlanningCards = Array.isArray(data?.brainDump) && data.brainDump.length > 0
+  const hasScheduledBoxes = Array.isArray(data?.timeBoxes) && data.timeBoxes.length > 0
+
+  if (hasPlanningCards && !hasScheduledBoxes) {
+    return 'WORKSPACE'
+  }
+
+  return 'DAY'
+}
 
 function TimelineInsightsSkeleton() {
   return (
@@ -119,7 +143,7 @@ function Timeline({
   const [resizePreview, setResizePreview] = useState({})
   const [isComposing, setIsComposing] = useState(false)
   const [timerNow, setTimerNow] = useState(0)
-  const [viewMode, setViewMode] = useState('DAY')
+  const [viewMode, setViewMode] = useState(() => resolveInitialViewMode(data))
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [categoryFilter, setCategoryFilter] = useState('ALL')
   const [selectedMonthDate, setSelectedMonthDate] = useState(null)
@@ -183,6 +207,10 @@ function Timeline({
       window.clearInterval(intervalId)
     }
   }, [hasRunningTimer])
+
+  useEffect(() => {
+    saveLastViewMode(viewMode)
+  }, [viewMode])
 
   const categoryLegend = useMemo(() => {
     const legendMap = new Map()

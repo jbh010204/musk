@@ -32,6 +32,7 @@ import {
   PLANNER_DAY_KEY_PREFIX,
   PLANNER_LAST_ACTIVE_DATE_KEY,
   PLANNER_LAST_FOCUS_KEY,
+  PLANNER_LAST_VIEW_MODE_KEY,
   PLANNER_META_KEY,
   PLANNER_SCHEMA_VERSION,
 } from './schema'
@@ -43,7 +44,9 @@ const DAY_KEY_PREFIX = PLANNER_DAY_KEY_PREFIX
 const DATE_STR_PATTERN = PLANNER_DATE_STR_PATTERN
 const LAST_ACTIVE_DATE_KEY = PLANNER_LAST_ACTIVE_DATE_KEY
 const LAST_FOCUS_KEY = PLANNER_LAST_FOCUS_KEY
+const LAST_VIEW_MODE_KEY = PLANNER_LAST_VIEW_MODE_KEY
 const AUTO_SYNC_INTERVAL_KEY = PLANNER_AUTO_SYNC_INTERVAL_KEY
+const VALID_VIEW_MODES = new Set(['WORKSPACE', 'CANVAS', 'COMPOSER', 'DAY', 'WEEK', 'MONTH'])
 
 let autoSyncStarted = false
 let autoSyncTimerId = null
@@ -64,7 +67,13 @@ const clearPlannerDataLocal = () => {
   }
 
   Object.keys(window.localStorage).forEach((key) => {
-    if (isPersistedDayKey(key) || key === META_KEY || key === LAST_ACTIVE_DATE_KEY || key === LAST_FOCUS_KEY) {
+    if (
+      isPersistedDayKey(key) ||
+      key === META_KEY ||
+      key === LAST_ACTIVE_DATE_KEY ||
+      key === LAST_FOCUS_KEY ||
+      key === LAST_VIEW_MODE_KEY
+    ) {
       window.localStorage.removeItem(key)
     }
   })
@@ -120,6 +129,14 @@ const saveLastFocusLocal = ({ date, slot, ts = Date.now() }) => {
   )
 }
 
+const saveLastViewModeLocal = (viewMode) => {
+  if (typeof window === 'undefined' || !VALID_VIEW_MODES.has(String(viewMode))) {
+    return
+  }
+
+  window.localStorage.setItem(LAST_VIEW_MODE_KEY, String(viewMode))
+}
+
 const parseImportPayload = (input) => {
   if (typeof input === 'string') {
     return JSON.parse(input)
@@ -157,6 +174,7 @@ const buildSnapshotPayload = (dateStr = null) => ({
   meta: loadMeta(),
   lastActiveDate: loadLastActiveDate(),
   lastFocus: loadLastFocus(),
+  lastViewMode: loadLastViewMode(),
 })
 
 const hasPlannerLocalData = () => {
@@ -171,7 +189,8 @@ const hasPlannerLocalData = () => {
     loadMeta().categories.length > 0 ||
     loadMeta().templates.length > 0 ||
     loadLastActiveDate() !== null ||
-    loadLastFocus() !== null
+    loadLastFocus() !== null ||
+    loadLastViewMode() !== null
   )
 }
 
@@ -207,6 +226,10 @@ const applySnapshotToLocal = (snapshot) => {
     Number.isInteger(snapshot.lastFocus.slot)
   ) {
     saveLastFocusLocal(snapshot.lastFocus)
+  }
+
+  if (VALID_VIEW_MODES.has(String(snapshot.lastViewMode))) {
+    saveLastViewModeLocal(snapshot.lastViewMode)
   }
 }
 
@@ -431,6 +454,24 @@ export const saveLastFocus = ({ date, slot }) => {
   void saveLastFocusToServer(payload)
 }
 
+export const loadLastViewMode = () => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const value = window.localStorage.getItem(LAST_VIEW_MODE_KEY)
+  return VALID_VIEW_MODES.has(String(value)) ? String(value) : null
+}
+
+export const saveLastViewMode = (viewMode) => {
+  if (typeof window === 'undefined' || !VALID_VIEW_MODES.has(String(viewMode))) {
+    return
+  }
+
+  saveLastViewModeLocal(String(viewMode))
+  markPlannerDirty('merge')
+}
+
 export const exportPlannerData = (dateStr = null) => {
   if (typeof window === 'undefined') {
     return {
@@ -484,8 +525,9 @@ export const importPlannerData = (input, options = {}) => {
     Number.isInteger(payload.lastFocus.slot)
       ? payload.lastFocus
       : null
+  const lastViewMode = VALID_VIEW_MODES.has(String(payload.lastViewMode)) ? String(payload.lastViewMode) : null
 
-  if (!days && !meta && !lastActiveDate && !lastFocus) {
+  if (!days && !meta && !lastActiveDate && !lastFocus && !lastViewMode) {
     return { ok: false, error: 'days 또는 meta 데이터가 필요합니다' }
   }
 
@@ -531,6 +573,10 @@ export const importPlannerData = (input, options = {}) => {
 
   if (lastFocus) {
     saveLastFocusLocal(lastFocus)
+  }
+
+  if (lastViewMode) {
+    saveLastViewModeLocal(lastViewMode)
   }
 
   markPlannerDirty(mode)

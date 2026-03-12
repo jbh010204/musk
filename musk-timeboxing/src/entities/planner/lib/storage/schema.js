@@ -7,6 +7,7 @@ export const PLANNER_DAY_KEY_PATTERN = /^musk-planner-\d{4}-\d{2}-\d{2}$/
 export const PLANNER_DATE_STR_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 export const PLANNER_LAST_ACTIVE_DATE_KEY = 'musk-planner-last-date'
 export const PLANNER_LAST_FOCUS_KEY = 'musk-planner-last-focus'
+export const PLANNER_LAST_VIEW_MODE_KEY = 'musk-planner-last-view-mode'
 export const PLANNER_AUTO_SYNC_INTERVAL_KEY = 'musk-planner-auto-sync-interval-ms'
 
 export const createEmptyDay = (dateStr) => ({

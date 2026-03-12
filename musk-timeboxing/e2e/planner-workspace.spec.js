@@ -59,7 +59,6 @@ test('planner workspace composes board canvas and composer in one view', async (
   })
 
   await page.reload()
-  await page.locator('[data-testid="timeline-view-workspace"]:visible').first().click()
 
   await expect(page.locator('[data-testid="planner-workspace-view"]:visible').first()).toBeVisible()
   await expect(page.locator('[data-testid="planning-canvas-view"]:visible').first()).toBeVisible()
@@ -88,6 +87,18 @@ test('planner workspace composes board canvas and composer in one view', async (
       parsed?.stackCanvasState?.selectedCardId === null
     )
   }, setup.today)
+})
+
+test('planner workspace keeps the last selected timeline view after refresh', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => window.localStorage.clear())
+  await page.reload()
+
+  await page.locator('[data-testid="timeline-view-week"]:visible').first().click()
+  await expect(page.locator('text=주간 계획을 한 번에 확인합니다.').first()).toBeVisible()
+
+  await page.reload()
+  await expect(page.locator('[data-testid="timeline-view-week"][aria-pressed="true"]:visible').first()).toBeVisible()
 })
 
 test('planner workspace can drag a canvas card directly into the timeline rail', async ({ page }) => {
