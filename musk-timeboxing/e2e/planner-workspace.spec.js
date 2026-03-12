@@ -389,3 +389,234 @@ test('planner workspace can bulk schedule multiple selected canvas cards', async
   expect(stored?.stackCanvasState?.selectedCardIds).toEqual([])
   expect(stored?.stackCanvasState?.selectedCardId).toBeNull()
 })
+
+test('planner workspace can search, filter, and collapse inbox cards', async ({ page }) => {
+  await page.goto('/')
+
+  await page.evaluate(() => {
+    window.localStorage.clear()
+
+    const formatDate = (date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    const today = formatDate(new Date())
+    window.localStorage.setItem('musk-planner-last-date', today)
+    window.localStorage.setItem(
+      'musk-planner-meta',
+      JSON.stringify({
+        schemaVersion: 4,
+        categories: [{ id: 'cat-focus', name: '집중', color: '#6366f1', parentId: null, order: 0 }],
+        templates: [],
+      }),
+    )
+    window.localStorage.setItem(
+      `musk-planner-${today}`,
+      JSON.stringify({
+        schemaVersion: 4,
+        date: today,
+        brainDump: [
+          {
+            id: 'workspace-inbox-card-1',
+            content: '로그인 API 정리',
+            isDone: false,
+            priority: 0,
+            categoryId: null,
+            stackOrder: 0,
+            estimatedSlots: 2,
+            linkedTimeBoxIds: [],
+            note: '보안 메모',
+            createdFrom: 'board',
+          },
+          {
+            id: 'workspace-inbox-card-2',
+            content: '회의 노트 정리',
+            isDone: false,
+            priority: 0,
+            categoryId: null,
+            stackOrder: 1,
+            estimatedSlots: 2,
+            linkedTimeBoxIds: ['inbox-tb-1'],
+            note: '',
+            createdFrom: 'board',
+          },
+          {
+            id: 'workspace-inbox-card-3',
+            content: '회고 정리',
+            isDone: false,
+            priority: 0,
+            categoryId: null,
+            stackOrder: 2,
+            estimatedSlots: 2,
+            linkedTimeBoxIds: ['inbox-tb-2'],
+            note: '',
+            createdFrom: 'board',
+          },
+        ],
+        bigThree: [],
+        timeBoxes: [
+          {
+            id: 'inbox-tb-1',
+            content: '회의 노트 정리',
+            sourceId: 'workspace-inbox-card-2',
+            startSlot: 8,
+            endSlot: 10,
+            status: 'PLANNED',
+            actualMinutes: null,
+            categoryId: null,
+            category: null,
+          },
+          {
+            id: 'inbox-tb-2',
+            content: '회고 정리',
+            sourceId: 'workspace-inbox-card-3',
+            startSlot: 10,
+            endSlot: 12,
+            status: 'COMPLETED',
+            actualMinutes: 60,
+            categoryId: null,
+            category: null,
+          },
+        ],
+        stackCanvasState: {
+          version: 2,
+          layoutMode: 'stack',
+          selectedCardId: null,
+          selectedCardIds: [],
+          focusedLaneId: 'cat-focus',
+          migratedFromLegacyBoard: false,
+          lastSyncedAt: null,
+        },
+      }),
+    )
+  })
+
+  await page.reload()
+  await page.locator('[data-testid="timeline-view-workspace"]:visible').first().click()
+
+  await page.locator('[data-testid="planning-canvas-inbox-search"]:visible').first().fill('로그인')
+  await expect(page.locator('[data-testid="planning-board-card-workspace-inbox-card-1"]:visible').first()).toBeVisible()
+  await expect(page.locator('[data-testid="planning-board-card-workspace-inbox-card-2"]:visible')).toHaveCount(0)
+
+  await page.locator('[data-testid="planning-canvas-inbox-search"]:visible').first().fill('')
+  await page.locator('[data-testid="planning-canvas-inbox-filter-SCHEDULED"]:visible').first().click()
+  await expect(page.locator('[data-testid="planning-board-card-workspace-inbox-card-2"]:visible').first()).toBeVisible()
+  await expect(page.locator('[data-testid="planning-board-card-workspace-inbox-card-1"]:visible')).toHaveCount(0)
+
+  await page.locator('[data-testid="planning-canvas-inbox-collapse-toggle"]:visible').first().click()
+  await expect(page.getByText('Inbox를 접어두었습니다. 필요할 때 다시 펼쳐 검색하고 정리하세요.').first()).toBeVisible()
+
+  const stored = await page.evaluate(() => {
+    const dayKey = Object.keys(window.localStorage).find((key) =>
+      /^musk-planner-\d{4}-\d{2}-\d{2}$/.test(key),
+    )
+    if (!dayKey) {
+      return null
+    }
+
+    return JSON.parse(window.localStorage.getItem(dayKey))
+  })
+
+  expect(stored?.stackCanvasState?.inboxFilter).toBe('SCHEDULED')
+  expect(stored?.stackCanvasState?.isInboxCollapsed).toBe(true)
+})
+
+test('planner workspace supports keyboard shortcuts for move, big3, and first-open scheduling', async ({ page }) => {
+  await page.goto('/')
+
+  await page.evaluate(() => {
+    window.localStorage.clear()
+
+    const formatDate = (date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    const today = formatDate(new Date())
+    window.localStorage.setItem('musk-planner-last-date', today)
+    window.localStorage.setItem(
+      'musk-planner-meta',
+      JSON.stringify({
+        schemaVersion: 4,
+        categories: [
+          { id: 'cat-focus', name: '집중', color: '#6366f1', parentId: null, order: 0 },
+          { id: 'cat-admin', name: '운영', color: '#f97316', parentId: null, order: 1 },
+        ],
+        templates: [],
+      }),
+    )
+    window.localStorage.setItem(
+      `musk-planner-${today}`,
+      JSON.stringify({
+        schemaVersion: 4,
+        date: today,
+        brainDump: [
+          {
+            id: 'workspace-shortcut-card',
+            content: '단축키 플로우 테스트',
+            isDone: false,
+            priority: 0,
+            categoryId: null,
+            stackOrder: 0,
+            estimatedSlots: 2,
+            linkedTimeBoxIds: [],
+            note: '',
+            createdFrom: 'board',
+          },
+        ],
+        bigThree: [],
+        timeBoxes: [],
+        stackCanvasState: {
+          version: 2,
+          layoutMode: 'stack',
+          selectedCardId: null,
+          selectedCardIds: [],
+          focusedLaneId: 'cat-focus',
+          migratedFromLegacyBoard: false,
+          lastSyncedAt: null,
+        },
+      }),
+    )
+  })
+
+  await page.reload()
+
+  await page.locator('[data-testid="planning-board-card-select-toggle-workspace-shortcut-card"]:visible').first().click()
+  await page.locator('[data-testid="planning-canvas-view"]:visible').first().click()
+
+  await page.keyboard.press(']')
+  await expect(page.locator('[data-testid="planning-board-lane-cat-focus"]:visible').first()).toContainText(
+    '단축키 플로우 테스트',
+  )
+
+  await page.keyboard.press('Shift+B')
+  await expect(page.locator('[data-testid="workspace-bigthree-slot-0"]:visible').first()).toContainText(
+    '단축키 플로우 테스트',
+  )
+
+  await page.keyboard.press('Shift+Enter')
+  await expect(page.locator('[data-testid^="composer-block-"]:visible')).toHaveCount(1)
+  await expect(page.locator('[data-testid="planning-board-card-workspace-shortcut-card"]:visible').first()).toContainText(
+    '예정 1',
+  )
+
+  const stored = await page.evaluate(() => {
+    const dayKey = Object.keys(window.localStorage).find((key) =>
+      /^musk-planner-\d{4}-\d{2}-\d{2}$/.test(key),
+    )
+    if (!dayKey) {
+      return null
+    }
+
+    return JSON.parse(window.localStorage.getItem(dayKey))
+  })
+
+  expect(stored?.bigThree).toHaveLength(1)
+  expect(stored?.timeBoxes).toHaveLength(1)
+  expect(stored?.timeBoxes?.[0]?.startSlot).toBe(0)
+})

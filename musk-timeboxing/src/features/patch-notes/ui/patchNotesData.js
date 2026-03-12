@@ -1,5 +1,27 @@
 export const PATCH_NOTES = [
   {
+    version: 'v0.22.6',
+    date: '2026-03-12',
+    title: 'Workspace flow: inbox tools + keyboard shortcuts',
+    summary:
+      'Inbox에 검색/상태 필터/접기를 추가하고, 선택 카드 기준 `Shift+B`, `Shift+Enter`, `[ ]` 단축 경로를 넣어 캔버스 정리 속도를 높였습니다.',
+    focus: [
+      '검색어는 지역 상태로만 두고 `inboxFilter`, `isInboxCollapsed`만 `stackCanvasState`에 저장해 영속성과 쓰기 빈도를 분리',
+      '첫 빈 슬롯 배치 helper를 planner entity 계층으로 추출해 hook/타임라인이 같은 배치 규칙을 재사용하도록 정리',
+      '워크스페이스 회귀를 Inbox 도구 계약과 keyboard shortcut 계약까지 포함하도록 확장',
+    ],
+    improvements: [
+      '`PlanningCanvas.jsx`, `CategoryStackLane.jsx`, `inboxFilters.js`를 수정해 Inbox 검색, 상태 필터, 접기, 단축키 힌트를 추가',
+      '`timeBoxPlacement.js`, `Timeline/index.jsx`, `PlannerWorkspace.jsx`를 수정해 선택 카드의 첫 빈 슬롯 배치 경로를 도입',
+      '`planner-workspace.spec.js`, `README.md`, `STACK_CANVAS_PIVOT_PLAN.md`를 현재 Inbox/shortcut 흐름 기준으로 갱신',
+    ],
+    validation: [
+      'lint/build 통과',
+      'planner-workspace 타깃 E2E 통과',
+      'E2E 전체 회귀 통과',
+    ],
+  },
+  {
     version: 'v0.22.5',
     date: '2026-03-12',
     title: 'Workspace polish: glowing dock states + roomier timeline rail',

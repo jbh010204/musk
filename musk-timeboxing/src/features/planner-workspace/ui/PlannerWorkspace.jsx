@@ -21,6 +21,7 @@ function PlannerWorkspace({
   onSendCardsToBigThree,
   onScheduleBoardCard,
   onScheduleBoardCards,
+  onScheduleSelectedCardsToFirstOpen,
   onScheduleBigThreeItem,
   onJumpToDay,
 }) {
@@ -130,6 +131,8 @@ function PlannerWorkspace({
           selectedCardIds={selectedCardIds}
           onSelectCard={handleSelectCard}
           onSelectCards={handleSelectCards}
+          onSendSelectedCardsToBigThree={onSendCardsToBigThree}
+          onScheduleSelectedCardsToFirstOpen={onScheduleSelectedCardsToFirstOpen}
           embedded
         />
 

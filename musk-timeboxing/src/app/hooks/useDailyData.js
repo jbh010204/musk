@@ -5,6 +5,7 @@ import {
   applyTaskCardBoardLayout,
   clearTaskCardCategory,
   cycleTaskCardPriority,
+  findAvailableStartSlot,
   getMostRecentStoredDate,
   hasOverlap,
   loadDay,
@@ -98,28 +99,6 @@ const normalizeRestoredTimeBox = (box) => {
     timerStartedAt: Number.isFinite(box?.timerStartedAt) ? Number(box.timerStartedAt) : null,
     elapsedSeconds: normalizeElapsedSeconds(box?.elapsedSeconds),
   }
-}
-
-const findAvailableStartSlot = (timeBoxes, preferredStart, duration) => {
-  const normalizedDuration = Math.max(1, Math.min(TOTAL_SLOTS, Number(duration) || 1))
-  const maxStart = TOTAL_SLOTS - normalizedDuration
-  const safePreferred = Math.max(0, Math.min(maxStart, clampSlot(preferredStart)))
-  const findFrom = (startIndex) => {
-    for (let slot = startIndex; slot <= maxStart; slot += 1) {
-      const candidate = {
-        startSlot: slot,
-        endSlot: slot + normalizedDuration,
-      }
-
-      if (!hasOverlap(timeBoxes, candidate)) {
-        return slot
-      }
-    }
-
-    return null
-  }
-
-  return findFrom(safePreferred) ?? findFrom(0)
 }
 
 const syncBrainDumpLinks = (brainDump, timeBoxes) => syncTaskCardLinksWithTimeBoxes(brainDump, timeBoxes)

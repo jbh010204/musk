@@ -18,6 +18,9 @@ function CategoryStackLane({
   scheduleDraggable = false,
   onScheduleDragStart = () => {},
   onScheduleDragEnd = () => {},
+  headerActions = null,
+  collapsed = false,
+  collapsedMessage = '접힌 상태입니다.',
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `lane:${lane.id}`,
@@ -59,14 +62,21 @@ function CategoryStackLane({
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{lane.label}</p>
           </div>
-          <span className="rounded-xl bg-slate-200/70 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800/70 dark:text-slate-300">
-            {lane.items.length}개
-          </span>
+          <div className="flex items-center gap-2">
+            {headerActions}
+            <span className="rounded-xl bg-slate-200/70 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800/70 dark:text-slate-300">
+              {lane.items.length}개
+            </span>
+          </div>
         </div>
 
         <SortableContext items={lane.items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
-            {lane.items.length === 0 ? (
+            {collapsed ? (
+              <div className="rounded-2xl px-3 py-6 text-center text-sm text-slate-400 dark:text-slate-500">
+                {collapsedMessage}
+              </div>
+            ) : lane.items.length === 0 ? (
               <div className="rounded-2xl px-3 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
                 {emptyMessage}
               </div>

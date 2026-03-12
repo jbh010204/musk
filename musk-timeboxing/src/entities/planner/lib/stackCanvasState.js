@@ -10,6 +10,8 @@ export const createEmptyStackCanvasState = () => ({
   selectedCardIds: [],
   selectedBigThreeId: null,
   focusedLaneId: UNCATEGORIZED_BOARD_LANE,
+  inboxFilter: 'ALL',
+  isInboxCollapsed: false,
   migratedFromLegacyBoard: false,
   lastSyncedAt: null,
 })
@@ -46,6 +48,13 @@ export const normalizeStackCanvasState = (value) => {
       typeof safeValue.focusedLaneId === 'string' && safeValue.focusedLaneId.trim().length > 0
         ? safeValue.focusedLaneId
         : UNCATEGORIZED_BOARD_LANE,
+    inboxFilter:
+      safeValue.inboxFilter === 'TODO' ||
+      safeValue.inboxFilter === 'SCHEDULED' ||
+      safeValue.inboxFilter === 'COMPLETED'
+        ? safeValue.inboxFilter
+        : 'ALL',
+    isInboxCollapsed: Boolean(safeValue.isInboxCollapsed),
     migratedFromLegacyBoard: Boolean(safeValue.migratedFromLegacyBoard || hadLegacySnapshot),
     lastSyncedAt: Number.isFinite(safeValue.lastSyncedAt) ? Number(safeValue.lastSyncedAt) : null,
   }

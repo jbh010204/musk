@@ -8,7 +8,7 @@ import {
   useSensors,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   buildBoardLayoutEntries,
   getCategoryColor,
@@ -17,6 +17,7 @@ import {
   UNCATEGORIZED_BOARD_LANE,
 } from '../../../entities/planner'
 import { Badge, Button, Card } from '../../../shared/ui'
+import { INBOX_FILTER_OPTIONS, filterInboxItems } from '../lib/inboxFilters'
 import BoardCardEditorModal from '../../planning-board/ui/BoardCardEditorModal'
 import CategoryNode from '../../planning-board/ui/CategoryNode'
 import CategoryStackLane from '../../planning-board/ui/CategoryStackLane'
@@ -58,6 +59,8 @@ function PlanningCanvas({
   selectedCardIds: controlledSelectedCardIds = null,
   onSelectCard = null,
   onSelectCards = null,
+  onSendSelectedCardsToBigThree = () => 0,
+  onScheduleSelectedCardsToFirstOpen = () => false,
   scheduleDraggable = false,
   onScheduleDragStart = () => {},
   onScheduleDragEnd = () => {},
@@ -65,6 +68,7 @@ function PlanningCanvas({
 }) {
   const [editingCard, setEditingCard] = useState(null)
   const [activeCardId, setActiveCardId] = useState(null)
+  const [inboxSearch, setInboxSearch] = useState('')
   const [internalSelectedCardId, setInternalSelectedCardId] = useState(
     controlledSelectedCardId ?? stackCanvasState?.selectedCardId ?? null,
   )
@@ -83,6 +87,8 @@ function PlanningCanvas({
     ? controlledSelectedCardIds
     : internalSelectedCardIds
   const focusedLaneId = stackCanvasState?.focusedLaneId ?? UNCATEGORIZED_BOARD_LANE
+  const inboxFilter = stackCanvasState?.inboxFilter ?? 'ALL'
+  const isInboxCollapsed = Boolean(stackCanvasState?.isInboxCollapsed)
 
   const visualLanes = useMemo(
     () =>
@@ -112,6 +118,19 @@ function PlanningCanvas({
   const dockLanes = useMemo(() => visualLanes, [visualLanes])
   const uncategorizedLane =
     visualLanes.find((lane) => lane.id === UNCATEGORIZED_BOARD_LANE) || visualLanes[0] || null
+  const filteredInboxItems = useMemo(
+    () =>
+      filterInboxItems(uncategorizedLane?.items || [], {
+        query: inboxSearch,
+        filter: inboxFilter,
+        timeBoxes,
+      }),
+    [inboxFilter, inboxSearch, timeBoxes, uncategorizedLane?.items],
+  )
+  const inboxLane = useMemo(
+    () => (uncategorizedLane ? { ...uncategorizedLane, items: filteredInboxItems } : null),
+    [filteredInboxItems, uncategorizedLane],
+  )
   const activeLane = useMemo(() => {
     const preferredLane =
       focusedLaneId && focusedLaneId !== UNCATEGORIZED_BOARD_LANE
@@ -124,6 +143,7 @@ function PlanningCanvas({
 
     return visualLanes.find((lane) => lane.id !== UNCATEGORIZED_BOARD_LANE) || null
   }, [focusedLaneId, visualLanes])
+  const orderedDockLaneIds = useMemo(() => dockLanes.map((lane) => lane.id), [dockLanes])
 
   useEffect(() => {
     setLaneState(createLaneState(lanes))
@@ -217,12 +237,12 @@ function PlanningCanvas({
     applySelection([...selectedCardIds, nextId], nextId)
   }
 
-  const commitLaneState = (nextLaneState) => {
+  const commitLaneState = useCallback((nextLaneState) => {
     setLaneState(nextLaneState)
     onApplyLayout(buildBoardLayoutEntries(nextLaneState))
-  }
+  }, [onApplyLayout])
 
-  const moveCardsToLane = (cardIds, targetLaneId) => {
+  const moveCardsToLane = useCallback((cardIds, targetLaneId) => {
     const uniqueCardIds = [...new Set(cardIds)].filter(Boolean)
     if (uniqueCardIds.length === 0) {
       return
@@ -245,7 +265,7 @@ function PlanningCanvas({
 
     targetLane.items = [...targetLane.items.filter((itemId) => !uniqueCardIds.includes(itemId)), ...uniqueCardIds]
     commitLaneState(nextLaneState)
-  }
+  }, [commitLaneState, visualLanes])
 
   const handleDragStart = ({ active }) => {
     setActiveCardId(typeof active?.id === 'string' ? active.id : null)
@@ -327,7 +347,7 @@ function PlanningCanvas({
     commitLaneState(nextLaneState)
   }
 
-  const handleSelectNode = (laneId) => {
+  const handleSelectNode = useCallback((laneId) => {
     const armedCardIds = selectedCardIds.length > 0 ? selectedCardIds : selectedCardId ? [selectedCardId] : []
     if (armedCardIds.length === 0) {
       onUpdateStackCanvasState({
@@ -342,7 +362,28 @@ function PlanningCanvas({
       selectedCardIds: armedCardIds,
       focusedLaneId: laneId,
     })
-  }
+  }, [moveCardsToLane, onUpdateStackCanvasState, selectedCardId, selectedCardIds])
+
+  const moveSelectionAcrossDock = useCallback((offset) => {
+    const armedCardIds = selectedCardIds.length > 0 ? selectedCardIds : selectedCardId ? [selectedCardId] : []
+    if (armedCardIds.length === 0 || orderedDockLaneIds.length === 0) {
+      return
+    }
+
+    const anchorCard = cardMap.get(armedCardIds.at(-1)) || null
+    const currentLaneId = anchorCard?.categoryId || focusedLaneId || UNCATEGORIZED_BOARD_LANE
+    const currentIndex = orderedDockLaneIds.indexOf(currentLaneId)
+    if (currentIndex < 0) {
+      return
+    }
+
+    const nextIndex = currentIndex + offset
+    if (nextIndex < 0 || nextIndex >= orderedDockLaneIds.length) {
+      return
+    }
+
+    handleSelectNode(orderedDockLaneIds[nextIndex])
+  }, [cardMap, focusedLaneId, handleSelectNode, orderedDockLaneIds, selectedCardId, selectedCardIds])
 
   const handleSubmitEditor = (payload) => {
     if (editingCard?.id) {
@@ -370,6 +411,54 @@ function PlanningCanvas({
 
     return closestCorners(args)
   }
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const target = event.target
+      const isEditableTarget =
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
+          target.closest('[role="dialog"]'))
+
+      if (editingCard || isEditableTarget) {
+        return
+      }
+
+      const armedCardIds = selectedCardIds.length > 0 ? selectedCardIds : selectedCardId ? [selectedCardId] : []
+      if (armedCardIds.length === 0) {
+        return
+      }
+
+      if (event.shiftKey && event.key.toLowerCase() === 'b') {
+        event.preventDefault()
+        onSendSelectedCardsToBigThree(armedCardIds)
+        return
+      }
+
+      if (event.shiftKey && event.key === 'Enter') {
+        event.preventDefault()
+        onScheduleSelectedCardsToFirstOpen(armedCardIds)
+        return
+      }
+
+      if (event.key === '[') {
+        event.preventDefault()
+        moveSelectionAcrossDock(-1)
+        return
+      }
+
+      if (event.key === ']') {
+        event.preventDefault()
+        moveSelectionAcrossDock(1)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [editingCard, moveSelectionAcrossDock, onScheduleSelectedCardsToFirstOpen, onSendSelectedCardsToBigThree, selectedCardId, selectedCardIds])
 
   return (
     <section data-testid="planning-canvas-view" className={embedded ? 'space-y-4' : 'space-y-6'}>
@@ -417,6 +506,7 @@ function PlanningCanvas({
           <Badge tone="neutral">
             활성 카테고리 {activeLane?.label || '없음'}
           </Badge>
+          {selectedCardIds.length > 0 ? <Badge tone="neutral">단축키 Shift+B · Shift+Enter · [ ]</Badge> : null}
         </div>
       </Card>
 
@@ -443,15 +533,29 @@ function PlanningCanvas({
                       카드가 쌓인 도크는 그라데이션 glow로 먼저 드러납니다. 선택한 카드는 여기서 바로 분류합니다.
                     </p>
                   </div>
-                  {selectedCardIds.length > 0 ? (
+                  <div className="flex items-center gap-2">
+                    {selectedCardIds.length > 0 ? (
+                      <button
+                        type="button"
+                        className="rounded-xl px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                        onClick={() => applySelection([], null)}
+                      >
+                        선택 해제
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="rounded-xl px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100"
-                      onClick={() => applySelection([], null)}
+                      data-testid="planning-canvas-inbox-collapse-toggle"
+                      onClick={() =>
+                        onUpdateStackCanvasState({
+                          isInboxCollapsed: !isInboxCollapsed,
+                        })
+                      }
                     >
-                      선택 해제
+                      {isInboxCollapsed ? 'Inbox 펼치기' : 'Inbox 접기'}
                     </button>
-                  ) : null}
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -481,12 +585,43 @@ function PlanningCanvas({
               <div className="grid gap-5 xl:grid-cols-[20rem_minmax(0,1fr)]">
                 {uncategorizedLane ? (
                   <CategoryStackLane
-                    lane={uncategorizedLane}
+                    lane={inboxLane}
                     selectedCardId={selectedCardId}
                     selectedCardIds={selectedCardIds}
                     showNode={false}
                     isNodeActive={focusedLaneId === UNCATEGORIZED_BOARD_LANE}
                     emptyMessage="새 카드가 여기 들어옵니다. 위 도크를 눌러 바로 분류하세요."
+                    collapsed={isInboxCollapsed}
+                    collapsedMessage="Inbox를 접어두었습니다. 필요할 때 다시 펼쳐 검색하고 정리하세요."
+                    headerActions={
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={inboxSearch}
+                          onChange={(event) => setInboxSearch(event.target.value)}
+                          className="ui-input h-8 w-36 px-3 py-1 text-xs"
+                          placeholder="Inbox 검색"
+                          data-testid="planning-canvas-inbox-search"
+                        />
+                        <div className="flex items-center gap-1 rounded-xl bg-slate-100/80 p-1 dark:bg-slate-900/60">
+                          {INBOX_FILTER_OPTIONS.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              data-testid={`planning-canvas-inbox-filter-${option.value}`}
+                              className={`rounded-lg px-2 py-1 text-[11px] transition-colors ${
+                                inboxFilter === option.value
+                                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100'
+                                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
+                              }`}
+                              onClick={() => onUpdateStackCanvasState({ inboxFilter: option.value })}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    }
                     onEditCard={setEditingCard}
                     onSelectCard={(item) => setSelectedCard(item)}
                     onToggleCardSelect={(item) => toggleSelectedCard(item)}

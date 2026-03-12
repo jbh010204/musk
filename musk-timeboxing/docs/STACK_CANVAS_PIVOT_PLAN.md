@@ -74,6 +74,7 @@
 - Big3 Focus Strip: 핵심 3개 확정
 - StackCanvas: 상단 Category Dock + Inbox / Active Category Stack 구조
   - 카드가 있는 카테고리 노드는 category color 기반 gradient glow로 먼저 눈에 띄게 한다.
+  - Inbox는 검색/상태 필터/접기를 지원하고, 다중 선택 카드에 대한 keyboard shortcut 진입점이 된다.
 - Timeline Rail: 선택 대상 슬롯 클릭 배치 중심
   - rail width, label width, slot height는 workspace layout token으로 관리해 읽기 밀도를 한 번에 조정할 수 있게 한다.
 

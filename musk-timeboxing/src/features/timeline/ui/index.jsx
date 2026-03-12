@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  findAvailableStartSlot,
+  findContiguousStartSlot,
   getCategoryColor,
   getCategoryLabel,
   hasOverlap,
@@ -378,6 +380,41 @@ function Timeline({
     return true
   }
 
+  const handleScheduleBoardCardsToFirstOpen = (cardIds) => {
+    const cards = cardIds
+      .map((cardId) => brainDumpItems.find((item) => item.id === cardId) || null)
+      .filter(Boolean)
+
+    if (cards.length === 0) {
+      return false
+    }
+
+    if (cards.length === 1) {
+      const card = cards[0]
+      const startSlot = findAvailableStartSlot(data.timeBoxes, 0, card.estimatedSlots || DEFAULT_BOX_SLOTS)
+
+      if (startSlot == null) {
+        showToast('선택한 카드를 배치할 빈 시간이 없습니다')
+        return false
+      }
+
+      return handleScheduleBoardCard(card.id, startSlot)
+    }
+
+    const startSlot = findContiguousStartSlot(
+      data.timeBoxes,
+      cards.map((card) => card.estimatedSlots || DEFAULT_BOX_SLOTS),
+      0,
+    )
+
+    if (startSlot == null) {
+      showToast('선택한 카드를 연속 배치할 빈 시간이 없습니다')
+      return false
+    }
+
+    return handleScheduleBoardCards(cards.map((card) => card.id), startSlot)
+  }
+
   const handleScheduleBigThreeItem = (bigThreeId, startSlot) => {
     const item = data.bigThree.find((entry) => entry.id === bigThreeId)
     if (!item) {
@@ -595,6 +632,7 @@ function Timeline({
           onSendCardsToBigThree={onSendCardsToBigThree}
           onScheduleBoardCard={handleScheduleBoardCard}
           onScheduleBoardCards={handleScheduleBoardCards}
+          onScheduleSelectedCardsToFirstOpen={handleScheduleBoardCardsToFirstOpen}
           onScheduleBigThreeItem={handleScheduleBigThreeItem}
           onJumpToDay={() => setViewMode('DAY')}
         />
