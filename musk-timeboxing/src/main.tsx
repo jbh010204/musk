@@ -4,7 +4,13 @@ import App from './App'
 import { hydratePlannerStorageFromServer, startPlannerAutoSync } from './entities/planner'
 import './index.css'
 
-const bootstrap = async () => {
+declare global {
+  interface Window {
+    __MUSK_PLANNER_BOOTSTRAP_RESULT__?: unknown
+  }
+}
+
+const bootstrap = async (): Promise<void> => {
   const bootstrapResult = await hydratePlannerStorageFromServer()
 
   if (typeof window !== 'undefined') {
@@ -13,7 +19,12 @@ const bootstrap = async () => {
 
   startPlannerAutoSync()
 
-  createRoot(document.getElementById('root')).render(
+  const rootElement = document.getElementById('root')
+  if (!rootElement) {
+    return
+  }
+
+  createRoot(rootElement).render(
     <StrictMode>
       <App />
     </StrictMode>,

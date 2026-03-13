@@ -1,6 +1,22 @@
 import { useState } from 'react'
 
-const ACTIONS = [
+type FloatingActionId = 'template' | 'patch-notes' | 'category' | 'data'
+
+interface FloatingAction {
+  id: FloatingActionId
+  label: string
+  color: string
+  short: string
+}
+
+interface FloatingActionDockProps {
+  onOpenPatchNotes: () => void
+  onOpenCategory: () => void
+  onOpenData: () => void
+  onOpenTemplate: () => void
+}
+
+const ACTIONS: FloatingAction[] = [
   {
     id: 'template',
     label: '퀵 템플릿',
@@ -27,10 +43,15 @@ const ACTIONS = [
   },
 ]
 
-function FloatingActionDock({ onOpenPatchNotes, onOpenCategory, onOpenData, onOpenTemplate }) {
+function FloatingActionDock({
+  onOpenPatchNotes,
+  onOpenCategory,
+  onOpenData,
+  onOpenTemplate,
+}: FloatingActionDockProps) {
   const [open, setOpen] = useState(false)
 
-  const handleAction = (actionId) => {
+  const handleAction = (actionId: FloatingActionId): void => {
     setOpen(false)
 
     if (actionId === 'category') {
