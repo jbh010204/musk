@@ -1,11 +1,5 @@
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { DndContext, DragOverlay } from '@dnd-kit/core'
+import { useEffect, useMemo, useState } from 'react'
 import BigThree from './features/big-three'
 import BrainDump from './features/brain-dump'
 import CategoryManagerModal from './features/category'
@@ -29,7 +23,6 @@ import {
   deriveBigThreeProgress,
   deriveTopSkippedReason,
   getPlannerPersistenceStatus,
-  hasOverlap,
   loadPlannerDayModel,
   planTimeBoxPlacement,
   loadLastViewMode,
@@ -39,23 +32,8 @@ import {
   subscribePlannerPersistenceStatus,
   TOTAL_SLOTS,
 } from './entities/planner'
-import {
-  getPlannerDndType,
-  getScheduleSourceContent,
-  getScheduleSourceTaskId,
-  isBigThreeSlotDropPayload,
-  isScheduleSourceDragPayload,
-  isTimeBoxDragPayload,
-  isTimelineSlotDropPayload,
-  PLANNER_DND_TYPES,
-} from './features/planner-dnd/lib/payloads'
-import {
-  resolveMovedRangeFromDelta,
-  resolveTimelineSlotFromFinalPosition,
-  resolveTimelineSlotFromPointerPosition,
-} from './features/planner-dnd/lib/timelineDrop'
+import { usePlannerTimelineDnd } from './features/planner-dnd/usePlannerTimelineDnd'
 
-const DEFAULT_BOX_SLOTS = 1
 const BASE_SLOT_HEIGHT = 32
 const DETAIL_SLOT_HEIGHT = 64
 const THEME_KEY = 'musk-planner-theme'
@@ -220,24 +198,27 @@ function App() {
   const [quickAddContext, setQuickAddContext] = useState(null)
   const [isTimelineInsightsLoading, setIsTimelineInsightsLoading] = useState(true)
   const [crossDateRevision, setCrossDateRevision] = useState(0)
-  const [activeDragPreview, setActiveDragPreview] = useState(null)
-  const [dropPreviewSlot, setDropPreviewSlot] = useState(null)
-  const [movingTimeBoxPreview, setMovingTimeBoxPreview] = useState(null)
   const [dailySuggestion, setDailySuggestion] = useState(null)
-  const lastPointerRef = useRef(null)
-  const dropPreviewSlotRef = useRef(null)
-  const activeDragTypeRef = useRef(null)
-  const pointerTrackingRef = useRef(false)
   const timelineSlotHeight = timelineScale === '15' ? DETAIL_SLOT_HEIGHT : BASE_SLOT_HEIGHT
   const showDesktopPlanningRail = timelineViewMode === 'CANVAS' || timelineViewMode === 'COMPOSER'
   const showMobilePlanningTabs = timelineViewMode === 'CANVAS' || timelineViewMode === 'COMPOSER'
-  const timelineDropOptions = useMemo(
-    () => ({
-      totalSlots: TOTAL_SLOTS,
-      baseSlotHeight: BASE_SLOT_HEIGHT,
-    }),
-    [],
-  )
+  const {
+    sensors,
+    activeDragPreview,
+    dropPreviewSlot,
+    movingTimeBoxPreview,
+    handleDragStart,
+    handleDragMove,
+    handleDragCancel,
+    handleDragEnd,
+  } = usePlannerTimelineDnd({
+    timeBoxes: data.timeBoxes,
+    timelineSlotHeight,
+    addTimeBox,
+    updateTimeBox,
+    sendToBigThree,
+    showToast,
+  })
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -300,23 +281,6 @@ function App() {
 
     window.localStorage.setItem(TIMELINE_FOCUS_MODE_KEY, isTimelineFocusMode ? 'true' : 'false')
   }, [isTimelineFocusMode])
-
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
-  const updateDropPreviewSlot = (slot) => {
-    const normalized = Number.isInteger(slot) ? slot : null
-    dropPreviewSlotRef.current = normalized
-    setDropPreviewSlot((prev) => (prev === normalized ? prev : normalized))
-  }
-
-  const updateDropPreviewFromPointer = (pointer) => {
-    if (activeDragTypeRef.current !== 'BRAIN_DUMP' && activeDragTypeRef.current !== 'BIG_THREE') {
-      updateDropPreviewSlot(null)
-      return
-    }
-
-    const slot = resolveTimelineSlotFromPointerPosition(pointer, timelineDropOptions)
-    updateDropPreviewSlot(slot)
-  }
 
   const goNextDay = () => {
     setIsTimelineInsightsLoading(true)
@@ -498,225 +462,6 @@ function App() {
     setCrossDateRevision((prev) => prev + 1)
     showToast(`다음 날(${plan.targetDate})로 ${appliedCount}건 재배치했습니다`, 2600)
     setIsRescheduleModalOpen(false)
-  }
-
-  const trackPointerMove = (event) => {
-    const pointer = {
-      clientX: Number(event?.clientX),
-      clientY: Number(event?.clientY),
-    }
-    lastPointerRef.current = pointer
-    updateDropPreviewFromPointer(pointer)
-  }
-
-  const startPointerTracking = () => {
-    if (pointerTrackingRef.current || typeof window === 'undefined') {
-      return
-    }
-
-    pointerTrackingRef.current = true
-    window.addEventListener('pointermove', trackPointerMove)
-  }
-
-  const stopPointerTracking = () => {
-    if (!pointerTrackingRef.current || typeof window === 'undefined') {
-      return
-    }
-
-    pointerTrackingRef.current = false
-    window.removeEventListener('pointermove', trackPointerMove)
-  }
-
-  const handleDragStart = ({ active, activatorEvent }) => {
-    const payload = active?.data?.current
-    const pointer = {
-      clientX: Number(activatorEvent?.clientX),
-      clientY: Number(activatorEvent?.clientY),
-    }
-    lastPointerRef.current = pointer
-
-    if (!payload) {
-      setActiveDragPreview(null)
-      setMovingTimeBoxPreview(null)
-      updateDropPreviewSlot(null)
-      return
-    }
-
-    activeDragTypeRef.current = getPlannerDndType(payload)
-
-    if (isScheduleSourceDragPayload(payload)) {
-      startPointerTracking()
-      setActiveDragPreview({
-        type: getPlannerDndType(payload),
-        content: getScheduleSourceContent(payload),
-      })
-      updateDropPreviewFromPointer(pointer)
-      return
-    }
-
-    if (isTimeBoxDragPayload(payload)) {
-      setMovingTimeBoxPreview({
-        id: payload.id,
-        startSlot: Number(payload.startSlot) || 0,
-        endSlot: Number(payload.endSlot) || (Number(payload.startSlot) || 0) + 1,
-        hasConflict: false,
-      })
-      return
-    }
-
-    setActiveDragPreview(null)
-    setMovingTimeBoxPreview(null)
-    updateDropPreviewSlot(null)
-  }
-
-  const handleDragCancel = () => {
-    setActiveDragPreview(null)
-    setMovingTimeBoxPreview(null)
-    lastPointerRef.current = null
-    activeDragTypeRef.current = null
-    updateDropPreviewSlot(null)
-    stopPointerTracking()
-  }
-
-  const handleDragMove = ({ over, activatorEvent, active, delta }) => {
-    if (activeDragTypeRef.current === PLANNER_DND_TYPES.TIME_BOX) {
-      const activeData = active?.data?.current
-      if (!isTimeBoxDragPayload(activeData)) {
-        setMovingTimeBoxPreview(null)
-        return
-      }
-
-      const movedRange = resolveMovedRangeFromDelta(activeData, delta?.y, timelineSlotHeight, TOTAL_SLOTS)
-      const hasConflict = hasOverlap(data.timeBoxes, movedRange, activeData.id)
-      setMovingTimeBoxPreview({
-        id: activeData.id,
-        ...movedRange,
-        hasConflict,
-      })
-      return
-    }
-
-    if (
-      activeDragTypeRef.current !== PLANNER_DND_TYPES.BRAIN_DUMP &&
-      activeDragTypeRef.current !== PLANNER_DND_TYPES.BIG_THREE
-    ) {
-      return
-    }
-
-    const overData = over?.data?.current
-    if (isTimelineSlotDropPayload(overData)) {
-      updateDropPreviewSlot(overData.slotIndex)
-      return
-    }
-
-    let pointerSlot = null
-    const clientX = Number(activatorEvent?.clientX)
-    const clientY = Number(activatorEvent?.clientY)
-
-    if (Number.isFinite(clientX) && Number.isFinite(clientY)) {
-      const pointer = { clientX, clientY }
-      lastPointerRef.current = pointer
-      pointerSlot = resolveTimelineSlotFromPointerPosition(pointer, timelineDropOptions)
-    }
-
-    const rectSlot = resolveTimelineSlotFromFinalPosition(active, delta, timelineDropOptions)
-    updateDropPreviewSlot(pointerSlot ?? rectSlot)
-  }
-
-  const handleDragEnd = ({ active, over, delta }) => {
-    setActiveDragPreview(null)
-    const finalize = () => {
-      setMovingTimeBoxPreview(null)
-      lastPointerRef.current = null
-      activeDragTypeRef.current = null
-      updateDropPreviewSlot(null)
-      stopPointerTracking()
-    }
-
-    const activeData = active.data.current
-
-    if (!activeData) {
-      finalize()
-      return
-    }
-
-    if (isTimeBoxDragPayload(activeData)) {
-      const movedRange = resolveMovedRangeFromDelta(activeData, delta?.y, timelineSlotHeight, TOTAL_SLOTS)
-      const activeStart = Number(activeData.startSlot) || 0
-      const activeEnd = Number(activeData.endSlot) || activeStart + 1
-
-      if (movedRange.slotDelta === 0) {
-        finalize()
-        return
-      }
-
-      const { startSlot, endSlot } = movedRange
-
-      if (startSlot === activeStart && endSlot === activeEnd) {
-        finalize()
-        return
-      }
-
-      const movedBox = {
-        startSlot,
-        endSlot,
-      }
-
-      if (hasOverlap(data.timeBoxes, movedBox, activeData.id)) {
-        showToast('해당 시간에 이미 일정이 있습니다')
-        finalize()
-        return
-      }
-
-      updateTimeBox(activeData.id, { startSlot, endSlot })
-      finalize()
-      return
-    }
-
-    const overData = over?.data?.current ?? null
-
-    if (
-      getPlannerDndType(activeData) === PLANNER_DND_TYPES.BRAIN_DUMP &&
-      isBigThreeSlotDropPayload(overData)
-    ) {
-      const success = sendToBigThree(activeData.id)
-      if (!success) {
-        showToast('빅 3이 이미 가득 찼습니다')
-      }
-      finalize()
-      return
-    }
-
-    if (isScheduleSourceDragPayload(activeData)) {
-      const overSlot = isTimelineSlotDropPayload(overData) ? overData.slotIndex : null
-      const startSlot =
-        overSlot ??
-        dropPreviewSlotRef.current ??
-        resolveTimelineSlotFromPointerPosition(lastPointerRef.current, timelineDropOptions) ??
-        resolveTimelineSlotFromFinalPosition(active, delta, timelineDropOptions) ??
-        null
-
-      if (!Number.isInteger(startSlot)) {
-        finalize()
-        return
-      }
-
-      const placement = planTimeBoxPlacement(data.timeBoxes, {
-        content: getScheduleSourceContent(activeData),
-        taskId: getScheduleSourceTaskId(activeData),
-        startSlot,
-        durationSlots: DEFAULT_BOX_SLOTS,
-      })
-
-      if (!placement.timeBox) {
-        showPlacementFailureToast(placement.reason, showToast)
-        finalize()
-        return
-      }
-
-      addTimeBox(placement.timeBox)
-    }
-    finalize()
   }
 
   const handleAddCategory = (name, color, parentId = null) => {

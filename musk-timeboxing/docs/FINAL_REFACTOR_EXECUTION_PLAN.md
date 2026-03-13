@@ -192,6 +192,7 @@
 - managed category view model 계산을 model로 이동
 - repeated timebox placement planning을 model helper로 이동
 - timeline slot hit-test / drag range 계산을 `planner-dnd` helper로 이동
+- timeline DnD state/sensor/handler orchestration을 `usePlannerTimelineDnd` hook으로 이동
 
 허용:
 
@@ -240,6 +241,7 @@
 - `storage/index`, `model/index`를 `.ts`로 전환
 - `app/hooks/useDailyData`를 `.ts`로 전환
 - `features/planner-dnd/lib/payloads`를 `.ts`로 전환
+- `features/planner-dnd/usePlannerTimelineDnd`를 `.ts`로 추가
 - JS model helper의 `createId` 추론을 `string`으로 고정해 TS import 경계를 안정화
 
 다음 우선순위:
