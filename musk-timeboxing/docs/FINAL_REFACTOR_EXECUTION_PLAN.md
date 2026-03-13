@@ -58,6 +58,7 @@
 - planner lib core (`boardCard`, `stackCanvasState`, `calendarViewData`) TypeScript 전환 완료
 - `useDailyData` TypeScript 경계 추가
 - `app/hooks/useCategoryMeta`, `useTemplateMeta`, `useToast`, `app/hooks/index` TypeScript 전환 완료
+- `main.tsx`, `features/floating/*` TypeScript 전환 완료
 - `shared/ui/*` TypeScript 전환 완료
 - `features/header/*` TypeScript 전환 완료
 - `features/big-three/*` TypeScript 전환 완료
@@ -265,6 +266,7 @@
 - `lib/boardCard`, `lib/stackCanvasState`, `lib/calendarViewData`를 `.ts`로 전환
 - `app/hooks/useDailyData`를 `.ts`로 전환
 - `app/hooks/useCategoryMeta`, `useTemplateMeta`, `useToast`, `app/hooks/index`를 `.ts` / `.tsx`로 전환
+- `main`, `features/floating/index`, `features/floating/ui/FloatingActionDock`를 `.ts` / `.tsx`로 전환
 - `shared/ui/Badge`, `Button`, `Card`, `IconButton`, `cn`, `index`를 TS로 전환
 - `features/header/index`, `features/header/ui/Header`를 TS로 전환
 - `features/big-three/index`, `features/big-three/ui/index`, `features/big-three/ui/BigThreeSlot`을 TS로 전환
@@ -296,7 +298,7 @@
 다음 우선순위:
 
 1. `src/App.jsx`의 toast / section composition 정리
-2. `features/floating/*`, `features/patch-notes/*`, `src/main.jsx` TS 전환
+2. `features/patch-notes/*` TS 전환
 3. 남은 planner-adjacent JS utility 정리 (`storageServer.js` 포함 여부 점검)
 
 순서:
