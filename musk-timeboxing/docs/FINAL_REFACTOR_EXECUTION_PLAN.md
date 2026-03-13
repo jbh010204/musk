@@ -41,6 +41,7 @@
 - workspace / selection helper extraction
 - App-level Big3/reschedule derivation extraction
 - core DnD payload helper extraction
+- day navigation / carry-over helper extraction
 
 아직 큰 덩어리로 남아 있는 곳:
 
@@ -136,6 +137,12 @@
 
 - business rule은 model에 있고
 - hook은 `prev -> next` 연결만 담당
+
+현재까지:
+
+- day navigation date helper를 model로 이동
+- carry-over 계산을 model helper로 이동
+- stack canvas patch 적용을 lib helper로 이동
 
 ## Step 4. selection / workspace command 정리 [Done]
 
