@@ -1,12 +1,33 @@
+import type { CategoryRecord, CategoryTreeNode, CategoryViewModel } from './types'
+
 const DEFAULT_CATEGORY_COLOR = '#6366f1'
 
-const normalizeName = (value) => String(value || '').trim()
-const normalizeColor = (value) => {
+interface CategoryInput {
+  id?: unknown
+  name?: unknown
+  color?: unknown
+  parentId?: unknown
+  order?: unknown
+  collapsed?: unknown
+}
+
+interface CategoryMutationInput {
+  name?: unknown
+  color?: unknown
+  parentId?: unknown
+}
+
+type CategoryMutationResult =
+  | { ok: true; nextCategories: CategoryRecord[]; category?: CategoryRecord }
+  | { ok: false; error: string }
+
+const normalizeName = (value: unknown): string => String(value || '').trim()
+const normalizeColor = (value: unknown): string => {
   const raw = String(value || '').trim()
   return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw : DEFAULT_CATEGORY_COLOR
 }
 
-export const normalizeCategoryParentId = (value) => {
+export const normalizeCategoryParentId = (value: unknown): string | null => {
   if (typeof value !== 'string') {
     return null
   }
@@ -15,12 +36,15 @@ export const normalizeCategoryParentId = (value) => {
   return trimmed.length > 0 ? trimmed : null
 }
 
-export const normalizeCategoryOrder = (value, fallback = 0) => {
+export const normalizeCategoryOrder = (value: unknown, fallback = 0): number => {
   const next = Number(value)
   return Number.isInteger(next) ? next : fallback
 }
 
-export const normalizeCategoryRecord = (category, fallbackIndex = 0) => {
+export const normalizeCategoryRecord = (
+  category: CategoryInput | CategoryRecord | null | undefined,
+  fallbackIndex = 0,
+): CategoryRecord | null => {
   const name = normalizeName(category?.name)
   if (!name) {
     return null
@@ -36,7 +60,10 @@ export const normalizeCategoryRecord = (category, fallbackIndex = 0) => {
   }
 }
 
-const compareCategoryOrder = (left, right) => {
+const compareCategoryOrder = (
+  left: CategoryInput | CategoryRecord | null | undefined,
+  right: CategoryInput | CategoryRecord | null | undefined,
+): number => {
   const byOrder = normalizeCategoryOrder(left?.order) - normalizeCategoryOrder(right?.order)
   if (byOrder !== 0) {
     return byOrder
@@ -45,27 +72,38 @@ const compareCategoryOrder = (left, right) => {
   return String(left?.name || '').localeCompare(String(right?.name || ''), 'ko')
 }
 
-export const normalizeCategoryRecords = (categories = []) =>
+export const normalizeCategoryRecords = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+): CategoryRecord[] =>
   categories
     .map((category, index) => normalizeCategoryRecord(category, index))
-    .filter(Boolean)
-    .map((category) => category)
+    .filter((category): category is CategoryRecord => Boolean(category))
 
-export const getCategoryChildren = (categories = [], parentId = null) =>
+export const getCategoryChildren = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  parentId: string | null = null,
+): CategoryRecord[] =>
   normalizeCategoryRecords(categories)
     .filter((category) => (category.parentId ?? null) === (parentId ?? null))
     .sort(compareCategoryOrder)
 
-export const buildCategoryTree = (categories = [], parentId = null, depth = 0) =>
+export const buildCategoryTree = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  parentId: string | null = null,
+  depth = 0,
+): CategoryTreeNode[] =>
   getCategoryChildren(categories, parentId).map((category) => ({
     ...category,
     depth,
     children: buildCategoryTree(categories, category.id, depth + 1),
   }))
 
-export const getCategoryDescendantIds = (categories = [], categoryId) => {
-  const descendants = []
-  const visit = (parentId) => {
+export const getCategoryDescendantIds = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  categoryId: string,
+): string[] => {
+  const descendants: string[] = []
+  const visit = (parentId: string) => {
     getCategoryChildren(categories, parentId).forEach((child) => {
       descendants.push(child.id)
       visit(child.id)
@@ -76,18 +114,31 @@ export const getCategoryDescendantIds = (categories = [], categoryId) => {
   return descendants
 }
 
-export const isDescendantCategory = (categories = [], targetId, ancestorId) =>
+export const isDescendantCategory = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  targetId: string,
+  ancestorId: string,
+): boolean =>
   getCategoryDescendantIds(categories, ancestorId).includes(targetId)
 
-export const isLeafCategory = (categories = [], categoryId) =>
+export const isLeafCategory = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  categoryId: string,
+): boolean =>
   getCategoryChildren(categories, categoryId).length === 0
 
-export const canAssignTaskToCategory = (categories = [], categoryId) =>
+export const canAssignTaskToCategory = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  categoryId: string | null,
+): boolean =>
   categoryId == null || (categories.some((category) => category.id === categoryId) && isLeafCategory(categories, categoryId))
 
-export const getCategoryPath = (categories = [], categoryId) => {
+export const getCategoryPath = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  categoryId: string | null,
+): CategoryRecord[] => {
   const categoryMap = new Map(normalizeCategoryRecords(categories).map((category) => [category.id, category]))
-  const path = []
+  const path: CategoryRecord[] = []
   let current = categoryId ? categoryMap.get(categoryId) || null : null
   const visited = new Set()
 
@@ -100,7 +151,10 @@ export const getCategoryPath = (categories = [], categoryId) => {
   return path
 }
 
-export const getCategoryPathLabel = (categories = [], categoryId) => {
+export const getCategoryPathLabel = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  categoryId: string | null,
+): string => {
   const path = getCategoryPath(categories, categoryId)
   if (path.length === 0) {
     return ''
@@ -109,10 +163,12 @@ export const getCategoryPathLabel = (categories = [], categoryId) => {
   return path.map((category) => category.name).join(' / ')
 }
 
-export const getAssignableCategories = (categories = []) => {
+export const getAssignableCategories = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+): CategoryViewModel[] => {
   const tree = buildCategoryTree(categories)
-  const flattened = []
-  const visit = (nodes) => {
+  const flattened: CategoryViewModel[] = []
+  const visit = (nodes: CategoryTreeNode[]) => {
     nodes.forEach((node) => {
       const childCount = node.children.length
       const pathLabel = getCategoryPathLabel(categories, node.id)
@@ -130,10 +186,12 @@ export const getAssignableCategories = (categories = []) => {
   return flattened.filter((category) => category.isLeaf)
 }
 
-export const getCategoryViewModels = (categories = []) => {
+export const getCategoryViewModels = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+): CategoryViewModel[] => {
   const tree = buildCategoryTree(categories)
-  const flattened = []
-  const visit = (nodes) => {
+  const flattened: CategoryViewModel[] = []
+  const visit = (nodes: CategoryTreeNode[]) => {
     nodes.forEach((node) => {
       const childCount = node.children.length
       flattened.push({
@@ -150,7 +208,11 @@ export const getCategoryViewModels = (categories = []) => {
   return flattened
 }
 
-export const hasDuplicateCategoryName = (categories = [], name, excludeId = null) =>
+export const hasDuplicateCategoryName = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  name: string,
+  excludeId: string | null = null,
+): boolean =>
   normalizeCategoryRecords(categories).some((category) => {
     if (excludeId && category.id === excludeId) {
       return false
@@ -159,13 +221,20 @@ export const hasDuplicateCategoryName = (categories = [], name, excludeId = null
     return category.name.toLowerCase() === String(name).toLowerCase()
   })
 
-const getNextSiblingOrder = (categories = [], parentId = null) =>
+const getNextSiblingOrder = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  parentId: string | null = null,
+): number =>
   getCategoryChildren(categories, parentId).reduce(
     (max, category) => Math.max(max, normalizeCategoryOrder(category.order)),
     -1,
   ) + 1
 
-export const canMoveCategory = (categories = [], categoryId, nextParentId) => {
+export const canMoveCategory = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  categoryId: string,
+  nextParentId: string | null,
+): boolean => {
   if (nextParentId == null) {
     return true
   }
@@ -177,7 +246,10 @@ export const canMoveCategory = (categories = [], categoryId, nextParentId) => {
   return !isDescendantCategory(categories, nextParentId, categoryId)
 }
 
-export const addCategoryRecord = (categories = [], { name, color, parentId = null } = {}) => {
+export const addCategoryRecord = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  { name, color, parentId = null }: CategoryMutationInput = {},
+): CategoryMutationResult => {
   const normalizedName = normalizeName(name)
   if (!normalizedName) {
     return { ok: false, error: '카테고리 이름을 입력해 주세요' }
@@ -199,6 +271,9 @@ export const addCategoryRecord = (categories = [], { name, color, parentId = nul
     parentId: normalizedParentId,
     order: getNextSiblingOrder(categories, normalizedParentId),
   })
+  if (!nextCategory) {
+    return { ok: false, error: '카테고리를 생성할 수 없습니다' }
+  }
 
   return {
     ok: true,
@@ -207,7 +282,11 @@ export const addCategoryRecord = (categories = [], { name, color, parentId = nul
   }
 }
 
-export const updateCategoryRecord = (categories = [], categoryId, { name, color, parentId } = {}) => {
+export const updateCategoryRecord = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  categoryId: string,
+  { name, color, parentId }: CategoryMutationInput = {},
+): CategoryMutationResult => {
   const normalizedCategories = normalizeCategoryRecords(categories)
   const target = normalizedCategories.find((category) => category.id === categoryId)
   if (!target) {
@@ -254,7 +333,10 @@ export const updateCategoryRecord = (categories = [], categoryId, { name, color,
   }
 }
 
-export const removeCategoryRecord = (categories = [], categoryId) => {
+export const removeCategoryRecord = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  categoryId: string,
+): CategoryMutationResult => {
   const normalizedCategories = normalizeCategoryRecords(categories)
   const target = normalizedCategories.find((category) => category.id === categoryId)
   if (!target) {

@@ -15,6 +15,26 @@ export interface TaskCard {
   origin: TaskCardOrigin
 }
 
+export interface CategoryRecord {
+  id: string
+  name: string
+  color: string
+  parentId: string | null
+  order: number
+  collapsed: boolean
+}
+
+export interface CategoryTreeNode extends CategoryRecord {
+  depth: number
+  children: CategoryTreeNode[]
+}
+
+export interface CategoryViewModel extends CategoryTreeNode {
+  childCount: number
+  isLeaf: boolean
+  pathLabel: string
+}
+
 export interface BigThreeItem {
   id: string
   content: string
