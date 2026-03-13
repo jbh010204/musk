@@ -1,7 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { TaskCard } from '../../../entities/planner/model/types'
-import { Button, IconButton } from '../../../shared/ui'
+import { IconButton } from '../../../shared/ui'
 import { createBoardCardDragPayload } from '../../planner-dnd/lib/payloads'
 
 const formatDurationLabel = (estimateSlots = 1) => `${estimateSlots * 30}분`
@@ -38,7 +38,8 @@ function BoardCard({
     data: createBoardCardDragPayload(item.id),
     disabled: !sortable,
   })
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = sortableState
+  const { attributes, listeners, setActivatorNodeRef, setNodeRef, transform, transition, isDragging } =
+    sortableState
 
   return (
     <div
@@ -112,16 +113,16 @@ function BoardCard({
               >
                 ✎
               </IconButton>
-              <Button
-                variant="ghost"
-                size="icon"
+              <button
+                ref={setActivatorNodeRef}
+                type="button"
                 aria-label="카드 이동 핸들"
-                className="cursor-grab rounded-full text-slate-400 transition-opacity group-hover:text-slate-600 active:cursor-grabbing dark:text-slate-500 dark:group-hover:text-slate-200"
+                className="ui-btn-ghost !h-7 !w-7 !p-0 cursor-grab rounded-full text-slate-400 transition-opacity group-hover:text-slate-600 active:cursor-grabbing dark:text-slate-500 dark:group-hover:text-slate-200"
                 {...attributes}
                 {...listeners}
               >
                 ⋮⋮
-              </Button>
+              </button>
             </>
           ) : null}
           {scheduleDraggable ? (

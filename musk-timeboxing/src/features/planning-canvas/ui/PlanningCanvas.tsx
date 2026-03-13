@@ -26,6 +26,7 @@ import {
 import type { CategoryViewModel, TaskCard, TimeBox } from '../../../entities/planner/model/types'
 import { Button, Card } from '../../../shared/ui'
 import { INBOX_FILTER_OPTIONS, filterInboxItems, type InboxFilterValue } from '../lib/inboxFilters'
+import { COMPACT_CARD_DRAG_OVERLAY_MODIFIER } from '../../planner-dnd/lib/dragOverlay'
 import CanvasInlineCreateSlot from './CanvasInlineCreateSlot'
 import CanvasSelectionBar from './CanvasSelectionBar'
 import BoardCardEditorModal from '../../planning-board/ui/BoardCardEditorModal'
@@ -125,7 +126,6 @@ function PlanningCanvas({
     : []
   const [editingCard, setEditingCard] = useState<TaskCard | null>(null)
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
-  const [activeCardWidth, setActiveCardWidth] = useState<number | null>(null)
   const [inboxSearch, setInboxSearch] = useState('')
   const [internalSelectedCardId, setInternalSelectedCardId] = useState(
     controlledSelectedCardId ?? initialSelectedCardId,
@@ -167,8 +167,6 @@ function PlanningCanvas({
     stackCanvasState?.inboxFilter === 'COMPLETED'
       ? stackCanvasState.inboxFilter
       : 'ALL'
-  const isInboxCollapsed = Boolean(stackCanvasState?.isInboxCollapsed)
-
   const visualLanes = useMemo(
     () =>
       laneState.map((lane) => {
@@ -326,12 +324,10 @@ function PlanningCanvas({
 
   const handleDragStart = ({ active }: DragStartEvent) => {
     setActiveCardId(typeof active?.id === 'string' ? active.id : null)
-    setActiveCardWidth(active.rect.current.initial?.width ?? null)
   }
 
   const handleDragCancel = (_event?: DragCancelEvent) => {
     setActiveCardId(null)
-    setActiveCardWidth(null)
     setLaneState(createLaneState(lanes))
   }
 
@@ -340,7 +336,6 @@ function PlanningCanvas({
     const overId = typeof over?.id === 'string' ? over.id : null
 
     setActiveCardId(null)
-    setActiveCardWidth(null)
 
     if (!activeId || !overId) {
       setLaneState(createLaneState(lanes))
@@ -618,15 +613,10 @@ function PlanningCanvas({
             </div>
             <button
               type="button"
-              className="rounded-full border border-slate-200/80 bg-white/82 px-3 py-1.5 text-[11px] font-medium text-slate-500 transition-colors hover:border-slate-300/90 hover:text-slate-900 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-slate-100"
-              data-testid="planning-canvas-inbox-collapse-toggle"
-              onClick={() =>
-                onUpdateStackCanvasState({
-                  isInboxCollapsed: !isInboxCollapsed,
-                })
-              }
+              className="rounded-full border border-slate-200/80 bg-white/88 px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300/90 hover:text-slate-900 dark:border-slate-700/80 dark:bg-slate-900/82 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:text-slate-100"
+              onClick={onOpenCategoryManager}
             >
-              {isInboxCollapsed ? 'Inbox 펼치기' : 'Inbox 접기'}
+              + 카테고리
             </button>
           </div>
 
@@ -663,30 +653,31 @@ function PlanningCanvas({
               showNode={false}
               isNodeActive={focusedLaneId === UNCATEGORIZED_BOARD_LANE}
               emptyMessage="새 카드가 여기 들어옵니다."
-              collapsed={isInboxCollapsed}
-              collapsedMessage="Inbox를 접어두었습니다."
               headerActions={
-                <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2">
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                   <input
                     type="text"
                     value={inboxSearch}
                     onChange={(event) => setInboxSearch(event.target.value)}
-                    className="ui-input h-8 min-w-[10rem] flex-1 px-3 py-1 text-xs"
+                    className="ui-input h-9 min-w-0 w-full px-3 py-1 text-xs"
                     placeholder="Inbox 검색"
                     data-testid="planning-canvas-inbox-search"
                   />
-                  <select
-                    data-testid="planning-canvas-inbox-filter"
-                    className="ui-input h-8 w-[6.5rem] shrink-0 px-2 py-1 text-xs"
-                    value={inboxFilter}
-                    onChange={(event) => onUpdateStackCanvasState({ inboxFilter: event.target.value })}
-                  >
-                    {INBOX_FILTER_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">정렬</span>
+                    <select
+                      data-testid="planning-canvas-inbox-filter"
+                      className="ui-input h-9 w-[6.75rem] shrink-0 rounded-full px-3 py-1 text-xs"
+                      value={inboxFilter}
+                      onChange={(event) => onUpdateStackCanvasState({ inboxFilter: event.target.value })}
+                    >
+                      {INBOX_FILTER_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               }
               leadingContent={
@@ -785,10 +776,10 @@ function PlanningCanvas({
           <Card className="overflow-hidden p-6">{canvasContent}</Card>
         )}
 
-        <DragOverlay>
+        <DragOverlay modifiers={[COMPACT_CARD_DRAG_OVERLAY_MODIFIER]}>
           {activeCard ? (
-            <div className="pointer-events-none" style={{ width: activeCardWidth ?? 280 }}>
-              <div className="rounded-2xl bg-white/95 p-4 shadow-xl dark:bg-slate-900/95">
+            <div className="pointer-events-none w-[220px]">
+              <div className="rounded-[1.2rem] border border-slate-200/90 bg-white/96 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.16)] dark:border-slate-800/90 dark:bg-slate-950/96">
                 <div className="flex items-center gap-2">
                   <span
                     className="h-2.5 w-2.5 rounded-full"
@@ -805,8 +796,11 @@ function PlanningCanvas({
                     이동 중
                   </span>
                 </div>
-                <p className="mt-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <p className="mt-3 line-clamp-2 text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">
                   {activeCard.title}
+                </p>
+                <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                  원하는 도크 위에 올려 놓으세요
                 </p>
               </div>
             </div>

@@ -21,6 +21,7 @@ import {
 } from '../../../entities/planner'
 import type { CategoryViewModel, TaskCard } from '../../../entities/planner/model/types'
 import { Card } from '../../../shared/ui'
+import { COMPACT_CARD_DRAG_OVERLAY_MODIFIER } from '../../planner-dnd/lib/dragOverlay'
 import BoardCard from './BoardCard'
 import BoardCardEditorModal from './BoardCardEditorModal'
 import BoardToolbar from './BoardToolbar'
@@ -81,7 +82,6 @@ function PlanningBoard({
 }: PlanningBoardProps) {
   const [editingCard, setEditingCard] = useState<Partial<TaskCard> | null>(null)
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
-  const [activeCardWidth, setActiveCardWidth] = useState<number | null>(null)
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
   const lanes = useMemo(() => groupBoardCardsByCategory(items, categories), [categories, items])
@@ -135,12 +135,10 @@ function PlanningBoard({
 
   const handleDragStart = ({ active }: DragStartEvent) => {
     setActiveCardId(typeof active?.id === 'string' ? active.id : null)
-    setActiveCardWidth(active.rect.current.initial?.width ?? null)
   }
 
   const handleDragCancel = (_event?: DragCancelEvent) => {
     setActiveCardId(null)
-    setActiveCardWidth(null)
     setLaneState(createLaneState(lanes))
   }
 
@@ -149,7 +147,6 @@ function PlanningBoard({
     const overId = typeof over?.id === 'string' ? over.id : null
 
     setActiveCardId(null)
-    setActiveCardWidth(null)
 
     if (!activeId || !overId) {
       setLaneState(createLaneState(lanes))
@@ -286,19 +283,27 @@ function PlanningBoard({
           다음 단계는 편성기에서 이 카드를 30분 스냅 시간표에 끼워 넣는 것입니다.
         </Card>
 
-        <DragOverlay>
+        <DragOverlay modifiers={[COMPACT_CARD_DRAG_OVERLAY_MODIFIER]}>
           {activeCard ? (
-            <div className="pointer-events-none" style={{ width: activeCardWidth ?? 280 }}>
-              <BoardCard
-                item={activeCard}
-                color={
-                  activeCard.categoryId
-                    ? getCategoryColor(categories.find((category) => category.id === activeCard.categoryId), null)
-                    : '#94a3b8'
-                }
-                sortable={false}
-                onEdit={() => {}}
-              />
+            <div className="pointer-events-none w-[220px]">
+              <div className="rounded-[1.2rem] border border-slate-200/90 bg-white/96 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.16)] dark:border-slate-800/90 dark:bg-slate-950/96">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{
+                      backgroundColor: activeCard.categoryId
+                        ? getCategoryColor(categories.find((category) => category.id === activeCard.categoryId), null)
+                        : '#94a3b8',
+                    }}
+                  />
+                  <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    이동 중
+                  </span>
+                </div>
+                <p className="mt-3 line-clamp-2 text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">
+                  {activeCard.title}
+                </p>
+              </div>
             </div>
           ) : null}
         </DragOverlay>

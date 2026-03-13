@@ -96,23 +96,23 @@ function CategoryStackLane({
               : 'border-slate-300/70 bg-slate-50/70 dark:border-slate-700/70 dark:bg-slate-900/45'
         }`}
       >
-        <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-          <div className="flex min-w-0 items-start gap-3">
-            <span
-              className={`mt-0.5 shrink-0 rounded-full ${compactSurface ? 'h-8 w-1.5' : 'h-10 w-2'} ${
-                isNodeActive ? 'opacity-100' : 'opacity-70'
-              }`}
-              style={{ backgroundColor: lane.color }}
-            />
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Stack
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{lane.label}</p>
+        <div className="mb-3 space-y-3">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="flex min-w-0 items-start gap-3">
+              <span
+                className={`mt-0.5 shrink-0 rounded-full ${compactSurface ? 'h-8 w-1.5' : 'h-10 w-2'} ${
+                  isNodeActive ? 'opacity-100' : 'opacity-70'
+                }`}
+                style={{ backgroundColor: lane.color }}
+              />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Stack
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{lane.label}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex min-w-0 max-w-full flex-1 flex-wrap items-center justify-end gap-2">
-            {headerActions ? <div className="min-w-0 max-w-full flex-1">{headerActions}</div> : null}
+
             <span
               className={`shrink-0 rounded-xl px-2 py-0.5 text-[11px] ${
                 isNodeActive
@@ -123,6 +123,8 @@ function CategoryStackLane({
               {lane.items.length}개
             </span>
           </div>
+
+          {headerActions ? <div className="min-w-0">{headerActions}</div> : null}
         </div>
 
         <SortableContext items={lane.items.map((item) => item.id)} strategy={verticalListSortingStrategy}>

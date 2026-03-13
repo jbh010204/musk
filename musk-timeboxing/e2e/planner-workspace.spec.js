@@ -390,7 +390,7 @@ test('planner workspace can bulk schedule multiple selected canvas cards', async
   expect(stored?.stackCanvasState?.selectedCardId).toBeNull()
 })
 
-test('planner workspace can search, filter, and collapse inbox cards', async ({ page }) => {
+test('planner workspace can search and filter inbox cards', async ({ page }) => {
   await page.goto('/')
 
   await page.evaluate(() => {
@@ -506,9 +506,6 @@ test('planner workspace can search, filter, and collapse inbox cards', async ({ 
   await expect(page.locator('[data-testid="planning-board-card-workspace-inbox-card-2"]:visible').first()).toBeVisible()
   await expect(page.locator('[data-testid="planning-board-card-workspace-inbox-card-1"]:visible')).toHaveCount(0)
 
-  await page.locator('[data-testid="planning-canvas-inbox-collapse-toggle"]:visible').first().click()
-  await expect(page.getByText('Inbox를 접어두었습니다.').first()).toBeVisible()
-
   const stored = await page.evaluate(() => {
     const dayKey = Object.keys(window.localStorage).find((key) =>
       /^musk-planner-\d{4}-\d{2}-\d{2}$/.test(key),
@@ -521,7 +518,6 @@ test('planner workspace can search, filter, and collapse inbox cards', async ({ 
   })
 
   expect(stored?.stackCanvasState?.inboxFilter).toBe('SCHEDULED')
-  expect(stored?.stackCanvasState?.isInboxCollapsed).toBe(true)
 })
 
 test('planner workspace supports keyboard shortcuts for move, big3, and first-open scheduling', async ({ page }) => {

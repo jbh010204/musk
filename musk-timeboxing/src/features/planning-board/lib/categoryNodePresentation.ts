@@ -39,9 +39,9 @@ export const getCategoryNodePresentation = ({
 }: CategoryNodePresentationInput) => {
   const hasCards = count > 0
   const isHighlighted = isOver || isActive
-  const borderAlpha = isOver ? 0.42 : isActive ? 0.28 : hasCards ? 0.16 : isArmed ? 0.12 : 0.08
-  const topTintAlpha = isOver ? 0.24 : isActive ? 0.18 : hasCards ? 0.08 : 0
-  const bottomTintAlpha = isOver ? 0.12 : isActive ? 0.08 : hasCards ? 0.03 : 0
+  const borderAlpha = isOver ? 0.42 : isActive ? 0.28 : hasCards ? 0.12 : isArmed ? 0.12 : 0.08
+  const topTintAlpha = isOver ? 0.24 : isActive ? 0.18 : 0
+  const bottomTintAlpha = isOver ? 0.12 : isActive ? 0.08 : 0
   const glowAlpha = isOver ? 0.18 : isActive ? 0.14 : 0
   const accentAlpha = isOver ? 1 : isActive ? 0.9 : hasCards ? 0.74 : 0.48
   const metaLabel = isOver ? '여기로 이동' : isActive ? '현재 열림' : hasCards ? `${count}개 카드` : '비어 있음'
@@ -55,7 +55,7 @@ export const getCategoryNodePresentation = ({
       : isActive
         ? 'border-transparent shadow-md'
         : hasCards
-          ? 'border-slate-200/90 shadow-sm dark:border-slate-800/90'
+          ? 'border-slate-200/90 shadow-[0_4px_10px_rgba(15,23,42,0.04)] dark:border-slate-800/90'
           : isArmed
             ? 'border-slate-300/80 dark:border-slate-700/80'
             : 'border-dashed border-slate-300/80 dark:border-slate-700/80',
@@ -77,7 +77,7 @@ export const getCategoryNodePresentation = ({
         glowAlpha > 0
           ? `0 0 0 1px ${hexToRgba(color, 0.12)}, 0 10px 28px ${hexToRgba(color, glowAlpha)}`
           : hasCards
-            ? `inset 0 1px 0 ${hexToRgba('#ffffff', 0.45)}, 0 6px 16px ${hexToRgba(color, 0.08)}`
+            ? 'inset 0 1px 0 rgba(255,255,255,0.45)'
             : 'inset 0 1px 0 rgba(255,255,255,0.45)',
     },
     accentStyle: {
@@ -94,7 +94,7 @@ export const getCategoryNodePresentation = ({
           }
         : undefined,
     surfaceStyle: {
-      backgroundColor: hasCards || isHighlighted ? hexToRgba('#ffffff', 0.72) : hexToRgba('#ffffff', 0.58),
+      backgroundColor: isHighlighted ? hexToRgba('#ffffff', 0.72) : hasCards ? hexToRgba('#ffffff', 0.66) : hexToRgba('#ffffff', 0.58),
     },
   }
 }
