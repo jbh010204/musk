@@ -42,6 +42,7 @@
 - App-level Big3/reschedule derivation extraction
 - core DnD payload helper extraction
 - day navigation / carry-over helper extraction
+- weekly strip / report / planning preview extraction
 
 아직 큰 덩어리로 남아 있는 곳:
 
@@ -172,6 +173,7 @@
 
 - `bigThreeProgress` selector를 model로 이동
 - reschedule plan / apply helper를 model로 이동
+- weekly strip / weekly report / weekly planning preview를 lib로 이동
 
 허용:
 
