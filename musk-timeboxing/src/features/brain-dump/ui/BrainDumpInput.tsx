@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useState, type KeyboardEvent } from 'react'
 
-function BrainDumpInput({ onAdd }) {
+interface BrainDumpInputProps {
+  onAdd: (content: string) => void
+}
+
+function BrainDumpInput({ onAdd }: BrainDumpInputProps) {
   const [value, setValue] = useState('')
   const [isComposing, setIsComposing] = useState(false)
 
-  const handleKeyDown = (event) => {
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     const nativeComposing = event.nativeEvent?.isComposing || event.keyCode === 229
 
     if (isComposing || nativeComposing) {

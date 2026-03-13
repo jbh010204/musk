@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
 import { useDraggable } from '@dnd-kit/core'
-import { BRAIN_DUMP_PRIORITY_LABELS } from '../../../entities/planner'
+import { useEffect, useRef, useState } from 'react'
+import { BRAIN_DUMP_PRIORITY_LABELS, type TaskCard } from '../../../entities/planner'
 import { Button } from '../../../shared/ui'
 import { createBrainDumpDragPayload } from '../../planner-dnd/lib/payloads'
 
@@ -10,9 +10,30 @@ const PRIORITY_SEGMENT_CLASSES = [
   'bg-cyan-400/85 dark:bg-cyan-400/95',
   'bg-amber-400/90 dark:bg-amber-400/95',
   'bg-gradient-to-r from-amber-400 to-orange-500',
-]
+] as const
 
-function PriorityBattery({ priority = 0, onClick = () => {}, disabled = false, itemId, label }) {
+interface PriorityBatteryProps {
+  priority?: number
+  onClick?: () => void
+  disabled?: boolean
+  itemId: string
+  label: string
+}
+
+interface BrainDumpItemProps {
+  item: TaskCard
+  onRemove: (id: string) => void
+  onCyclePriority: (id: string) => void
+  onSendToBigThree: (id: string) => void
+}
+
+function PriorityBattery({
+  priority = 0,
+  onClick = () => {},
+  disabled = false,
+  itemId,
+  label,
+}: PriorityBatteryProps) {
   return (
     <button
       type="button"
@@ -41,9 +62,9 @@ function PriorityBattery({ priority = 0, onClick = () => {}, disabled = false, i
   )
 }
 
-function BrainDumpItem({ item, onRemove, onCyclePriority, onSendToBigThree }) {
+function BrainDumpItem({ item, onRemove, onCyclePriority, onSendToBigThree }: BrainDumpItemProps) {
   const [isRemoving, setIsRemoving] = useState(false)
-  const removeTimerRef = useRef(null)
+  const removeTimerRef = useRef<number | null>(null)
   const priority = Number(item.priority) || 0
   const priorityLabel = BRAIN_DUMP_PRIORITY_LABELS[priority] || BRAIN_DUMP_PRIORITY_LABELS[0]
 
@@ -107,7 +128,7 @@ function BrainDumpItem({ item, onRemove, onCyclePriority, onSendToBigThree }) {
           </button>
         </div>
 
-        <div className="flex translate-x-1 items-center gap-1 opacity-0 pointer-events-none transition-all duration-200 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-x-0 group-focus-within:opacity-100">
+        <div className="pointer-events-none flex translate-x-1 items-center gap-1 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-x-0 group-focus-within:opacity-100">
           <Button
             onClick={() => onSendToBigThree(item.id)}
             disabled={isRemoving}

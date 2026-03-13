@@ -1,5 +1,16 @@
+import type { TaskCard } from '../../../entities/planner'
 import BrainDumpInput from './BrainDumpInput'
 import BrainDumpList from './BrainDumpList'
+
+interface BrainDumpProps {
+  items: TaskCard[]
+  bigThreeCount?: number
+  onAdd: (content: string) => void
+  onRemove: (id: string) => void
+  onCyclePriority: (id: string) => void
+  onSendToBigThree: (id: string) => void
+  onFillBigThree?: () => void
+}
 
 function BrainDump({
   items,
@@ -9,7 +20,7 @@ function BrainDump({
   onCyclePriority,
   onSendToBigThree,
   onFillBigThree = () => {},
-}) {
+}: BrainDumpProps) {
   return (
     <section className="space-y-5 p-5">
       <div className="flex items-center justify-between gap-3">
