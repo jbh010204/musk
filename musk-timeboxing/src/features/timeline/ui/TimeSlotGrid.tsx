@@ -2,6 +2,20 @@ import { useDroppable } from '@dnd-kit/core'
 import { TOTAL_SLOTS, slotToTime } from '../../../entities/planner'
 import { createTimelineSlotDropPayload } from '../../planner-dnd/lib/payloads'
 
+interface TimeSlotRowProps {
+  slotIndex: number
+  onSlotClick: (slotIndex: number) => void
+  showDropGuide: boolean
+  rowHeight: number
+  showQuarterDividers: boolean
+  labelWidth: number
+  slotTestIdPrefix: string | null
+  nativeDragActive: boolean
+  nativeOverSlot: number | null
+  onNativeSlotHover?: (slotIndex: number | null) => void
+  onNativeSlotDrop?: (slotIndex: number, cardId: string | null) => void
+}
+
 function TimeSlotRow({
   slotIndex,
   onSlotClick,
@@ -14,7 +28,7 @@ function TimeSlotRow({
   nativeOverSlot,
   onNativeSlotHover,
   onNativeSlotDrop,
-}) {
+}: TimeSlotRowProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `timeline-slot-${slotIndex}`,
     data: createTimelineSlotDropPayload(slotIndex),
@@ -86,6 +100,19 @@ function TimeSlotRow({
   )
 }
 
+interface TimeSlotGridProps {
+  onSlotClick: (slotIndex: number) => void
+  showDropGuide?: boolean
+  rowHeight?: number
+  showQuarterDividers?: boolean
+  labelWidth?: number
+  slotTestIdPrefix?: string | null
+  nativeDragActive?: boolean
+  nativeOverSlot?: number | null
+  onNativeSlotHover?: (slotIndex: number | null) => void
+  onNativeSlotDrop?: (slotIndex: number, cardId: string | null) => void
+}
+
 function TimeSlotGrid({
   onSlotClick,
   showDropGuide = false,
@@ -97,7 +124,7 @@ function TimeSlotGrid({
   nativeOverSlot = null,
   onNativeSlotHover = () => {},
   onNativeSlotDrop = () => {},
-}) {
+}: TimeSlotGridProps) {
   return (
     <div className="relative" data-timeline-grid="true">
       {Array.from({ length: TOTAL_SLOTS }).map((_, slotIndex) => (

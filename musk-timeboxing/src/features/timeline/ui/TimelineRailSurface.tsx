@@ -1,11 +1,63 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { resolveStackCanvasSelectedCardIds, slotToTime } from '../../../entities/planner'
+import type { BigThreeItem, CategoryViewModel, TimeBox } from '../../../entities/planner/model/types'
 import CompletionModal from './CompletionModal'
 import TimeBoxCard from './TimeBoxCard'
 import TimeSlotGrid from './TimeSlotGrid'
 
 const DEFAULT_BOX_SLOTS = 1
 const DURATION_PRESETS = [1, 2, 3, 4]
+
+interface PendingManualInput {
+  slotIndex: number
+  content: string
+  durationSlots: number
+}
+
+interface ManualTimeBoxPayload {
+  content: string
+  startSlot: number
+  durationSlots: number
+}
+
+interface MovingTimeBoxPreview {
+  startSlot: number
+  endSlot: number
+  hasConflict: boolean
+}
+
+interface TimelineRailSurfaceProps {
+  timeBoxes?: TimeBox[]
+  categories?: CategoryViewModel[]
+  slotHeight?: number
+  labelWidth?: number
+  selectedCardId?: string | null
+  selectedCardIds?: string[]
+  selectedBigThreeItem?: BigThreeItem | null
+  onClearSelections?: () => void
+  onScheduleBoardCard?: (cardId: string, slotIndex: number) => boolean
+  onScheduleBoardCards?: (cardIds: string[], slotIndex: number) => boolean
+  onScheduleBigThreeItem?: (bigThreeItemId: string, slotIndex: number) => boolean
+  onCreateManualTimeBox?: (payload: ManualTimeBoxPayload) => boolean
+  onResizeTimeBox?: ((id: string, endSlot: number) => void) | null
+  updateTimeBox: (id: string, patch: Record<string, unknown>) => void
+  removeTimeBox: (id: string) => void
+  onDuplicateTimeBox?: (id: string) => boolean
+  onTimerStart?: (id: string) => void
+  onTimerPause?: (id: string) => void
+  onTimerComplete?: (id: string) => void
+  dropPreviewSlot?: number | null
+  movingTimeBoxPreview?: MovingTimeBoxPreview | null
+  showDropGuide?: boolean
+  slotTestIdPrefix?: string | null
+  nativeDraggingCardId?: string | null
+  onNativeDragEnd?: () => void
+  className?: string
+  containerTestId?: string | null
+  blockTestIdPrefix?: string | null
+  emptyState?: ReactNode
+  children?: ReactNode
+}
 
 function TimelineRailSurface({
   timeBoxes = [],
@@ -38,13 +90,13 @@ function TimelineRailSurface({
   blockTestIdPrefix = null,
   emptyState = null,
   children = null,
-}) {
-  const [pendingInput, setPendingInput] = useState(null)
-  const [selectedBoxId, setSelectedBoxId] = useState(null)
-  const [resizePreview, setResizePreview] = useState({})
+}: TimelineRailSurfaceProps) {
+  const [pendingInput, setPendingInput] = useState<PendingManualInput | null>(null)
+  const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null)
+  const [resizePreview, setResizePreview] = useState<Record<string, number>>({})
   const [isComposing, setIsComposing] = useState(false)
   const [timerNow, setTimerNow] = useState(0)
-  const [nativeOverSlot, setNativeOverSlot] = useState(null)
+  const [nativeOverSlot, setNativeOverSlot] = useState<number | null>(null)
 
   const sortedBoxes = useMemo(
     () => [...timeBoxes].sort((left, right) => left.startSlot - right.startSlot),
@@ -83,7 +135,7 @@ function TimelineRailSurface({
     setNativeOverSlot(null)
   }
 
-  const tryScheduleAtSlot = (slotIndex, cardIdsOverride = null) => {
+  const tryScheduleAtSlot = (slotIndex: number, cardIdsOverride: string[] | null = null) => {
     if (selectedBigThreeItem?.id) {
       const created = onScheduleBigThreeItem(selectedBigThreeItem.id, slotIndex)
       if (created) {
@@ -115,7 +167,7 @@ function TimelineRailSurface({
     return false
   }
 
-  const handleSlotClick = (slotIndex) => {
+  const handleSlotClick = (slotIndex: number) => {
     if (hasSelection) {
       tryScheduleAtSlot(slotIndex)
       return
@@ -146,14 +198,14 @@ function TimelineRailSurface({
     }
   }
 
-  const handleResizePreview = (id, endSlot) => {
+  const handleResizePreview = (id: string, endSlot: number) => {
     setResizePreview((prev) => ({
       ...prev,
       [id]: endSlot,
     }))
   }
 
-  const handleResizeEnd = (id, endSlot) => {
+  const handleResizeEnd = (id: string, endSlot: number) => {
     if (typeof onResizeTimeBox === 'function') {
       onResizeTimeBox(id, endSlot)
     } else {
@@ -166,7 +218,7 @@ function TimelineRailSurface({
     })
   }
 
-  const handleNativeSlotDrop = (slotIndex, cardId) => {
+  const handleNativeSlotDrop = (slotIndex: number, cardId: string | null) => {
     if (!cardId) {
       setNativeOverSlot(null)
       onNativeDragEnd()
@@ -282,7 +334,10 @@ function TimelineRailSurface({
                     )
                   }
                   onKeyDown={(event) => {
-                    const nativeComposing = event.nativeEvent?.isComposing || event.keyCode === 229
+                    const nativeComposing =
+                      'isComposing' in event.nativeEvent
+                        ? event.nativeEvent.isComposing
+                        : event.keyCode === 229
 
                     if (isComposing || nativeComposing) {
                       return
@@ -302,8 +357,8 @@ function TimelineRailSurface({
                     }
                   }}
                   onBlur={(event) => {
-                    const related = event.relatedTarget
-                    if (related && related.dataset.durationPreset) {
+                    const related = event.relatedTarget as HTMLElement | null
+                    if (related?.dataset.durationPreset) {
                       return
                     }
                     setPendingInput(null)
