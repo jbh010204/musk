@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import { Button, Card } from '../../../shared/ui'
 import {
   exportPlannerData,
@@ -7,13 +7,25 @@ import {
   syncPlannerDataToServer,
 } from '../../../entities/planner'
 
-function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
+type ImportMode = 'merge' | 'replace'
+type PersistenceStatus = ReturnType<typeof getPlannerPersistenceStatus>
+type ImportResult = ReturnType<typeof importPlannerData>
+type SyncResult = Awaited<ReturnType<typeof syncPlannerDataToServer>>
+
+interface DataTransferModalProps {
+  currentDate: string
+  onClose: () => void
+  onImported: () => void
+  showToast: (message: string, duration?: number, options?: unknown) => unknown
+}
+
+function DataTransferModal({ currentDate, onClose, onImported, showToast }: DataTransferModalProps) {
   const [exportText, setExportText] = useState('')
   const [importText, setImportText] = useState('')
-  const [importMode, setImportMode] = useState('merge')
+  const [importMode, setImportMode] = useState<ImportMode>('merge')
   const [isSyncingServer, setIsSyncingServer] = useState(false)
-  const fileInputRef = useRef(null)
-  const persistenceStatus = getPlannerPersistenceStatus()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const persistenceStatus: PersistenceStatus = getPlannerPersistenceStatus()
   const lastSyncLabel = persistenceStatus.autoSyncLastSuccessAt
     ? new Date(persistenceStatus.autoSyncLastSuccessAt).toLocaleTimeString('ko-KR', {
         hour: '2-digit',
@@ -69,7 +81,7 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
     showToast('JSON 파일 다운로드를 시작했습니다')
   }
 
-  const handleImportFileChange = async (event) => {
+  const handleImportFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) {
       return
@@ -93,16 +105,13 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
       return
     }
 
-    const result = importPlannerData(raw, { mode: importMode })
+    const result: ImportResult = importPlannerData(raw, { mode: importMode })
     if (!result.ok) {
-      showToast(result.error)
+      showToast('error' in result ? result.error : '가져오기에 실패했습니다')
       return
     }
 
-    showToast(
-      `가져오기 완료: ${result.importedDays}일, 카테고리 ${result.importedCategories}개`,
-      2600,
-    )
+    showToast(`가져오기 완료: ${result.importedDays}일, 카테고리 ${result.importedCategories}개`, 2600)
     onImported()
     onClose()
   }
@@ -111,7 +120,7 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
     setIsSyncingServer(true)
 
     try {
-      const result = await syncPlannerDataToServer({ mode: 'merge' })
+      const result: SyncResult = await syncPlannerDataToServer({ mode: 'merge' })
       if (!result.ok) {
         showToast('서버 저장소 동기화에 실패했습니다')
         return
@@ -131,11 +140,7 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
       >
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">데이터 백업 / 복원</h3>
-          <Button
-            onClick={onClose}
-          >
-            닫기
-          </Button>
+          <Button onClick={onClose}>닫기</Button>
         </div>
 
         <Card tone="subtle" className="mt-4 p-3">
@@ -167,22 +172,13 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
         <Card tone="subtle" className="mt-4 p-3">
           <p className="mb-2 text-xs uppercase tracking-wide text-gray-400">내보내기 (Export)</p>
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="sky"
-              onClick={handleExportAll}
-            >
+            <Button variant="sky" onClick={handleExportAll}>
               전체 내보내기
             </Button>
-            <Button
-              variant="sky"
-              onClick={handleExportToday}
-            >
+            <Button variant="sky" onClick={handleExportToday}>
               오늘 내보내기
             </Button>
-            <Button
-              variant="secondary"
-              onClick={handleCopyExport}
-            >
+            <Button variant="secondary" onClick={handleCopyExport}>
               복사
             </Button>
             <Button
@@ -211,7 +207,7 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
             <select
               id="import-mode"
               value={importMode}
-              onChange={(event) => setImportMode(event.target.value)}
+              onChange={(event) => setImportMode(event.target.value as ImportMode)}
               className="rounded bg-gray-700 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="merge">병합 (기존 유지)</option>
@@ -243,10 +239,7 @@ function DataTransferModal({ currentDate, onClose, onImported, showToast }) {
           />
 
           <div className="mt-3 flex justify-end">
-            <Button
-              variant="primary"
-              onClick={handleImport}
-            >
+            <Button variant="primary" onClick={handleImport}>
               가져오기 실행
             </Button>
           </div>

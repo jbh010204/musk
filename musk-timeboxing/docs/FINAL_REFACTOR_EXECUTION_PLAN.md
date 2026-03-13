@@ -61,6 +61,7 @@
 - `features/brain-dump/*` TypeScript 전환 완료
 - `features/template/*` TypeScript 전환 완료
 - `features/category/*` TypeScript 전환 완료
+- `features/data-transfer/*` TypeScript 전환 완료
 - timeline DnD orchestration hook(`usePlannerTimelineDnd.ts`)
 - timebox action orchestration hook(`usePlannerTimeBoxActions.ts`)
 - day flow orchestration hook(`usePlannerDayFlow.ts`)
@@ -264,6 +265,7 @@
 - `features/brain-dump/index`, `features/brain-dump/ui/*`를 TS로 전환
 - `features/template/index`, `features/template/ui/TemplateManagerModal`을 TS로 전환
 - `features/category/index`, `features/category/ui/CategoryManagerModal`을 TS로 전환
+- `features/data-transfer/index`, `features/data-transfer/ui/DataTransferModal`을 TS로 전환
 - `features/planner-dnd/lib/payloads`를 `.ts`로 전환
 - `features/planner-dnd/usePlannerTimelineDnd`를 `.ts`로 추가
 - `app/hooks/usePlannerTimeBoxActions`를 `.ts`로 추가
