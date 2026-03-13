@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import { Badge, Button, Card } from '../../../shared/ui'
 
 const DRAG_THRESHOLD_PX = 6
@@ -6,14 +6,76 @@ const MOMENTUM_FRICTION = 0.94
 const MIN_MOMENTUM_VELOCITY = 0.08
 const MAX_MOMENTUM_VELOCITY = 22
 
-const formatKoreanDate = (dateStr) => {
+type BigThreeStatus = 'DONE' | 'PENDING' | 'EMPTY'
+type PersistenceBadgeTone = 'neutral' | 'danger' | 'success'
+
+interface WeekStripDay {
+  dateStr: string
+  isCurrent: boolean
+  total: number
+  completed: number
+  dayLabel: string
+  dayNumber: string | number
+}
+
+interface BigThreeProgress {
+  statuses: BigThreeStatus[]
+  completedCount: number
+  filledCount: number
+  isPerfect: boolean
+}
+
+interface PlannerPersistenceStatusLike {
+  serverEnabled?: boolean
+  serverAvailability?: 'unknown' | 'disabled' | 'online' | 'offline'
+  autoSyncLastStatus?: 'idle' | 'pending' | 'syncing' | 'synced' | 'error'
+  autoSyncDirty?: boolean
+}
+
+interface DragState {
+  active: boolean
+  pointerId: number | null
+  captured: boolean
+  startX: number
+  startScrollLeft: number
+  moved: boolean
+  pendingScrollLeft: number
+  targetScrollLeft: number
+  lastMoveTs: number
+  lastMomentumTs: number
+  velocity: number
+  frameId: number | null
+  momentumFrameId: number | null
+}
+
+interface HeaderProps {
+  currentDate: string
+  goNextDay: () => void
+  goPrevDay: () => void
+  weekStrip?: WeekStripDay[]
+  goToDate?: (dateStr: string) => void
+  bigThreeProgress?: BigThreeProgress
+  theme?: 'dark' | 'light'
+  persistenceStatus?: PlannerPersistenceStatusLike | null
+  onOpenReschedule?: () => void
+  onToggleTheme?: () => void
+}
+
+const DEFAULT_BIG_THREE_PROGRESS: BigThreeProgress = {
+  statuses: ['EMPTY', 'EMPTY', 'EMPTY'],
+  completedCount: 0,
+  filledCount: 0,
+  isPerfect: false,
+}
+
+const formatKoreanDate = (dateStr: string) => {
   const date = new Date(`${dateStr}T00:00:00`)
   const [year, month, day] = dateStr.split('-').map(Number)
   const weekday = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(date)
   return `${year}년 ${month}월 ${day}일 (${weekday})`
 }
 
-const getPersistenceBadge = (status) => {
+const getPersistenceBadge = (status: PlannerPersistenceStatusLike | null | undefined): { tone: PersistenceBadgeTone; label: string } => {
   if (!status?.serverEnabled) {
     return {
       tone: 'neutral',
@@ -54,21 +116,16 @@ function Header({
   goPrevDay,
   weekStrip = [],
   goToDate = () => {},
-  bigThreeProgress = {
-    statuses: ['EMPTY', 'EMPTY', 'EMPTY'],
-    completedCount: 0,
-    filledCount: 0,
-    isPerfect: false,
-  },
+  bigThreeProgress = DEFAULT_BIG_THREE_PROGRESS,
   theme = 'dark',
   persistenceStatus = null,
   onOpenReschedule = () => {},
   onToggleTheme = () => {},
-}) {
-  const stripRef = useRef(null)
-  const currentDayRef = useRef(null)
+}: HeaderProps) {
+  const stripRef = useRef<HTMLDivElement | null>(null)
+  const currentDayRef = useRef<HTMLButtonElement | null>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const dragStateRef = useRef({
+  const dragStateRef = useRef<DragState>({
     active: false,
     pointerId: null,
     captured: false,
@@ -155,7 +212,7 @@ function Header({
 
     cancelMomentum()
 
-    const step = (timestamp) => {
+    const step = (timestamp: number) => {
       dragState.momentumFrameId = null
       const elapsed = dragState.lastMomentumTs > 0 ? Math.max(1, timestamp - dragState.lastMomentumTs) : 16
       const frameScale = elapsed / 16
@@ -221,10 +278,10 @@ function Header({
       velocity: dragState.velocity,
       frameId: null,
       momentumFrameId: dragState.momentumFrameId,
-    })
+    } satisfies DragState)
   }
 
-  const handleStripPointerDown = (event) => {
+  const handleStripPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.pointerType !== 'mouse' || !stripRef.current) {
       return
     }
@@ -250,10 +307,10 @@ function Header({
       velocity: 0,
       frameId: null,
       momentumFrameId: null,
-    })
+    } satisfies DragState)
   }
 
-  const handleStripPointerMove = (event) => {
+  const handleStripPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const strip = stripRef.current
     const dragState = dragStateRef.current
 
@@ -295,7 +352,7 @@ function Header({
     event.preventDefault()
   }
 
-  const handleStripPointerUp = (event) => {
+  const handleStripPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (dragStateRef.current.pointerId !== event.pointerId) {
       return
     }
@@ -303,7 +360,7 @@ function Header({
     finishDrag()
   }
 
-  const handleStripPointerCancel = (event) => {
+  const handleStripPointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (dragStateRef.current.pointerId !== event.pointerId) {
       return
     }
@@ -311,16 +368,18 @@ function Header({
     finishDrag()
   }
 
-  const handleDayClick = (dateStr) => (event) => {
-    if (suppressClickRef.current) {
-      event.preventDefault()
-      event.stopPropagation()
-      suppressClickRef.current = false
-      return
-    }
+  const handleDayClick =
+    (dateStr: string) =>
+    (event: ReactMouseEvent<HTMLButtonElement>) => {
+      if (suppressClickRef.current) {
+        event.preventDefault()
+        event.stopPropagation()
+        suppressClickRef.current = false
+        return
+      }
 
-    goToDate(dateStr)
-  }
+      goToDate(dateStr)
+    }
 
   return (
     <header className="sticky top-0 z-30 bg-slate-50/95 px-6 py-4 text-slate-900 backdrop-blur dark:bg-gray-900/85 dark:text-gray-100">
