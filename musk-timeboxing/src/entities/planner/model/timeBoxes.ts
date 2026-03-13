@@ -30,6 +30,8 @@ interface AddTimeBoxResult {
   nextTimeBoxes: TimeBox[]
 }
 
+type TimeBoxPlacementFailureReason = 'invalid-content' | 'no-space' | 'overlap'
+
 interface RestoreTimeBoxResult {
   restored: boolean
   nextTimeBoxes: TimeBox[]
@@ -39,6 +41,23 @@ interface ApplyTimeBoxReschedulePlanResult {
   appliedCount: number
   nextTimeBoxes: TimeBox[]
   dedupedPlanned: TimeBox[]
+}
+
+interface TimeBoxPlacementInput {
+  content?: unknown
+  taskId?: unknown
+  startSlot?: unknown
+  preferredStartSlot?: unknown
+  durationSlots?: unknown
+  category?: unknown
+  categoryId?: unknown
+}
+
+interface TimeBoxPlacementPlan {
+  reason: TimeBoxPlacementFailureReason | null
+  timeBox: TimeBox | null
+  requestedStartSlot: number | null
+  resolvedStartSlot: number | null
 }
 
 const defaultCreateId = (): string => crypto.randomUUID()
@@ -69,6 +88,23 @@ const normalizeElapsedSeconds = (value: unknown): number =>
 
 const normalizeTimerStartedAt = (value: unknown): number | null =>
   Number.isFinite(value) ? Number(value) : null
+
+const normalizeDurationSlots = (value: unknown): number => {
+  const next = Number(value)
+  if (!Number.isInteger(next)) {
+    return 1
+  }
+
+  return Math.max(1, Math.min(TOTAL_SLOTS, next))
+}
+
+const normalizeRequestedStartSlot = (value: unknown, durationSlots: number): number | null => {
+  if (!Number.isInteger(value)) {
+    return null
+  }
+
+  return Math.max(0, Math.min(TOTAL_SLOTS - durationSlots, Number(value)))
+}
 
 const normalizeTaskId = (value: unknown): string | null => {
   if (typeof value === 'string') {
@@ -114,6 +150,81 @@ export const createTimeBoxRecord = (
   createId: () => string = defaultCreateId,
 ): TimeBox | null =>
   normalizeTimeBoxRecord(input, createId)
+
+export const planTimeBoxPlacement = (
+  timeBoxes: TimeBox[] = [],
+  input: TimeBoxPlacementInput = {},
+  createId: () => string = defaultCreateId,
+): TimeBoxPlacementPlan => {
+  const content = normalizeText(input.content)
+  if (!content) {
+    return {
+      reason: 'invalid-content',
+      timeBox: null,
+      requestedStartSlot: null,
+      resolvedStartSlot: null,
+    }
+  }
+
+  const durationSlots = normalizeDurationSlots(input.durationSlots)
+  const requestedStartSlot = normalizeRequestedStartSlot(input.startSlot, durationSlots)
+  const preferredStartSlot = normalizeRequestedStartSlot(input.preferredStartSlot, durationSlots) ?? 0
+  const resolvedStartSlot =
+    requestedStartSlot ?? findAvailableStartSlot(timeBoxes, preferredStartSlot, durationSlots)
+
+  if (resolvedStartSlot == null) {
+    return {
+      reason: 'no-space',
+      timeBox: null,
+      requestedStartSlot,
+      resolvedStartSlot: null,
+    }
+  }
+
+  const timeBox = normalizeTimeBoxRecord(
+    {
+      content,
+      taskId: input.taskId ?? null,
+      startSlot: resolvedStartSlot,
+      endSlot: Math.min(TOTAL_SLOTS, resolvedStartSlot + durationSlots),
+      status: 'PLANNED',
+      actualMinutes: null,
+      category: input.category ?? null,
+      categoryId: input.categoryId ?? null,
+      skipReason: null,
+      carryOverFromDate: null,
+      carryOverFromBoxId: null,
+      timerStartedAt: null,
+      elapsedSeconds: 0,
+    },
+    createId,
+  )
+
+  if (!timeBox) {
+    return {
+      reason: 'invalid-content',
+      timeBox: null,
+      requestedStartSlot,
+      resolvedStartSlot,
+    }
+  }
+
+  if (hasOverlap(timeBoxes, timeBox)) {
+    return {
+      reason: 'overlap',
+      timeBox: null,
+      requestedStartSlot,
+      resolvedStartSlot,
+    }
+  }
+
+  return {
+    reason: null,
+    timeBox,
+    requestedStartSlot,
+    resolvedStartSlot,
+  }
+}
 
 export const createCarryOverTimeBoxRecord = (
   sourceTimeBox: TimeBoxInput | TimeBox | null | undefined,

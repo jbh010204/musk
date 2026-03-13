@@ -19,6 +19,7 @@ import QuickAddModal from './features/timeline/ui/QuickAddModal'
 import { useCategoryMeta, useDailyData, useTemplateMeta, useToast } from './app/hooks'
 import {
   applyTimeBoxReschedulePlan,
+  buildManagedCategoryViewModels,
   buildPlannerWeekStrip,
   buildMonthCalendarSnapshot,
   buildWeekCalendarSnapshot,
@@ -26,13 +27,14 @@ import {
   buildWeeklyPlanningPreview,
   buildWeeklyReport,
   deriveBigThreeProgress,
-  findAvailableStartSlot,
-  getCategoryViewModels,
+  deriveTopSkippedReason,
   getPlannerPersistenceStatus,
   hasOverlap,
   loadPlannerDayModel,
+  planTimeBoxPlacement,
   loadLastViewMode,
   savePlannerDayModel,
+  shiftPlannerDate,
   slotDurationMinutes,
   subscribePlannerPersistenceStatus,
   TOTAL_SLOTS,
@@ -59,17 +61,6 @@ const INSIGHTS_LOADING_MS = 220
 const UNDO_TOAST_MS = 5000
 const BOOTSTRAP_NOTICE_KEY = 'musk-planner-bootstrap-notice-shown'
 
-const formatDate = (date) => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-const shiftDate = (dateStr, offset) => {
-  const date = new Date(`${dateStr}T00:00:00`)
-  date.setDate(date.getDate() + offset)
-  return formatDate(date)
-}
 const formatShortDateLabel = (dateStr) =>
   new Intl.DateTimeFormat('ko-KR', {
     month: 'long',
@@ -125,34 +116,21 @@ const SKIP_ACTION_TEMPLATE_BY_REASON = {
   },
 }
 
-const getSkipBasedSuggestion = (dayData) => {
-  const skipped = (Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []).filter(
-    (box) => box.status === 'SKIPPED',
-  )
-
-  if (skipped.length === 0) {
-    return null
-  }
-
-  const reasonCounter = new Map()
-  skipped.forEach((box) => {
-    const reason =
-      typeof box.skipReason === 'string' && box.skipReason.trim().length > 0 ? box.skipReason.trim() : '기타'
-    reasonCounter.set(reason, (reasonCounter.get(reason) || 0) + 1)
-  })
-
-  const [topReason, topCount] = [...reasonCounter.entries()].sort((a, b) => b[1] - a[1])[0] || ['기타', 0]
-  if (topCount < 1) {
-    return null
-  }
-
-  return {
-    reason: topReason,
-    message: SKIP_SUGGESTION_BY_REASON[topReason] || SKIP_SUGGESTION_BY_REASON.기타,
-  }
-}
-
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
+
+const showPlacementFailureToast = (reason, showToast, messages = {}) => {
+  if (reason === 'invalid-content') {
+    showToast(messages.invalidContent || '일정 내용을 입력해 주세요')
+    return
+  }
+
+  if (reason === 'overlap') {
+    showToast(messages.overlap || '해당 시간에 이미 일정이 있습니다')
+    return
+  }
+
+  showToast(messages.noSpace || '배치할 빈 시간이 없습니다')
+}
 
 const resolveMovedRangeFromDelta = (activeData, deltaY, slotHeight) => {
   const activeStart = Number(activeData?.startSlot) || 0
@@ -324,34 +302,18 @@ function App() {
   } = useCategoryMeta()
   const { templates, addTemplate, updateTemplate, removeTemplate, clearTemplateCategory, reloadTemplates } =
     useTemplateMeta()
-  const lockedParentIds = useMemo(() => {
-    const usedIds = new Set()
-
-    data.taskCards.forEach((item) => {
-      if (item.categoryId) {
-        usedIds.add(item.categoryId)
-      }
-    })
-    data.timeBoxes.forEach((box) => {
-      if (box.categoryId) {
-        usedIds.add(box.categoryId)
-      }
-    })
-    templates.forEach((template) => {
-      if (template.categoryId) {
-        usedIds.add(template.categoryId)
-      }
-    })
-
-    return usedIds
-  }, [data.taskCards, data.timeBoxes, templates])
   const categories = useMemo(
     () =>
-      getCategoryViewModels(rawCategories).map((category) => ({
-        ...category,
-        canAcceptChildren: !lockedParentIds.has(category.id),
-      })),
-    [lockedParentIds, rawCategories],
+      buildManagedCategoryViewModels(rawCategories, {
+        taskCards: data.taskCards,
+        timeBoxes: data.timeBoxes,
+        templates,
+      }),
+    [data.taskCards, data.timeBoxes, rawCategories, templates],
+  )
+  const lockedParentIds = useMemo(
+    () => categories.filter((category) => !category.canAcceptChildren).map((category) => category.id),
+    [categories],
   )
 
   const { showToast, ToastContainer } = useToast()
@@ -475,8 +437,8 @@ function App() {
 
   const goNextDay = () => {
     setIsTimelineInsightsLoading(true)
-    const skipSuggestion = getSkipBasedSuggestion(data)
-    const nextDate = shiftDate(currentDate, 1)
+    const skipReason = deriveTopSkippedReason(data.timeBoxes)
+    const nextDate = shiftPlannerDate(currentDate, 1)
     const result = goNextDayRaw({ autoCarry: true })
 
     if (result.moved > 0) {
@@ -485,11 +447,11 @@ function App() {
       showToast(`이월 가능한 일정이 없어 ${result.skipped}건을 건너뛰었습니다`)
     }
 
-    if (skipSuggestion) {
+    if (skipReason) {
       setDailySuggestion({
         forDate: nextDate,
-        message: skipSuggestion.message,
-        action: SKIP_ACTION_TEMPLATE_BY_REASON[skipSuggestion.reason] || SKIP_ACTION_TEMPLATE_BY_REASON.기타,
+        message: SKIP_SUGGESTION_BY_REASON[skipReason] || SKIP_SUGGESTION_BY_REASON.기타,
+        action: SKIP_ACTION_TEMPLATE_BY_REASON[skipReason] || SKIP_ACTION_TEMPLATE_BY_REASON.기타,
       })
       return
     }
@@ -598,28 +560,29 @@ function App() {
       return
     }
 
-    const startSlot = findAvailableStartSlot(
+    const placement = planTimeBoxPlacement(
       data.timeBoxes,
-      action.preferredStartSlot,
-      action.durationSlots,
+      {
+        content: action.content,
+        taskId: null,
+        preferredStartSlot: action.preferredStartSlot,
+        durationSlots: action.durationSlots,
+      },
     )
 
-    if (startSlot == null) {
-      showToast('추천 블록을 배치할 빈 시간이 없습니다')
+    if (!placement.timeBox) {
+      showPlacementFailureToast(placement.reason, showToast, {
+        noSpace: '추천 블록을 배치할 빈 시간이 없습니다',
+      })
       return
     }
 
-    addTimeBox({
-      content: action.content,
-      taskId: null,
-      startSlot,
-      endSlot: Math.min(TOTAL_SLOTS, startSlot + action.durationSlots),
-    })
-    showToast(`추천 블록을 추가했습니다: ${action.content}`)
+    addTimeBox(placement.timeBox)
+    showToast(`추천 블록을 추가했습니다: ${placement.timeBox.content}`)
   }
 
   const buildReschedulePlan = () => {
-    const targetDate = shiftDate(currentDate, 1)
+    const targetDate = shiftPlannerDate(currentDate, 1)
     const targetDay = loadPlannerDayModel(targetDate)
     return buildTimeBoxReschedulePlan({
       currentDate,
@@ -855,21 +818,20 @@ function App() {
         return
       }
 
-      const endSlot = Math.min(startSlot + DEFAULT_BOX_SLOTS, TOTAL_SLOTS)
-      const newBox = {
+      const placement = planTimeBoxPlacement(data.timeBoxes, {
         content: getScheduleSourceContent(activeData),
         taskId: getScheduleSourceTaskId(activeData),
         startSlot,
-        endSlot,
-      }
+        durationSlots: DEFAULT_BOX_SLOTS,
+      })
 
-      if (hasOverlap(data.timeBoxes, newBox)) {
-        showToast('해당 시간에 이미 일정이 있습니다')
+      if (!placement.timeBox) {
+        showPlacementFailureToast(placement.reason, showToast)
         finalize()
         return
       }
 
-      addTimeBox(newBox)
+      addTimeBox(placement.timeBox)
     }
     finalize()
   }
@@ -1028,22 +990,26 @@ function App() {
       return false
     }
 
-    const duration = Math.max(1, source.endSlot - source.startSlot)
-    const startSlot = findAvailableStartSlot(data.timeBoxes, source.endSlot, duration)
-    if (startSlot == null) {
-      showToast('복제할 빈 시간이 없습니다')
-      return false
-    }
-
-    addTimeBox({
+    const placement = planTimeBoxPlacement(data.timeBoxes, {
       content: `${source.content} (복제)`,
       taskId: source.taskId ?? null,
-      startSlot,
-      endSlot: Math.min(TOTAL_SLOTS, startSlot + duration),
+      preferredStartSlot: source.endSlot,
+      durationSlots: Math.max(1, source.endSlot - source.startSlot),
       category: source.category ?? null,
       categoryId: source.categoryId ?? null,
     })
-    showToast(`일정을 ${slotDurationMinutes(startSlot, Math.min(TOTAL_SLOTS, startSlot + duration))}분 블록으로 복제했습니다`)
+
+    if (!placement.timeBox) {
+      showPlacementFailureToast(placement.reason, showToast, {
+        noSpace: '복제할 빈 시간이 없습니다',
+      })
+      return false
+    }
+
+    addTimeBox(placement.timeBox)
+    showToast(
+      `일정을 ${slotDurationMinutes(placement.timeBox.startSlot, placement.timeBox.endSlot)}분 블록으로 복제했습니다`,
+    )
     return true
   }
 
@@ -1059,60 +1025,28 @@ function App() {
       return false
     }
 
-    const trimmedContent = String(content || '').trim()
-    if (!trimmedContent) {
-      showToast('일정 내용을 입력해 주세요')
-      return false
-    }
-
-    const safeDuration = Math.max(1, Math.min(TOTAL_SLOTS, Number(durationSlots) || 1))
     const targetDay = dateStr === currentDate ? data : loadPlannerDayModel(dateStr)
-    const requestedStart = Number.isInteger(startSlot)
-      ? clamp(Number(startSlot), 0, TOTAL_SLOTS - safeDuration)
-      : null
-    const resolvedStart =
-      requestedStart != null
-        ? requestedStart
-        : findAvailableStartSlot(targetDay.timeBoxes, 0, safeDuration)
-
-    if (resolvedStart == null) {
-      showToast('배치할 빈 시간이 없습니다')
-      return false
-    }
-
-    const newBox = {
-      content: trimmedContent,
+    const placement = planTimeBoxPlacement(targetDay.timeBoxes, {
+      content,
       taskId,
-      startSlot: resolvedStart,
-      endSlot: Math.min(TOTAL_SLOTS, resolvedStart + safeDuration),
+      startSlot: Number.isInteger(startSlot)
+        ? clamp(Number(startSlot), 0, TOTAL_SLOTS - Math.max(1, Math.min(TOTAL_SLOTS, Number(durationSlots) || 1)))
+        : null,
+      durationSlots,
       categoryId: categoryId || null,
-    }
+    })
 
-    if (hasOverlap(targetDay.timeBoxes, newBox)) {
-      showToast('해당 시간에 이미 일정이 있습니다')
+    if (!placement.timeBox) {
+      showPlacementFailureToast(placement.reason, showToast)
       return false
     }
 
     if (dateStr === currentDate) {
-      addTimeBox(newBox)
+      addTimeBox(placement.timeBox)
     } else {
       savePlannerDayModel(dateStr, {
         ...targetDay,
-        timeBoxes: [
-          ...targetDay.timeBoxes,
-          {
-            id: crypto.randomUUID(),
-            ...newBox,
-            status: 'PLANNED',
-            actualMinutes: null,
-            category: null,
-            skipReason: null,
-            timerStartedAt: null,
-            elapsedSeconds: 0,
-            carryOverFromDate: null,
-            carryOverFromBoxId: null,
-          },
-        ],
+        timeBoxes: [...targetDay.timeBoxes, placement.timeBox],
       })
       setCrossDateRevision((prev) => prev + 1)
     }

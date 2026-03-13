@@ -186,6 +186,9 @@
 - `bigThreeProgress` selector를 model로 이동
 - reschedule plan / apply helper를 model로 이동
 - weekly strip / weekly report / weekly planning preview를 lib로 이동
+- skip reason selector를 model로 이동
+- managed category view model 계산을 model로 이동
+- repeated timebox placement planning을 model helper로 이동
 
 허용:
 

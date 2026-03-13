@@ -17,6 +17,10 @@ interface CategoryMutationInput {
   parentId?: unknown
 }
 
+interface CategoryUsageRef {
+  categoryId?: unknown
+}
+
 type CategoryMutationResult =
   | { ok: true; nextCategories: CategoryRecord[]; category?: CategoryRecord }
   | { ok: false; error: string }
@@ -206,6 +210,42 @@ export const getCategoryViewModels = (
 
   visit(tree)
   return flattened
+}
+
+export const collectLockedCategoryIds = (
+  taskCards: CategoryUsageRef[] = [],
+  timeBoxes: CategoryUsageRef[] = [],
+  templates: CategoryUsageRef[] = [],
+): Set<string> => {
+  const usedIds = new Set<string>()
+
+  ;[...taskCards, ...timeBoxes, ...templates].forEach((entry) => {
+    if (typeof entry?.categoryId === 'string' && entry.categoryId.trim().length > 0) {
+      usedIds.add(entry.categoryId)
+    }
+  })
+
+  return usedIds
+}
+
+export const buildManagedCategoryViewModels = (
+  categories: Array<CategoryInput | CategoryRecord> = [],
+  {
+    taskCards = [],
+    timeBoxes = [],
+    templates = [],
+  }: {
+    taskCards?: CategoryUsageRef[]
+    timeBoxes?: CategoryUsageRef[]
+    templates?: CategoryUsageRef[]
+  } = {},
+): Array<CategoryViewModel & { canAcceptChildren: boolean }> => {
+  const lockedCategoryIds = collectLockedCategoryIds(taskCards, timeBoxes, templates)
+
+  return getCategoryViewModels(categories).map((category) => ({
+    ...category,
+    canAcceptChildren: !lockedCategoryIds.has(category.id),
+  }))
 }
 
 export const hasDuplicateCategoryName = (
