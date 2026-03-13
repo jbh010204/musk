@@ -42,6 +42,14 @@ export interface BigThreeItem {
   taskId: string | null
 }
 
+export interface PlannerTemplate {
+  id: string
+  name: string
+  content: string
+  durationSlots: number
+  categoryId: string | null
+}
+
 export interface TimeBox {
   id: string
   content: string
@@ -58,6 +66,25 @@ export interface TimeBox {
   timerStartedAt: number | null
   elapsedSeconds: number
 }
+
+export type TimeBoxUpdatePatch = Partial<
+  Pick<
+    TimeBox,
+    | 'content'
+    | 'taskId'
+    | 'startSlot'
+    | 'endSlot'
+    | 'status'
+    | 'actualMinutes'
+    | 'category'
+    | 'categoryId'
+    | 'skipReason'
+    | 'carryOverFromDate'
+    | 'carryOverFromBoxId'
+    | 'timerStartedAt'
+    | 'elapsedSeconds'
+  >
+>
 
 export interface StackCanvasStateRecord {
   [key: string]: unknown
@@ -76,7 +103,7 @@ export interface PlannerDay {
 export interface PlannerMetaModel {
   schemaVersion: number
   categories: CategoryRecord[]
-  templates: unknown[]
+  templates: PlannerTemplate[]
 }
 
 export interface LastFocusSnapshot {

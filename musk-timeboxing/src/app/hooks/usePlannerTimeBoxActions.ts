@@ -6,20 +6,8 @@ import {
   TOTAL_SLOTS,
   type TimeBox,
 } from '../../entities/planner'
-
-interface ToastOptions {
-  actionLabel?: string
-  onAction?: () => void
-}
-
-interface UpdateTimeBoxChanges {
-  status?: string | null
-  actualMinutes?: number | null
-  skipReason?: string | null
-  startSlot?: number
-  endSlot?: number
-  [key: string]: unknown
-}
+import type { TimeBoxUpdatePatch } from '../../entities/planner/model/types'
+import type { ShowToast } from './useToast'
 
 interface CreateTimeBoxOnDateInput {
   dateStr: string
@@ -34,10 +22,10 @@ interface UsePlannerTimeBoxActionsOptions {
   currentDate: string
   data: ReturnType<typeof loadPlannerDayModel>
   undoToastMs: number
-  showToast: (message: string, duration?: number, options?: ToastOptions | null) => void
+  showToast: ShowToast
   formatDateLabel: (dateStr: string) => string
-  addTimeBox: (timeBox: TimeBox) => unknown
-  updateTimeBox: (id: string, changes: UpdateTimeBoxChanges) => void
+  addTimeBox: (timeBox: TimeBox) => string | null
+  updateTimeBox: (id: string, changes: TimeBoxUpdatePatch) => void
   completeTimeBoxByTimer: (id: string) => void
   removeTimeBox: (id: string) => void
   restoreTimeBox: (timeBox: TimeBox) => boolean
@@ -86,7 +74,7 @@ export const usePlannerTimeBoxActions = ({
   restoreTimeBox,
   bumpCrossDateRevision,
 }: UsePlannerTimeBoxActionsOptions) => {
-  const handleUpdateTimeBox = (id: string, changes: UpdateTimeBoxChanges) => {
+  const handleUpdateTimeBox = (id: string, changes: TimeBoxUpdatePatch) => {
     const previous = data.timeBoxes.find((box) => box.id === id)
     if (!previous) {
       return

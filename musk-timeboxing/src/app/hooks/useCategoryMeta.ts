@@ -10,8 +10,13 @@ import {
 } from '../../entities/planner'
 import type { CategoryRecord } from '../../entities/planner/model/types'
 
-interface CategoryMutationOptions {
+export interface CategoryMutationOptions {
   lockedParentIds?: string[]
+}
+
+export interface CategoryMutationResult {
+  ok: boolean
+  error?: string
 }
 
 type CategoryAddResult = ReturnType<typeof addCategoryRecord>

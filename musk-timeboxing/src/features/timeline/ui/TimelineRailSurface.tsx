@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { resolveStackCanvasSelectedCardIds, slotToTime } from '../../../entities/planner'
-import type { BigThreeItem, CategoryViewModel, TimeBox } from '../../../entities/planner/model/types'
+import type {
+  BigThreeItem,
+  CategoryViewModel,
+  TimeBox,
+  TimeBoxUpdatePatch,
+} from '../../../entities/planner/model/types'
 import CompletionModal from './CompletionModal'
 import TimeBoxCard from './TimeBoxCard'
 import TimeSlotGrid from './TimeSlotGrid'
@@ -40,7 +45,7 @@ interface TimelineRailSurfaceProps {
   onScheduleBigThreeItem?: (bigThreeItemId: string, slotIndex: number) => boolean
   onCreateManualTimeBox?: (payload: ManualTimeBoxPayload) => boolean
   onResizeTimeBox?: ((id: string, endSlot: number) => void) | null
-  updateTimeBox: (id: string, patch: Record<string, unknown>) => void
+  updateTimeBox: (id: string, patch: TimeBoxUpdatePatch) => void
   removeTimeBox: (id: string) => void
   onDuplicateTimeBox?: (id: string) => boolean
   onTimerStart?: (id: string) => void

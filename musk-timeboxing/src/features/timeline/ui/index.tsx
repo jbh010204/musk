@@ -13,8 +13,10 @@ import type {
   BigThreeItem,
   CategoryViewModel,
   PlannerDay,
+  PlannerTemplate,
   TaskCard,
   TimeBox,
+  TimeBoxUpdatePatch,
   TimeBoxStatus,
 } from '../../../entities/planner/model/types'
 import PlanningCanvas from '../../planning-canvas'
@@ -34,12 +36,7 @@ type TimelineViewMode = 'WORKSPACE' | 'CANVAS' | 'COMPOSER' | 'DAY' | 'WEEK' | '
 type TimelineScale = '30' | '15'
 type TimelineStatusFilter = 'ALL' | TimeBoxStatus
 
-interface TemplateSummary {
-  id: string
-  name: string
-  content: string
-  durationSlots: number
-}
+interface TemplateSummary extends PlannerTemplate {}
 
 interface PreviewTimeBoxItem {
   id: string
@@ -205,19 +202,31 @@ interface TimelineProps {
     category: string | null
     categoryId: string | null
   }) => void
-  addBoardCard?: (...args: any[]) => boolean
-  addBigThreeItem?: (...args: any[]) => boolean
+  addBoardCard?: (payload: {
+    title: string
+    categoryId?: string | null
+    estimateSlots?: number
+    note?: string
+  }) => boolean
+  addBigThreeItem?: (content: string) => boolean
   removeBigThreeItem?: (id: string) => void
-  onSendCardsToBigThree?: (...args: any[]) => number
-  updateTaskCard?: (...args: any[]) => void
-  applyTaskCardBoardLayout?: (...args: any[]) => void
-  updateStackCanvasState?: (...args: any[]) => void
-  updateTimeBox: (id: string, patch: Record<string, unknown>) => void
+  onSendCardsToBigThree?: (taskCardIds?: string[]) => number
+  updateTaskCard?: (
+    id: string,
+    changes: Partial<
+      Pick<TaskCard, 'title' | 'isDone' | 'priority' | 'categoryId' | 'estimateSlots' | 'note' | 'origin'>
+    >,
+  ) => void
+  applyTaskCardBoardLayout?: (
+    layoutEntries?: Array<{ id?: string; categoryId?: string | null; stackOrder?: number }>,
+  ) => void
+  updateStackCanvasState?: (patch: Record<string, unknown>) => void
+  updateTimeBox: (id: string, patch: TimeBoxUpdatePatch) => void
   onTimerStart?: (id: string) => void
   onTimerPause?: (id: string) => void
   onTimerComplete?: (id: string) => void
   removeTimeBox: (id: string) => void
-  showToast: (message: string) => void
+  showToast: (message: string, duration?: number) => string
   showDropGuide?: boolean
   focusMode?: boolean
   onToggleFocusMode?: () => void

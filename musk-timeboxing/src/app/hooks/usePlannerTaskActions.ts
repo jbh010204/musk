@@ -1,15 +1,11 @@
 import type { BigThreeItem, TaskCard } from '../../entities/planner/model/types'
-
-interface ToastOptions {
-  actionLabel?: string
-  onAction?: () => void
-}
+import type { ShowToast } from './useToast'
 
 interface UsePlannerTaskActionsOptions {
   taskCards: TaskCard[]
   bigThree: BigThreeItem[]
   undoToastMs: number
-  showToast: (message: string, duration?: number, options?: ToastOptions | null) => void
+  showToast: ShowToast
   removeTaskCard: (id: string) => void
   restoreTaskCard: (item: TaskCard, index: number | null) => boolean
   sendToBigThree: (taskCardId: string) => boolean

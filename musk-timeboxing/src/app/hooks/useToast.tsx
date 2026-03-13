@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-interface ToastOptions {
+export interface ToastOptions {
   actionLabel?: string | null
   onAction?: (() => void) | null
 }
@@ -11,6 +11,12 @@ interface ToastRecord {
   actionLabel: string | null
   onAction: (() => void) | null
 }
+
+export type ShowToast = (
+  message: string,
+  duration?: number,
+  options?: ToastOptions | null,
+) => string
 
 export const useToast = () => {
   const [toasts, setToasts] = useState<ToastRecord[]>([])
@@ -26,8 +32,8 @@ export const useToast = () => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id))
   }, [])
 
-  const showToast = useCallback(
-    (message: string, duration = 2000, options: ToastOptions | null = null): string => {
+  const showToast = useCallback<ShowToast>(
+    (message, duration = 2000, options = null) => {
       const id = crypto.randomUUID()
       const actionLabel =
         typeof options?.actionLabel === 'string' && options.actionLabel.trim().length > 0

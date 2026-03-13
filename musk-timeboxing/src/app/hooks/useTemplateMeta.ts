@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react'
 import { loadMeta, saveMeta, TOTAL_SLOTS } from '../../entities/planner'
+import type { PlannerTemplate } from '../../entities/planner/model/types'
 
-type PlannerTemplate = ReturnType<typeof loadMeta>['templates'][number]
-
-interface TemplateInput {
+export interface TemplateMutationInput {
   name: string
   content: string
   durationSlots: number | string
   categoryId?: string | null
+}
+
+export interface TemplateMutationResult {
+  ok: boolean
+  error?: string
 }
 
 const normalizeName = (value: unknown): string => String(value || '').trim()
@@ -49,7 +53,7 @@ export const useTemplateMeta = () => {
     content,
     durationSlots,
     categoryId = null,
-  }: TemplateInput): { ok: boolean; error?: string } => {
+  }: TemplateMutationInput): TemplateMutationResult => {
     const normalizedName = normalizeName(name)
     const normalizedContent = normalizeContent(content)
 
@@ -81,8 +85,8 @@ export const useTemplateMeta = () => {
 
   const updateTemplate = (
     id: string,
-    { name, content, durationSlots, categoryId = null }: TemplateInput,
-  ): { ok: boolean; error?: string } => {
+    { name, content, durationSlots, categoryId = null }: TemplateMutationInput,
+  ): TemplateMutationResult => {
     const normalizedName = normalizeName(name)
     const normalizedContent = normalizeContent(content)
 

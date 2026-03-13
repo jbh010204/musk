@@ -10,6 +10,7 @@ import {
   type TimeBox,
   type TimeBoxReschedulePlan,
 } from '../../entities/planner'
+import type { ShowToast } from './useToast'
 
 const INSIGHTS_LOADING_MS = 220
 
@@ -72,11 +73,11 @@ type DailySuggestion = {
 interface UsePlannerDayFlowOptions {
   currentDate: string
   data: PlannerDayState
-  showToast: (message: string, duration?: number, options?: unknown) => void
+  showToast: ShowToast
   goNextDayRaw: (options?: { autoCarry?: boolean }) => { moved: number; skipped: number }
   goPrevDayRaw: () => void
   goToDateRaw: (dateStr: string) => void
-  addTimeBox: (timeBox: TimeBox) => unknown
+  addTimeBox: (timeBox: TimeBox) => string | null
   reloadCurrentDay: () => void
   reloadCategories: () => void
   reloadTemplates: () => void

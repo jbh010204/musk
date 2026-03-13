@@ -1,27 +1,23 @@
-interface CategoryMutationResult {
-  ok: boolean
-  error?: string
-  [key: string]: unknown
-}
-
-interface TemplateMutationResult {
-  ok: boolean
-  error?: string
-  [key: string]: unknown
-}
-
-interface TemplateMutationInput {
-  name: string
-  content: string
-  durationSlots: string
-  categoryId: string
-}
+import type { CategoryMutationOptions, CategoryMutationResult } from './useCategoryMeta'
+import type { TemplateMutationInput, TemplateMutationResult } from './useTemplateMeta'
+import type { ShowToast } from './useToast'
 
 interface UsePlannerMetaActionsOptions {
   lockedParentIds: string[]
-  showToast: (message: string, duration?: number, options?: unknown) => void
-  addCategory: (name: string, color: string, parentId?: string | null, options?: { lockedParentIds?: string[] }) => CategoryMutationResult
-  updateCategory: (id: string, name: string, color: string, parentId?: string | null, options?: { lockedParentIds?: string[] }) => CategoryMutationResult
+  showToast: ShowToast
+  addCategory: (
+    name: string,
+    color: string,
+    parentId?: string | null,
+    options?: CategoryMutationOptions,
+  ) => CategoryMutationResult
+  updateCategory: (
+    id: string,
+    name: string,
+    color: string,
+    parentId?: string | null,
+    options?: CategoryMutationOptions,
+  ) => CategoryMutationResult
   removeCategory: (id: string) => CategoryMutationResult
   clearTimeBoxCategory: (categoryId: string | null) => void
   clearTaskCardCategoryState: (categoryId: string | null) => void
