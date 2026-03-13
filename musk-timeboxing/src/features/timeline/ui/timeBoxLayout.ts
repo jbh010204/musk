@@ -6,7 +6,38 @@ const CLAMP_1_CLASS =
 const CLAMP_2_CLASS =
   'overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]'
 
-const LAYOUT_BY_MODE = {
+export type TimeBoxLayoutMode = 'compact' | 'medium' | 'spacious'
+
+export interface TimeBoxLayoutProfile {
+  mode: TimeBoxLayoutMode
+  topActionsClass: string
+  statusTextClass: string
+  contentLayout: 'inline' | 'stack-centered'
+  contentContainerClass: string
+  showTag: boolean
+  showTime: boolean
+  showMeta: boolean
+  showTopTimerLabel: boolean
+  showInlineRuntimeLabel: boolean
+  titleClass: string
+  titleClampClass: string
+  tagClass: string
+  timeClass: string
+  metaClass: string
+  metaClampClass: string
+  contentInsetWithTimerClass: string
+  contentInsetWithoutTimerClass: string
+  surfaceInsetY: number
+  timeVariant: 'short' | 'full'
+}
+
+export interface TimeBoxLayout extends TimeBoxLayoutProfile {
+  isCompact: boolean
+  handleHeight: number
+  contentInsetClass: string
+}
+
+const LAYOUT_BY_MODE: Record<TimeBoxLayoutMode, TimeBoxLayoutProfile> = {
   compact: {
     mode: 'compact',
     topActionsClass: 'top-1/2 -translate-y-1/2',
@@ -77,7 +108,7 @@ const LAYOUT_BY_MODE = {
   },
 }
 
-const resolveMode = (boxHeight) => {
+const resolveMode = (boxHeight: number): TimeBoxLayoutMode => {
   if (boxHeight <= COMPACT_MAX_HEIGHT) {
     return 'compact'
   }
@@ -89,7 +120,13 @@ const resolveMode = (boxHeight) => {
   return 'spacious'
 }
 
-export const resolveTimeBoxLayout = ({ boxHeight, canUseTimer }) => {
+export const resolveTimeBoxLayout = ({
+  boxHeight,
+  canUseTimer,
+}: {
+  boxHeight: number
+  canUseTimer: boolean
+}): TimeBoxLayout => {
   const mode = resolveMode(boxHeight)
   const profile = LAYOUT_BY_MODE[mode]
 

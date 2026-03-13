@@ -8,10 +8,28 @@ import {
   slotDurationMinutes,
   TOTAL_SLOTS,
 } from '../../../entities/planner'
+import type { CategoryRecord, CategoryViewModel, TimeBox } from '../../../entities/planner/model/types'
 import { createTimeBoxDragPayload } from '../../planner-dnd/lib/payloads'
 import { resolveTimeBoxLayout } from './timeBoxLayout'
 
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
+
+type CategoryMeta = CategoryRecord | CategoryViewModel | null | undefined
+
+interface TimeBoxCardProps {
+  timeBox: TimeBox
+  categoryMeta?: CategoryMeta
+  onTimeBoxClick: (timeBox: TimeBox) => void
+  slotHeight?: number
+  previewEndSlot?: number
+  onResizePreview?: (id: string, endSlot: number) => void
+  onResizeEnd?: (id: string, endSlot: number) => void
+  nowTimestamp?: number
+  onTimerStart?: (id: string) => void
+  onTimerPause?: (id: string) => void
+  onTimerComplete?: (id: string) => void
+  testId?: string
+}
 
 function TimeBoxCard({
   timeBox,
@@ -26,7 +44,7 @@ function TimeBoxCard({
   onTimerPause,
   onTimerComplete,
   testId = 'timebox-card',
-}) {
+}: TimeBoxCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `time-box-${timeBox.id}`,
     data: createTimeBoxDragPayload(timeBox),
@@ -105,7 +123,7 @@ function TimeBoxCard({
     return null
   }, [actualDiff, layout.timeVariant, plannedMinutes, timeBox.actualMinutes, timeBox.status])
 
-  const runtimeLine =
+  const runtimeLine: { text: string; className: string } | null =
     canUseTimer && elapsedSeconds > 0 && layout.showInlineRuntimeLabel
       ? {
           text: `실행 ${timerLabel}`,
@@ -124,7 +142,11 @@ function TimeBoxCard({
     return null
   }, [timeBox.skipReason, timeBox.status])
 
-  const metaLines = layout.showMeta ? [runtimeLine, detailMetaLine].filter(Boolean) : []
+  const metaLines = layout.showMeta
+    ? [runtimeLine, detailMetaLine].filter(
+        (line): line is { text: string; className: string } => Boolean(line),
+      )
+    : []
 
   const resizingRef = useRef({
     startY: 0,
@@ -137,7 +159,7 @@ function TimeBoxCard({
     moved: false,
   })
 
-  const handleResizeMouseDown = (event) => {
+  const handleResizeMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault()
     event.stopPropagation()
     setIsResizing(true)
@@ -148,7 +170,7 @@ function TimeBoxCard({
       currentEnd: timeBox.endSlot,
     }
 
-    const onMouseMove = (moveEvent) => {
+    const onMouseMove = (moveEvent: MouseEvent) => {
       const deltaY = moveEvent.clientY - resizingRef.current.startY
       const deltaSlots = Math.round(deltaY / slotHeight)
       const nextEnd = clamp(
@@ -172,7 +194,10 @@ function TimeBoxCard({
     window.addEventListener('mouseup', onMouseUp)
   }
 
-  const handleTimerAction = (event, handler) => {
+  const handleTimerAction = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    handler: ((id: string) => void) | undefined,
+  ) => {
     event.preventDefault()
     event.stopPropagation()
     handler?.(timeBox.id)
@@ -192,7 +217,13 @@ function TimeBoxCard({
       style={{
         top: timeBox.startSlot * slotHeight,
         height: boxHeight,
-        transform: transform ? CSS.Translate.toString({ x: 0, y: snappedDragY }) : undefined,
+        transform: transform
+          ? CSS.Translate.toString({
+              ...transform,
+              x: 0,
+              y: snappedDragY,
+            })
+          : undefined,
       }}
       onMouseDown={(event) => {
         pointerRef.current = {
