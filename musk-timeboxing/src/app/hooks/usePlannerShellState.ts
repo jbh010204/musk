@@ -4,6 +4,7 @@ import {
   loadLastViewMode,
   subscribePlannerPersistenceStatus,
 } from '../../entities/planner'
+import type { ShowToast } from './useToast'
 
 const THEME_KEY = 'musk-planner-theme'
 const TIMELINE_FOCUS_MODE_KEY = 'musk-planner-timeline-focus-mode'
@@ -47,7 +48,7 @@ interface QuickAddOptions {
 }
 
 interface UsePlannerShellStateOptions {
-  showToast: (message: string, duration?: number, options?: unknown) => void
+  showToast: ShowToast
   formatDateLabel: (dateStr: string) => string
   baseSlotHeight: number
   detailSlotHeight: number

@@ -14,6 +14,7 @@ import type {
   CategoryViewModel,
   PlannerDay,
   PlannerTemplate,
+  StackCanvasStateRecord,
   TaskCard,
   TimeBox,
   TimeBoxUpdatePatch,
@@ -220,7 +221,7 @@ interface TimelineProps {
   applyTaskCardBoardLayout?: (
     layoutEntries?: Array<{ id?: string; categoryId?: string | null; stackOrder?: number }>,
   ) => void
-  updateStackCanvasState?: (patch: Record<string, unknown>) => void
+  updateStackCanvasState?: (patch: StackCanvasStateRecord) => void
   updateTimeBox: (id: string, patch: TimeBoxUpdatePatch) => void
   onTimerStart?: (id: string) => void
   onTimerPause?: (id: string) => void
