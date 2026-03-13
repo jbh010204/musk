@@ -156,6 +156,8 @@
 - carry-over 계산을 model helper로 이동
 - stack canvas patch 적용을 lib helper로 이동
 - planner day record mutation helper를 model로 이동
+- task/big3/timebox mutation adapter를 hook 내부 helper로 공통화
+- date reload / date move 경로를 단일 `loadPlannerDate` 흐름으로 정리
 
 ## Step 4. selection / workspace command 정리 [Done]
 

@@ -42,6 +42,9 @@ import {
 
 type DailyDataState = ReturnType<typeof loadPlannerDayModel>
 type LastFocusState = ReturnType<typeof loadLastFocus>
+type TaskCardsState = DailyDataState['taskCards']
+type BigThreeState = DailyDataState['bigThree']
+type TimeBoxesState = DailyDataState['timeBoxes']
 type GoNextDayOptions = { autoCarry?: boolean }
 type AddBoardCardInput = {
   title: string
@@ -56,6 +59,9 @@ type AddTimeBoxInput = Parameters<typeof addTimeBoxRecord>[1]
 type UpdateTimeBoxChanges = Parameters<typeof updateTimeBoxRecord>[2]
 type RestoreTimeBoxInput = Parameters<typeof restoreTimeBoxRecord>[1]
 type StackCanvasStateUpdater = Parameters<typeof replacePlannerDayStackCanvasState>[1]
+type TaskCardsUpdater = (taskCards: TaskCardsState, plannerDay: DailyDataState) => TaskCardsState
+type BigThreeUpdater = (bigThree: BigThreeState, plannerDay: DailyDataState) => BigThreeState
+type TimeBoxesUpdater = (timeBoxes: TimeBoxesState, plannerDay: DailyDataState) => TimeBoxesState
 
 const createId = (): string => crypto.randomUUID()
 
@@ -100,6 +106,11 @@ export const useDailyData = () => {
     saveLastActiveDate(currentDate)
   }, [currentDate])
 
+  const loadPlannerDate = (dateStr: string, nextDayData: DailyDataState = loadPlannerDayModel(dateStr)): void => {
+    setCurrentDate(dateStr)
+    setData(nextDayData)
+  }
+
   const rememberFocus = (slot: number): void => {
     const focus = createLastFocusSnapshot(currentDate, slot)
     if (!focus) {
@@ -108,6 +119,21 @@ export const useDailyData = () => {
 
     setLastFocus(focus)
     saveLastFocus(focus)
+  }
+
+  const commitTaskCards = (
+    updater: TaskCardsUpdater,
+    options?: Parameters<typeof replacePlannerDayTaskCards>[2],
+  ): void => {
+    setData((prev) => replaceTaskCardsState(prev, updater(prev.taskCards, prev), options))
+  }
+
+  const commitBigThree = (updater: BigThreeUpdater): void => {
+    setData((prev) => replaceBigThreeState(prev, updater(prev.bigThree, prev)))
+  }
+
+  const commitTimeBoxes = (updater: TimeBoxesUpdater): void => {
+    setData((prev) => replaceTimeBoxesState(prev, updater(prev.timeBoxes, prev)))
   }
 
   const goNextDay = (options: GoNextDayOptions = {}) => {
@@ -134,15 +160,14 @@ export const useDailyData = () => {
     if (shouldCarry && result.moved > 0) {
       savePlannerDayModel(nextDate, result.nextTargetDay)
     }
-    setCurrentDate(nextDate)
-    setData(result.nextTargetDay)
+
+    loadPlannerDate(nextDate, result.nextTargetDay)
     return result
   }
 
   const goPrevDay = (): void => {
     const prevDate = shiftPlannerDate(currentDate, -1)
-    setCurrentDate(prevDate)
-    setData(loadPlannerDayModel(prevDate))
+    loadPlannerDate(prevDate)
   }
 
   const goToDate = (dateStr: string): void => {
@@ -150,18 +175,15 @@ export const useDailyData = () => {
       return
     }
 
-    setCurrentDate(dateStr)
-    setData(loadPlannerDayModel(dateStr))
+    loadPlannerDate(dateStr)
   }
 
   const addTaskCard = (title: string): void => {
     const trimmed = title.trim()
     if (!trimmed) return
 
-    setData((prev) =>
-      replaceTaskCardsState(
-        prev,
-        addTaskCardRecord(prev.taskCards, {
+    commitTaskCards((taskCards) =>
+      addTaskCardRecord(taskCards, {
           title: trimmed,
           isDone: false,
           priority: 0,
@@ -170,8 +192,7 @@ export const useDailyData = () => {
           linkedTimeBoxIds: [],
           note: '',
           origin: 'list',
-        }),
-      ),
+      }),
     )
   }
 
@@ -186,10 +207,8 @@ export const useDailyData = () => {
       return false
     }
 
-    setData((prev) =>
-      replaceTaskCardsState(
-        prev,
-        addTaskCardRecord(prev.taskCards, {
+    commitTaskCards((taskCards) =>
+      addTaskCardRecord(taskCards, {
           title: trimmed,
           isDone: false,
           priority: 0,
@@ -198,24 +217,22 @@ export const useDailyData = () => {
           linkedTimeBoxIds: [],
           note,
           origin: 'board',
-        }),
-      ),
+      }),
     )
 
     return true
   }
 
   const removeTaskCard = (id: string): void => {
-    setData((prev) => replaceTaskCardsState(prev, removeTaskCardRecord(prev.taskCards, id)))
+    commitTaskCards((taskCards) => removeTaskCardRecord(taskCards, id))
   }
 
   const restoreTaskCard = (item: RestoreTaskCardInput, index: number | null = null): boolean => {
     let restored = false
-    setData((prev) => {
-      const nextTaskCards = restoreTaskCardRecord(prev.taskCards, item, index)
-      restored = nextTaskCards.length !== prev.taskCards.length
-
-      return replaceTaskCardsState(prev, nextTaskCards)
+    commitTaskCards((taskCards) => {
+      const nextTaskCards = restoreTaskCardRecord(taskCards, item, index)
+      restored = nextTaskCards.length !== taskCards.length
+      return nextTaskCards
     })
 
     return restored
@@ -224,57 +241,57 @@ export const useDailyData = () => {
   const cycleTaskCardItemPriority = (id: string) => {
     let nextPriority = null
 
-    setData((prev) => {
-      const { nextTaskCards, nextPriority: resolvedPriority } = cycleTaskCardPriority(prev.taskCards, id)
-      if (nextTaskCards === prev.taskCards) {
-        return prev
+    commitTaskCards((taskCards, plannerDay) => {
+      const { nextTaskCards, nextPriority: resolvedPriority } = cycleTaskCardPriority(taskCards, id)
+      if (nextTaskCards === taskCards) {
+        return plannerDay.taskCards
       }
       nextPriority = resolvedPriority
 
-      return replaceTaskCardsState(prev, nextTaskCards)
+      return nextTaskCards
     })
 
     return nextPriority
   }
 
   const updateTaskCard = (id: string, changes: UpdateTaskCardChanges = {}) => {
-    setData((prev) =>
-      replaceTaskCardsState(prev, updateTaskCardRecord(prev.taskCards, id, changes), {
+    commitTaskCards(
+      (taskCards) => updateTaskCardRecord(taskCards, id, changes),
+      {
         syncLinks: true,
-      }),
+      },
     )
   }
 
   const applyTaskCardBoardLayout = (layoutEntries: TaskCardBoardLayoutEntries = []) => {
-    setData((prev) =>
-      replaceTaskCardsState(prev, applyTaskCardBoardLayoutCommand(prev.taskCards, layoutEntries)),
-    )
+    commitTaskCards((taskCards) => applyTaskCardBoardLayoutCommand(taskCards, layoutEntries))
   }
 
   const clearTaskCardCategoryState = (categoryId: string | null): void => {
-    setData((prev) =>
-      replaceTaskCardsState(prev, clearTaskCardCategory(prev.taskCards, categoryId), {
+    commitTaskCards(
+      (taskCards) => clearTaskCardCategory(taskCards, categoryId),
+      {
         syncLinks: true,
-      }),
+      },
     )
   }
 
   const sendToBigThree = (taskCardId: string): boolean => {
     let inserted = false
 
-    setData((prev) => {
+    commitBigThree((bigThree, plannerDay) => {
       const { inserted: didInsert, nextBigThree } = addTaskCardToBigThree(
-        prev.bigThree,
-        prev.taskCards,
+        bigThree,
+        plannerDay.taskCards,
         taskCardId,
         createId,
       )
       if (!didInsert) {
-        return prev
+        return plannerDay.bigThree
       }
 
       inserted = didInsert
-      return replaceBigThreeState(prev, nextBigThree)
+      return nextBigThree
     })
 
     return inserted
@@ -283,19 +300,19 @@ export const useDailyData = () => {
   const sendManyToBigThree = (taskCardIds: string[] = []): number => {
     let insertedCount = 0
 
-    setData((prev) => {
+    commitBigThree((bigThree, plannerDay) => {
       const { insertedCount: nextInsertedCount, nextBigThree } = addManyTaskCardsToBigThree(
-        prev.bigThree,
-        prev.taskCards,
+        bigThree,
+        plannerDay.taskCards,
         taskCardIds,
         createId,
       )
       if (nextInsertedCount === 0) {
-        return prev
+        return plannerDay.bigThree
       }
 
       insertedCount = nextInsertedCount
-      return replaceBigThreeState(prev, nextBigThree)
+      return nextBigThree
     })
 
     return insertedCount
@@ -304,18 +321,18 @@ export const useDailyData = () => {
   const fillBigThreeFromTaskCards = (): number => {
     let insertedCount = 0
 
-    setData((prev) => {
+    commitBigThree((bigThree, plannerDay) => {
       const { insertedCount: nextInsertedCount, nextBigThree } = autofillBigThreeFromTaskCards(
-        prev.bigThree,
-        prev.taskCards,
+        bigThree,
+        plannerDay.taskCards,
         createId,
       )
       if (nextInsertedCount === 0) {
-        return prev
+        return plannerDay.bigThree
       }
 
       insertedCount = nextInsertedCount
-      return replaceBigThreeState(prev, nextBigThree)
+      return nextBigThree
     })
 
     return insertedCount
@@ -324,25 +341,21 @@ export const useDailyData = () => {
   const addBigThreeItem = (content: string): boolean => {
     let inserted = false
 
-    setData((prev) => {
-      const { inserted: didInsert, nextBigThree } = addManualBigThreeItem(
-        prev.bigThree,
-        content,
-        createId,
-      )
+    commitBigThree((bigThree, plannerDay) => {
+      const { inserted: didInsert, nextBigThree } = addManualBigThreeItem(bigThree, content, createId)
       if (!didInsert) {
-        return prev
+        return plannerDay.bigThree
       }
 
       inserted = didInsert
-      return replaceBigThreeState(prev, nextBigThree)
+      return nextBigThree
     })
 
     return inserted
   }
 
   const removeBigThreeItem = (id: string): void => {
-    setData((prev) => replaceBigThreeState(prev, removeBigThreeItemRecord(prev.bigThree, id)))
+    commitBigThree((bigThree) => removeBigThreeItemRecord(bigThree, id))
   }
 
   const addTimeBox = ({
@@ -355,9 +368,9 @@ export const useDailyData = () => {
   }: AddTimeBoxInput): string | null => {
     let insertedId = null
 
-    setData((prev) => {
+    commitTimeBoxes((timeBoxes, plannerDay) => {
       const { insertedId: nextInsertedId, nextTimeBoxes } = addTimeBoxRecord(
-        prev.timeBoxes,
+        timeBoxes,
         {
           content,
           taskId,
@@ -369,12 +382,12 @@ export const useDailyData = () => {
         createId,
       )
       if (!nextInsertedId) {
-        return prev
+        return plannerDay.timeBoxes
       }
 
       insertedId = nextInsertedId
 
-      return replaceTimeBoxesState(prev, nextTimeBoxes)
+      return nextTimeBoxes
     })
 
     if (insertedId) {
@@ -390,48 +403,45 @@ export const useDailyData = () => {
       rememberFocus(Number(changes.startSlot))
     }
 
-    setData((prev) => replaceTimeBoxesState(prev, updateTimeBoxRecord(prev.timeBoxes, id, changes)))
+    commitTimeBoxes((timeBoxes) => updateTimeBoxRecord(timeBoxes, id, changes))
   }
 
   const startTimeBoxTimer = (id: string): void => {
     const now = Date.now()
 
-    setData((prev) => replaceTimeBoxesState(prev, startTimeBoxTimerRecord(prev.timeBoxes, id, now)))
+    commitTimeBoxes((timeBoxes) => startTimeBoxTimerRecord(timeBoxes, id, now))
   }
 
   const pauseTimeBoxTimer = (id: string): void => {
     const now = Date.now()
-    setData((prev) => replaceTimeBoxesState(prev, pauseTimeBoxTimerRecord(prev.timeBoxes, id, now)))
+    commitTimeBoxes((timeBoxes) => pauseTimeBoxTimerRecord(timeBoxes, id, now))
   }
 
   const completeTimeBoxByTimer = (id: string): void => {
     const now = Date.now()
-    setData((prev) => replaceTimeBoxesState(prev, completeTimeBoxByTimerRecord(prev.timeBoxes, id, now)))
+    commitTimeBoxes((timeBoxes) => completeTimeBoxByTimerRecord(timeBoxes, id, now))
   }
 
   const clearTimeBoxCategory = (categoryId: string | null): void => {
-    setData((prev) => replaceTimeBoxesState(prev, clearTimeBoxCategoryRecord(prev.timeBoxes, categoryId)))
+    commitTimeBoxes((timeBoxes) => clearTimeBoxCategoryRecord(timeBoxes, categoryId))
   }
 
   const removeTimeBox = (id: string): void => {
-    setData((prev) => {
-      const nextTimeBoxes = removeTimeBoxRecord(prev.timeBoxes, id)
-      return replaceTimeBoxesState(prev, nextTimeBoxes)
-    })
+    commitTimeBoxes((timeBoxes) => removeTimeBoxRecord(timeBoxes, id))
   }
 
   const restoreTimeBox = (timeBox: RestoreTimeBoxInput): boolean => {
     let restored = false
 
-    setData((prev) => {
-      const { restored: didRestore, nextTimeBoxes } = restoreTimeBoxRecord(prev.timeBoxes, timeBox)
+    commitTimeBoxes((timeBoxes, plannerDay) => {
+      const { restored: didRestore, nextTimeBoxes } = restoreTimeBoxRecord(timeBoxes, timeBox)
       if (!didRestore) {
-        return prev
+        return plannerDay.timeBoxes
       }
 
       restored = didRestore
 
-      return replaceTimeBoxesState(prev, nextTimeBoxes)
+      return nextTimeBoxes
     })
 
     if (restored) {
@@ -443,7 +453,7 @@ export const useDailyData = () => {
   }
 
   const reloadCurrentDay = (): void => {
-    setData(loadPlannerDayModel(currentDate))
+    loadPlannerDate(currentDate)
   }
 
   const updateStackCanvasState = (nextStackCanvasState: StackCanvasStateUpdater): void => {
