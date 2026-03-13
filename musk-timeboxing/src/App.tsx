@@ -31,6 +31,8 @@ import {
   deriveBigThreeProgress,
 } from './entities/planner'
 import { usePlannerTimelineDnd } from './features/planner-dnd/usePlannerTimelineDnd'
+import { PlannerModalLayer } from './app/ui/PlannerModalLayer'
+import { PlannerShellLayout } from './app/ui/PlannerShellLayout'
 
 const BASE_SLOT_HEIGHT = 32
 const DETAIL_SLOT_HEIGHT = 64
@@ -348,8 +350,12 @@ function App() {
       onDragCancel={handleDragCancel}
       onDragEnd={handleDragEnd}
     >
-      <div className={`${theme === THEME_DARK ? 'theme-dark dark' : 'theme-light'} h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-gray-100`}>
-        <div className="flex h-full flex-col overflow-hidden bg-slate-50 dark:bg-gray-900">
+      <PlannerShellLayout
+        theme={theme}
+        dumpSection={dumpSection}
+        bigThreeSection={bigThreeSection}
+        timelineSection={timelineSection}
+        header={
           <Header
             currentDate={currentDate}
             goNextDay={goNextDay}
@@ -362,128 +368,64 @@ function App() {
             onOpenReschedule={openRescheduleModal}
             onToggleTheme={toggleTheme}
           />
-
-          <div className="hidden min-h-0 flex-1 gap-6 overflow-hidden px-6 pb-6 md:flex">
-            {showDesktopPlanningRail ? (
-              <aside className="ui-panel-subtle w-80 flex-shrink-0 overflow-y-auto">
-                {dumpSection}
-                {bigThreeSection}
-              </aside>
-            ) : null}
-            <main className="ui-panel flex-1 overflow-y-auto">{timelineSection}</main>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto pb-16 md:hidden">
-            {showMobilePlanningTabs ? (
-              <>
-                {mobileTab === 'dump' ? dumpSection : null}
-                {mobileTab === 'big3' ? bigThreeSection : null}
-                {mobileTab === 'timeline' ? timelineSection : null}
-              </>
-            ) : (
-              timelineSection
-            )}
-          </div>
-
-          {showMobilePlanningTabs ? (
-            <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 shadow-sm backdrop-blur dark:bg-gray-800/95 md:hidden">
-              <div className="grid grid-cols-3">
-                <button
-                  type="button"
-                  onClick={() => setMobileTab('dump')}
-                  className={`px-3 py-3 text-sm ${
-                    mobileTab === 'dump'
-                      ? 'bg-indigo-600 text-gray-100'
-                      : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  덤프
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMobileTab('big3')}
-                  className={`px-3 py-3 text-sm ${
-                    mobileTab === 'big3'
-                      ? 'bg-indigo-600 text-gray-100'
-                      : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  빅3
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMobileTab('timeline')}
-                  className={`px-3 py-3 text-sm ${
-                    mobileTab === 'timeline'
-                      ? 'bg-indigo-600 text-gray-100'
-                      : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  타임라인
-                </button>
-              </div>
-            </nav>
-          ) : null}
-        </div>
-
-        <ToastContainer />
-        <FloatingActionDock
-          onOpenPatchNotes={openPatchNotes}
-          onOpenCategory={openCategoryManager}
-          onOpenData={openDataModal}
-          onOpenTemplate={openTemplateManager}
-        />
-        {isPatchNotesOpen ? <PatchNotesModal onClose={closePatchNotes} /> : null}
-        {isDataModalOpen ? (
-          <DataTransferModal
-            currentDate={currentDate}
-            onClose={closeDataModal}
-            onImported={handleImported}
-            showToast={showToast}
-          />
-        ) : null}
-        {isCategoryManagerOpen ? (
-          <CategoryManagerModal
-            categories={categories}
-            onClose={closeCategoryManager}
-            onAddCategory={handleAddCategory}
-            onUpdateCategory={handleUpdateCategory}
-            onDeleteCategory={handleDeleteCategory}
-          />
-        ) : null}
-        {isTemplateManagerOpen ? (
-          <TemplateManagerModal
-            templates={templates}
-            categories={categories}
-            onClose={closeTemplateManager}
-            onAddTemplate={handleAddTemplate}
-            onUpdateTemplate={handleUpdateTemplate}
-            onDeleteTemplate={handleDeleteTemplate}
-          />
-        ) : null}
-        {quickAddContext ? (
-          <QuickAddModal
-            dateStr={quickAddContext.dateStr}
-            dateLabel={quickAddContext.dateLabel}
-            categories={categories}
-            templates={templates}
-            initialTemplateId={quickAddContext.initialTemplateId}
-            onClose={closeQuickAdd}
-            onSubmit={(payload) => createTimeBoxOnDate(payload)}
-          />
-        ) : null}
-        {isRescheduleModalOpen ? (
-          <RescheduleAssistantModal
-            plan={buildReschedulePlan()}
-            onClose={closeRescheduleModal}
-            onApply={(plan) => {
-              if (applyReschedulePlan(plan)) {
-                closeRescheduleModal()
-              }
+        }
+        toastContainer={<ToastContainer />}
+        modalLayer={
+          <PlannerModalLayer
+            isPatchNotesOpen={isPatchNotesOpen}
+            onClosePatchNotes={closePatchNotes}
+            isDataModalOpen={isDataModalOpen}
+            dataTransfer={{
+              currentDate,
+              onImported: handleImported,
+              showToast,
             }}
+            onCloseDataModal={closeDataModal}
+            isCategoryManagerOpen={isCategoryManagerOpen}
+            categoryManager={{
+              categories,
+              onAddCategory: handleAddCategory,
+              onUpdateCategory: handleUpdateCategory,
+              onDeleteCategory: handleDeleteCategory,
+            }}
+            onCloseCategoryManager={closeCategoryManager}
+            isTemplateManagerOpen={isTemplateManagerOpen}
+            templateManager={{
+              templates,
+              categories,
+              onAddTemplate: handleAddTemplate,
+              onUpdateTemplate: handleUpdateTemplate,
+              onDeleteTemplate: handleDeleteTemplate,
+            }}
+            onCloseTemplateManager={closeTemplateManager}
+            quickAddContext={quickAddContext}
+            quickAdd={{
+              categories,
+              templates,
+              onSubmit: createTimeBoxOnDate,
+            }}
+            onCloseQuickAdd={closeQuickAdd}
+            isRescheduleModalOpen={isRescheduleModalOpen}
+            reschedule={{
+              plan: buildReschedulePlan(),
+              onApply: (plan) => {
+                if (applyReschedulePlan(plan)) {
+                  closeRescheduleModal()
+                }
+              },
+            }}
+            onCloseRescheduleModal={closeRescheduleModal}
           />
-        ) : null}
-      </div>
+        }
+        showDesktopPlanningRail={showDesktopPlanningRail}
+        showMobilePlanningTabs={showMobilePlanningTabs}
+        mobileTab={mobileTab}
+        onMobileTabChange={setMobileTab}
+        onOpenPatchNotes={openPatchNotes}
+        onOpenCategoryManager={openCategoryManager}
+        onOpenDataModal={openDataModal}
+        onOpenTemplateManager={openTemplateManager}
+      />
       <DragOverlay>
         {activeDragPreview ? (
           <div className="pointer-events-none max-w-xs rounded-2xl bg-indigo-600/95 px-4 py-3 text-sm text-white shadow-lg">
