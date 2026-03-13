@@ -217,6 +217,7 @@
 - task remove / Big3 send / autofill orchestration을 `usePlannerTaskActions` hook으로 이동
 - category / template CRUD orchestration을 `usePlannerMetaActions` hook으로 이동
 - theme / modal / quick-add / persistence shell state를 `usePlannerShellState` hook으로 이동
+- `PlannerShellLayout.tsx`, `PlannerModalLayer.tsx`로 root layout / modal composition을 분리해 `App.tsx`를 orchestration 중심으로 축소
 
 허용:
 
@@ -300,9 +301,9 @@
 
 다음 우선순위:
 
-1. `App.tsx`의 toast / section composition 추가 슬림화 여부 점검
-2. 문서/운영 파일(`AI_REFACTOR_GUIDE.md` 등)과 현재 구현 상태 동기화
-3. 필요하면 타입 alias / exported prop type 정리 같은 후속 cleanup 진행
+1. 문서/운영 파일(`AI_REFACTOR_GUIDE.md` 등)과 현재 구현 상태 동기화
+2. 필요하면 타입 alias / exported prop type 정리 같은 후속 cleanup 진행
+3. 기능 재개 전 `App.tsx` 추가 분해가 정말 필요한지 점검
 
 순서:
 
