@@ -8,11 +8,30 @@ import {
   syncBoardCardsWithTimeBoxes,
 } from '../lib/boardCard'
 import { cycleBrainDumpPriority, normalizeBrainDumpPriority, sortBrainDumpItems } from '../lib/brainDumpPriority'
+import type { TaskCard, TaskCardOrigin, TaskCardPriority, TimeBox } from './types'
 
-/** @returns {string} */
-const createId = () => crypto.randomUUID()
+interface TaskCardInput {
+  id?: unknown
+  title?: unknown
+  isDone?: unknown
+  priority?: unknown
+  categoryId?: unknown
+  stackOrder?: unknown
+  estimateSlots?: unknown
+  linkedTimeBoxIds?: unknown
+  note?: unknown
+  origin?: unknown
+}
 
-const normalizeTaskCardTitle = (value) => {
+interface TaskCardLayoutEntry {
+  id?: unknown
+  categoryId?: unknown
+  stackOrder?: unknown
+}
+
+const createId = (): string => crypto.randomUUID()
+
+const normalizeTaskCardTitle = (value: unknown): string => {
   if (typeof value !== 'string') {
     return ''
   }
@@ -20,10 +39,16 @@ const normalizeTaskCardTitle = (value) => {
   return value.trim()
 }
 
-const normalizeTaskCardOrigin = (value) =>
+const normalizeTaskCardOrigin = (value: unknown): TaskCardOrigin =>
   value === 'board' ? 'board' : 'list'
 
-export const normalizeTaskCard = (taskCard, fallbackIndex = 0) => {
+const normalizeTaskCardPriority = (value: unknown): TaskCardPriority =>
+  normalizeBrainDumpPriority(value) as TaskCardPriority
+
+export const normalizeTaskCard = (
+  taskCard: TaskCardInput | TaskCard | null | undefined,
+  fallbackIndex = 0,
+): TaskCard | null => {
   const title = normalizeTaskCardTitle(taskCard?.title)
   if (!title) {
     return null
@@ -33,10 +58,10 @@ export const normalizeTaskCard = (taskCard, fallbackIndex = 0) => {
     id: typeof taskCard?.id === 'string' ? taskCard.id : createId(),
     title,
     isDone: Boolean(taskCard?.isDone),
-    priority: normalizeBrainDumpPriority(taskCard?.priority),
+    priority: normalizeTaskCardPriority(taskCard?.priority),
     categoryId: normalizeBoardCategoryId(taskCard?.categoryId),
     stackOrder:
-      Number.isInteger(taskCard?.stackOrder)
+      typeof taskCard?.stackOrder === 'number' && Number.isInteger(taskCard.stackOrder)
         ? taskCard.stackOrder
         : fallbackIndex,
     estimateSlots: normalizeBoardEstimatedSlots(
@@ -48,14 +73,20 @@ export const normalizeTaskCard = (taskCard, fallbackIndex = 0) => {
   }
 }
 
-export const createTaskCardRecord = (taskCards = [], input = {}) =>
+export const createTaskCardRecord = (
+  taskCards: TaskCard[] = [],
+  input: TaskCardInput = {},
+): TaskCard | null =>
   normalizeTaskCard({
     id: input.id,
     title: String(input.title || '').trim(),
     isDone: Boolean(input.isDone),
-    priority: normalizeBrainDumpPriority(input.priority),
+    priority: normalizeTaskCardPriority(input.priority),
     categoryId: normalizeBoardCategoryId(input.categoryId),
-    stackOrder: Number.isInteger(input.stackOrder) ? input.stackOrder : getNextBoardStackOrder(taskCards),
+    stackOrder:
+      typeof input.stackOrder === 'number' && Number.isInteger(input.stackOrder)
+        ? input.stackOrder
+        : getNextBoardStackOrder(taskCards),
     estimateSlots: normalizeBoardEstimatedSlots(
       input.estimateSlots ?? DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
     ),
@@ -64,7 +95,7 @@ export const createTaskCardRecord = (taskCards = [], input = {}) =>
     origin: input.origin,
   })
 
-export const addTaskCardRecord = (taskCards = [], input = {}) => {
+export const addTaskCardRecord = (taskCards: TaskCard[] = [], input: TaskCardInput = {}): TaskCard[] => {
   const nextTaskCard = createTaskCardRecord(taskCards, input)
   if (!nextTaskCard) {
     return taskCards
@@ -73,10 +104,14 @@ export const addTaskCardRecord = (taskCards = [], input = {}) => {
   return [...taskCards, nextTaskCard]
 }
 
-export const removeTaskCardRecord = (taskCards = [], taskId) =>
+export const removeTaskCardRecord = (taskCards: TaskCard[] = [], taskId: string): TaskCard[] =>
   taskCards.filter((taskCard) => taskCard.id !== taskId)
 
-export const restoreTaskCardRecord = (taskCards = [], taskCard, index = null) => {
+export const restoreTaskCardRecord = (
+  taskCards: TaskCard[] = [],
+  taskCard: TaskCardInput | TaskCard | null | undefined,
+  index: number | null = null,
+): TaskCard[] => {
   const normalized = normalizeTaskCard(taskCard)
   if (!normalized || taskCards.some((existing) => existing.id === normalized.id)) {
     return taskCards
@@ -91,7 +126,11 @@ export const restoreTaskCardRecord = (taskCards = [], taskCard, index = null) =>
   return nextTaskCards
 }
 
-export const updateTaskCardRecord = (taskCards = [], taskId, changes = {}) =>
+export const updateTaskCardRecord = (
+  taskCards: TaskCard[] = [],
+  taskId: string,
+  changes: TaskCardInput = {},
+): TaskCard[] =>
   taskCards.map((taskCard, index) => {
     if (taskCard.id !== taskId) {
       return taskCard
@@ -132,10 +171,15 @@ export const updateTaskCardRecord = (taskCards = [], taskId, changes = {}) =>
     )
   })
 
-export const syncTaskCardLinksWithTimeBoxes = (taskCards = [], timeBoxes = []) =>
-  syncBoardCardsWithTimeBoxes(taskCards, timeBoxes)
+export const syncTaskCardLinksWithTimeBoxes = (
+  taskCards: TaskCard[] = [],
+  timeBoxes: TimeBox[] = [],
+): TaskCard[] => syncBoardCardsWithTimeBoxes(taskCards, timeBoxes) as TaskCard[]
 
-export const applyTaskCardBoardLayout = (taskCards = [], layoutEntries = []) => {
+export const applyTaskCardBoardLayout = (
+  taskCards: TaskCard[] = [],
+  layoutEntries: TaskCardLayoutEntry[] = [],
+): TaskCard[] => {
   const layoutMap = new Map(
     layoutEntries
       .filter((entry) => typeof entry?.id === 'string')
@@ -167,20 +211,26 @@ export const applyTaskCardBoardLayout = (taskCards = [], layoutEntries = []) => 
   })
 }
 
-export const clearTaskCardCategory = (taskCards = [], categoryId) =>
+export const clearTaskCardCategory = (
+  taskCards: TaskCard[] = [],
+  categoryId: string | null,
+): TaskCard[] =>
   taskCards.map((taskCard) =>
     taskCard.categoryId === categoryId ? { ...taskCard, categoryId: null } : taskCard,
   )
 
-export const cycleTaskCardPriority = (taskCards = [], taskId) => {
-  let nextPriority = null
+export const cycleTaskCardPriority = (
+  taskCards: TaskCard[] = [],
+  taskId: string,
+): { nextTaskCards: TaskCard[]; nextPriority: TaskCardPriority | null } => {
+  let nextPriority: TaskCardPriority | null = null
 
   const nextTaskCards = taskCards.map((taskCard) => {
     if (taskCard.id !== taskId) {
       return taskCard
     }
 
-    nextPriority = cycleBrainDumpPriority(taskCard.priority)
+    nextPriority = cycleBrainDumpPriority(taskCard.priority) as TaskCardPriority
     return {
       ...taskCard,
       priority: nextPriority,
@@ -193,4 +243,5 @@ export const cycleTaskCardPriority = (taskCards = [], taskId) => {
   }
 }
 
-export const getSortedTaskCards = (taskCards = []) => sortBrainDumpItems(taskCards)
+export const getSortedTaskCards = (taskCards: TaskCard[] = []): TaskCard[] =>
+  sortBrainDumpItems(taskCards) as TaskCard[]

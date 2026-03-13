@@ -1,13 +1,19 @@
 import { sortBrainDumpItems } from '../lib/brainDumpPriority'
+import type { BigThreeItem, TaskCard } from './types'
 
 export const MAX_BIG_THREE_ITEMS = 3
 
-/** @returns {string} */
-const defaultCreateId = () => crypto.randomUUID()
+interface BigThreeInput {
+  id?: unknown
+  content?: unknown
+  taskId?: unknown
+}
 
-const normalizeText = (value) => String(value || '').trim()
+const defaultCreateId = (): string => crypto.randomUUID()
 
-const normalizeTaskId = (value) => {
+const normalizeText = (value: unknown): string => String(value || '').trim()
+
+const normalizeTaskId = (value: unknown): string | null => {
   if (typeof value !== 'string') {
     return null
   }
@@ -16,7 +22,10 @@ const normalizeTaskId = (value) => {
   return trimmed.length > 0 ? trimmed : null
 }
 
-export const normalizeBigThreeRecord = (item, createId = defaultCreateId) => {
+export const normalizeBigThreeRecord = (
+  item: BigThreeInput | BigThreeItem | null | undefined,
+  createId: () => string = defaultCreateId,
+): BigThreeItem | null => {
   const content = normalizeText(item?.content)
   if (!content) {
     return null
@@ -29,24 +38,30 @@ export const normalizeBigThreeRecord = (item, createId = defaultCreateId) => {
   }
 }
 
-const createLinkedBigThreeRecord = (taskCard, createId = defaultCreateId) => ({
+const createLinkedBigThreeRecord = (
+  taskCard: TaskCard,
+  createId: () => string = defaultCreateId,
+): BigThreeItem => ({
   id: createId(),
   content: taskCard.title,
   taskId: taskCard.id,
 })
 
-const createManualBigThreeRecord = (content, createId = defaultCreateId) => ({
+const createManualBigThreeRecord = (
+  content: string,
+  createId: () => string = defaultCreateId,
+): BigThreeItem => ({
   id: createId(),
   content,
   taskId: null,
 })
 
 export const addTaskCardToBigThree = (
-  bigThree = [],
-  taskCards = [],
-  taskCardId,
+  bigThree: BigThreeItem[] = [],
+  taskCards: TaskCard[] = [],
+  taskCardId: string,
   createId = defaultCreateId,
-) => {
+): { inserted: boolean; nextBigThree: BigThreeItem[] } => {
   if (bigThree.length >= MAX_BIG_THREE_ITEMS) {
     return { inserted: false, nextBigThree: bigThree }
   }
@@ -63,11 +78,11 @@ export const addTaskCardToBigThree = (
 }
 
 export const addManyTaskCardsToBigThree = (
-  bigThree = [],
-  taskCards = [],
-  taskCardIds = [],
+  bigThree: BigThreeItem[] = [],
+  taskCards: TaskCard[] = [],
+  taskCardIds: string[] = [],
   createId = defaultCreateId,
-) => {
+): { insertedCount: number; nextBigThree: BigThreeItem[] } => {
   if (bigThree.length >= MAX_BIG_THREE_ITEMS) {
     return { insertedCount: 0, nextBigThree: bigThree }
   }
@@ -81,7 +96,7 @@ export const addManyTaskCardsToBigThree = (
   )
   const candidates = uniqueIds
     .map((taskCardId) => taskCards.find((item) => item.id === taskCardId) || null)
-    .filter(Boolean)
+    .filter((taskCard): taskCard is TaskCard => Boolean(taskCard))
     .filter((taskCard) => !existingTaskIds.has(taskCard.id))
     .slice(0, remainSlots)
 
@@ -96,10 +111,10 @@ export const addManyTaskCardsToBigThree = (
 }
 
 export const autofillBigThreeFromTaskCards = (
-  bigThree = [],
-  taskCards = [],
+  bigThree: BigThreeItem[] = [],
+  taskCards: TaskCard[] = [],
   createId = defaultCreateId,
-) => {
+): { insertedCount: number; nextBigThree: BigThreeItem[] } => {
   if (bigThree.length >= MAX_BIG_THREE_ITEMS || taskCards.length === 0) {
     return { insertedCount: 0, nextBigThree: bigThree }
   }
@@ -111,7 +126,7 @@ export const autofillBigThreeFromTaskCards = (
       .filter((taskId) => typeof taskId === 'string' && taskId.length > 0),
   )
   const candidates = taskCards.filter((taskCard) => !existingTaskIds.has(taskCard.id))
-  const prioritizedCandidates = sortBrainDumpItems(candidates)
+  const prioritizedCandidates = sortBrainDumpItems(candidates) as TaskCard[]
   const selectedCandidates = prioritizedCandidates.slice(0, remainSlots)
 
   if (selectedCandidates.length === 0) {
@@ -127,7 +142,11 @@ export const autofillBigThreeFromTaskCards = (
   }
 }
 
-export const addManualBigThreeItem = (bigThree = [], content, createId = defaultCreateId) => {
+export const addManualBigThreeItem = (
+  bigThree: BigThreeItem[] = [],
+  content: string,
+  createId = defaultCreateId,
+): { inserted: boolean; nextBigThree: BigThreeItem[] } => {
   const trimmed = normalizeText(content)
   if (!trimmed || bigThree.length >= MAX_BIG_THREE_ITEMS) {
     return { inserted: false, nextBigThree: bigThree }
@@ -139,5 +158,8 @@ export const addManualBigThreeItem = (bigThree = [], content, createId = default
   }
 }
 
-export const removeBigThreeItemRecord = (bigThree = [], bigThreeId) =>
+export const removeBigThreeItemRecord = (
+  bigThree: BigThreeItem[] = [],
+  bigThreeId: string,
+): BigThreeItem[] =>
   bigThree.filter((item) => item.id !== bigThreeId)

@@ -1,14 +1,24 @@
+export type TaskCardPriority = 0 | 1 | 2 | 3 | 4
+export type TaskCardOrigin = 'board' | 'list'
+export type BigThreeStatus = 'EMPTY' | 'DONE' | 'PENDING'
+
 export interface TaskCard {
   id: string
   title: string
-  categoryId?: string | null
-  linkedTimeBoxIds?: string[] | null
+  isDone: boolean
+  priority: TaskCardPriority
+  categoryId: string | null
+  stackOrder: number
+  estimateSlots: number
+  linkedTimeBoxIds: string[]
+  note: string
+  origin: TaskCardOrigin
 }
 
 export interface BigThreeItem {
   id: string
   content: string
-  taskId?: string | null
+  taskId: string | null
 }
 
 export interface TimeBox {
@@ -43,7 +53,7 @@ export interface LastFocusSnapshot {
 }
 
 export interface BigThreeProgress {
-  statuses: Array<'EMPTY' | 'DONE' | 'PENDING'>
+  statuses: BigThreeStatus[]
   completedCount: number
   filledCount: number
   isPerfect: boolean
