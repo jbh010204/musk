@@ -64,11 +64,19 @@ export interface StackCanvasStateRecord {
 }
 
 export interface PlannerDay {
+  schemaVersion?: number
+  date?: string
   taskCards: TaskCard[]
   bigThree: BigThreeItem[]
   timeBoxes: TimeBox[]
   stackCanvasState?: StackCanvasStateRecord
   [key: string]: unknown
+}
+
+export interface PlannerMetaModel {
+  schemaVersion: number
+  categories: CategoryRecord[]
+  templates: unknown[]
 }
 
 export interface LastFocusSnapshot {
