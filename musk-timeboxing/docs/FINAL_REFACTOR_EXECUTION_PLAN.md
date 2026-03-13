@@ -30,6 +30,7 @@
 - `storage/migrations.ts`
 - `storage/adapters.ts`
 - `storage/index.ts`
+- `app/hooks/useDailyData.ts`
 - `model/taskCards.ts`
 - `model/timeBoxes.ts`
 - `model/dayState.ts`
@@ -53,13 +54,13 @@
 - storage adapter TypeScript 전환 완료
 - storage schema/migration TypeScript 전환 완료
 - storage/index TypeScript 전환 완료
+- `useDailyData` TypeScript 경계 추가
 
 아직 큰 덩어리로 남아 있는 곳:
 
-- `src/app/hooks/useDailyData.js`
 - `src/App.jsx`
 - weekly/report level derived planner state 정리
-- `app/hooks/useDailyData.js` 타입 경계 초안
+- `useDailyData` 내부 command adapter 추가 축소
 
 ## 작업 원칙
 
@@ -231,12 +232,13 @@
 - `storage/adapters`를 `.ts`로 전환
 - `storage/schema`, `storage/migrations`를 `.ts`로 전환
 - `storage/index`, `model/index`를 `.ts`로 전환
+- `app/hooks/useDailyData`를 `.ts`로 전환
 - JS model helper의 `createId` 추론을 `string`으로 고정해 TS import 경계를 안정화
 
 다음 우선순위:
 
-1. `app/hooks/useDailyData.js`의 타입 경계 초안
-2. `src/App.jsx`에서 remaining planner derivation 축소
+1. `src/App.jsx`에서 remaining planner derivation 축소
+2. `useDailyData` 내부 command adapter 추가 축소
 3. `shared/ui/*`, `features/*` 점진 TS 전환
 
 순서:
