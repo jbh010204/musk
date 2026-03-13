@@ -224,7 +224,7 @@ interface TimelineProps {
   onDuplicateTimeBox?: (id: string) => boolean
   onOpenTemplateManager?: () => void
   onOpenCategoryManager?: () => void
-  onOpenQuickAdd?: (dateStr: string, payload: { dateLabel: string }) => void
+  onOpenQuickAdd?: (dateStr: string, payload?: { dateLabel?: string }) => void
   onApplyTemplate?: (templateId: string, dateStr: string) => void
 }
 

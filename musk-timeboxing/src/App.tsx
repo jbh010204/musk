@@ -37,7 +37,7 @@ const DETAIL_SLOT_HEIGHT = 64
 const THEME_DARK = 'dark'
 const UNDO_TOAST_MS = 5000
 
-const formatShortDateLabel = (dateStr) =>
+const formatShortDateLabel = (dateStr: string): string =>
   new Intl.DateTimeFormat('ko-KR', {
     month: 'long',
     day: 'numeric',

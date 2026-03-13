@@ -1,25 +1,17 @@
+import type { BigThreeItem, TaskCard } from '../../entities/planner/model/types'
+
 interface ToastOptions {
   actionLabel?: string
   onAction?: () => void
 }
 
-interface TaskCardRecord {
-  id: string
-  [key: string]: unknown
-}
-
-interface BigThreeRecord {
-  id: string
-  [key: string]: unknown
-}
-
 interface UsePlannerTaskActionsOptions {
-  taskCards: TaskCardRecord[]
-  bigThree: BigThreeRecord[]
+  taskCards: TaskCard[]
+  bigThree: BigThreeItem[]
   undoToastMs: number
   showToast: (message: string, duration?: number, options?: ToastOptions | null) => void
   removeTaskCard: (id: string) => void
-  restoreTaskCard: (item: TaskCardRecord, index: number | null) => boolean
+  restoreTaskCard: (item: TaskCard, index: number | null) => boolean
   sendToBigThree: (taskCardId: string) => boolean
   sendManyToBigThree: (taskCardIds?: string[]) => number
   fillBigThreeFromTaskCards: () => number

@@ -10,6 +10,13 @@ interface TemplateMutationResult {
   [key: string]: unknown
 }
 
+interface TemplateMutationInput {
+  name: string
+  content: string
+  durationSlots: string
+  categoryId: string
+}
+
 interface UsePlannerMetaActionsOptions {
   lockedParentIds: string[]
   showToast: (message: string, duration?: number, options?: unknown) => void
@@ -19,8 +26,8 @@ interface UsePlannerMetaActionsOptions {
   clearTimeBoxCategory: (categoryId: string | null) => void
   clearTaskCardCategoryState: (categoryId: string | null) => void
   clearTemplateCategory: (categoryId: string | null) => void
-  addTemplate: (payload: Record<string, unknown>) => TemplateMutationResult
-  updateTemplate: (id: string, payload: Record<string, unknown>) => TemplateMutationResult
+  addTemplate: (payload: TemplateMutationInput) => TemplateMutationResult
+  updateTemplate: (id: string, payload: TemplateMutationInput) => TemplateMutationResult
   removeTemplate: (id: string) => void
 }
 
@@ -77,7 +84,7 @@ export const usePlannerMetaActions = ({
     return result
   }
 
-  const handleAddTemplate = (payload: Record<string, unknown>) => {
+  const handleAddTemplate = (payload: TemplateMutationInput) => {
     const result = addTemplate(payload)
     if (!result.ok) {
       showToast(result.error || '템플릿을 추가하지 못했습니다')
@@ -88,7 +95,7 @@ export const usePlannerMetaActions = ({
     return result
   }
 
-  const handleUpdateTemplate = (id: string, payload: Record<string, unknown>) => {
+  const handleUpdateTemplate = (id: string, payload: TemplateMutationInput) => {
     const result = updateTemplate(id, payload)
     if (!result.ok) {
       showToast(result.error || '템플릿을 저장하지 못했습니다')

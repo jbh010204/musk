@@ -6,7 +6,7 @@ type PlannerTemplate = ReturnType<typeof loadMeta>['templates'][number]
 interface TemplateInput {
   name: string
   content: string
-  durationSlots: number
+  durationSlots: number | string
   categoryId?: string | null
 }
 
