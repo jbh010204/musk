@@ -239,6 +239,7 @@
 - `storage/schema`, `storage/migrations`를 `.ts`로 전환
 - `storage/index`, `model/index`를 `.ts`로 전환
 - `app/hooks/useDailyData`를 `.ts`로 전환
+- `features/planner-dnd/lib/payloads`를 `.ts`로 전환
 - JS model helper의 `createId` 추론을 `string`으로 고정해 TS import 경계를 안정화
 
 다음 우선순위:
