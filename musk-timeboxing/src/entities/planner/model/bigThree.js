@@ -2,6 +2,7 @@ import { sortBrainDumpItems } from '../lib/brainDumpPriority'
 
 export const MAX_BIG_THREE_ITEMS = 3
 
+/** @returns {string} */
 const defaultCreateId = () => crypto.randomUUID()
 
 const normalizeText = (value) => String(value || '').trim()

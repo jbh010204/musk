@@ -1,14 +1,19 @@
-export const deriveLinkedCount = (taskCard) =>
+import type { BigThreeItem, BigThreeProgress, TaskCard, TimeBox } from './types'
+
+export const deriveLinkedCount = (taskCard: TaskCard | null | undefined): number =>
   Array.isArray(taskCard?.linkedTimeBoxIds) ? taskCard.linkedTimeBoxIds.length : 0
 
-export const EMPTY_BIG_THREE_PROGRESS = {
+export const EMPTY_BIG_THREE_PROGRESS: BigThreeProgress = {
   statuses: ['EMPTY', 'EMPTY', 'EMPTY'],
   completedCount: 0,
   filledCount: 0,
   isPerfect: false,
 }
 
-export const deriveTaskCardStatus = (taskCard, timeBoxes = []) => {
+export const deriveTaskCardStatus = (
+  taskCard: TaskCard | null | undefined,
+  timeBoxes: TimeBox[] = [],
+): 'TODO' | 'SCHEDULED' | 'COMPLETED' | 'SKIPPED' | 'PARTIAL' => {
   const linkedIds = Array.isArray(taskCard?.linkedTimeBoxIds) ? taskCard.linkedTimeBoxIds : []
   if (linkedIds.length === 0) {
     return 'TODO'
@@ -16,7 +21,7 @@ export const deriveTaskCardStatus = (taskCard, timeBoxes = []) => {
 
   const linkedStatuses = linkedIds
     .map((id) => timeBoxes.find((timeBox) => timeBox.id === id)?.status)
-    .filter((status) => typeof status === 'string')
+    .filter((status): status is string => typeof status === 'string')
 
   if (linkedStatuses.length === 0) {
     return 'SCHEDULED'
@@ -40,8 +45,11 @@ export const deriveTaskCardStatus = (taskCard, timeBoxes = []) => {
   return 'PARTIAL'
 }
 
-export const deriveBigThreeProgress = (bigThree = [], timeBoxes = []) => {
-  const statuses = [0, 1, 2].map((index) => {
+export const deriveBigThreeProgress = (
+  bigThree: BigThreeItem[] = [],
+  timeBoxes: TimeBox[] = [],
+): BigThreeProgress => {
+  const statuses: BigThreeProgress['statuses'] = [0, 1, 2].map((index) => {
     const item = bigThree[index]
     if (!item) {
       return 'EMPTY'
@@ -55,7 +63,7 @@ export const deriveBigThreeProgress = (bigThree = [], timeBoxes = []) => {
     )
 
     return done ? 'DONE' : 'PENDING'
-  })
+  }) as BigThreeProgress['statuses']
 
   const completedCount = statuses.filter((status) => status === 'DONE').length
   const filledCount = statuses.filter((status) => status !== 'EMPTY').length

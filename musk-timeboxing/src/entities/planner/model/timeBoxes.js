@@ -1,6 +1,7 @@
 import { hasOverlap, TOTAL_SLOTS } from '../lib/timeSlot'
 import { findAvailableStartSlot } from '../lib/timeBoxPlacement'
 
+/** @returns {string} */
 const defaultCreateId = () => crypto.randomUUID()
 
 const normalizeText = (value) => {
@@ -264,6 +265,15 @@ export const completeTimeBoxByTimerRecord = (timeBoxes = [], timeBoxId, now = Da
     }
   })
 
+/**
+ * @param {{
+ *   currentDate?: string,
+ *   targetDate?: string,
+ *   timeBoxes?: any[],
+ *   targetTimeBoxes?: any[],
+ *   createId?: () => string,
+ * }} [options]
+ */
 export const buildTimeBoxReschedulePlan = ({
   currentDate,
   targetDate,

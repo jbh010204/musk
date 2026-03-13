@@ -9,6 +9,7 @@ import {
 } from '../lib/boardCard'
 import { cycleBrainDumpPriority, normalizeBrainDumpPriority, sortBrainDumpItems } from '../lib/brainDumpPriority'
 
+/** @returns {string} */
 const createId = () => crypto.randomUUID()
 
 const normalizeTaskCardTitle = (value) => {

@@ -1,28 +1,27 @@
 import { applyStackCanvasStatePatch } from '../lib/stackCanvasState'
 import { syncTaskCardLinksWithTimeBoxes } from './taskCards'
+import type { BigThreeItem, PlannerDay, StackCanvasStateRecord, TaskCard, TimeBox } from './types'
 
-const defaultPlannerDay = {
+const defaultPlannerDay: PlannerDay = {
   taskCards: [],
   bigThree: [],
   timeBoxes: [],
-  stackCanvasState: undefined,
 }
 
-const toPlannerDay = (plannerDay) =>
+const toPlannerDay = (plannerDay: Partial<PlannerDay> | null | undefined): PlannerDay =>
   plannerDay && typeof plannerDay === 'object'
-    ? plannerDay
+    ? ({ ...defaultPlannerDay, ...plannerDay } as PlannerDay)
     : defaultPlannerDay
 
 export const replacePlannerDayTaskCards = (
-  plannerDay,
-  taskCards,
-  { syncLinks = false } = {},
-) => {
+  plannerDay: Partial<PlannerDay> | null | undefined,
+  taskCards: TaskCard[],
+  { syncLinks = false }: { syncLinks?: boolean } = {},
+): PlannerDay => {
   const currentDay = toPlannerDay(plannerDay)
-  const nextTaskCards =
-    syncLinks
-      ? syncTaskCardLinksWithTimeBoxes(taskCards, currentDay.timeBoxes)
-      : taskCards
+  const nextTaskCards = syncLinks
+    ? syncTaskCardLinksWithTimeBoxes(taskCards, currentDay.timeBoxes)
+    : taskCards
 
   if (nextTaskCards === currentDay.taskCards) {
     return currentDay
@@ -34,7 +33,10 @@ export const replacePlannerDayTaskCards = (
   }
 }
 
-export const replacePlannerDayBigThree = (plannerDay, bigThree) => {
+export const replacePlannerDayBigThree = (
+  plannerDay: Partial<PlannerDay> | null | undefined,
+  bigThree: BigThreeItem[],
+): PlannerDay => {
   const currentDay = toPlannerDay(plannerDay)
   if (bigThree === currentDay.bigThree) {
     return currentDay
@@ -46,7 +48,10 @@ export const replacePlannerDayBigThree = (plannerDay, bigThree) => {
   }
 }
 
-export const replacePlannerDayTimeBoxes = (plannerDay, timeBoxes) => {
+export const replacePlannerDayTimeBoxes = (
+  plannerDay: Partial<PlannerDay> | null | undefined,
+  timeBoxes: TimeBox[],
+): PlannerDay => {
   const currentDay = toPlannerDay(plannerDay)
   if (timeBoxes === currentDay.timeBoxes) {
     return currentDay
@@ -59,7 +64,10 @@ export const replacePlannerDayTimeBoxes = (plannerDay, timeBoxes) => {
   }
 }
 
-export const replacePlannerDayStackCanvasState = (plannerDay, nextStackCanvasState) => {
+export const replacePlannerDayStackCanvasState = (
+  plannerDay: Partial<PlannerDay> | null | undefined,
+  nextStackCanvasState: StackCanvasStateRecord | ((currentState: StackCanvasStateRecord | undefined) => StackCanvasStateRecord),
+): PlannerDay => {
   const currentDay = toPlannerDay(plannerDay)
   const stackCanvasState = applyStackCanvasStatePatch(
     currentDay.stackCanvasState,
