@@ -269,6 +269,7 @@
 - `features/timeline/ui/QuickAddModal`, `RescheduleAssistantModal`, `CompletionModal`을 TS로 전환
 - `features/timeline/ui/DailyRecapCard`, `WeeklyReportCard`를 TS로 전환
 - `features/timeline/ui/WeeklyPlanningBoard`, `WeeklyCalendarView`를 TS로 전환
+- `features/timeline/ui/MonthlyCalendarView`, `MonthDayDetailSheet`를 TS로 전환
 - `features/planner-dnd/lib/payloads`를 `.ts`로 전환
 - `features/planner-dnd/usePlannerTimelineDnd`를 `.ts`로 추가
 - `app/hooks/usePlannerTimeBoxActions`를 `.ts`로 추가

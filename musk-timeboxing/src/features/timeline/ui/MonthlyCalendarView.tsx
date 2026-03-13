@@ -2,7 +2,7 @@ import { Badge, Button, Card } from '../../../shared/ui'
 import { hexToRgba } from '../../../entities/planner'
 
 const WEEK_HEADER_LABELS = ['월', '화', '수', '목', '금', '토', '일']
-const HEAT_LEVEL_LABELS = {
+const HEAT_LEVEL_LABELS: Record<number, string> = {
   0: '비어 있음',
   1: '낮은 밀도',
   2: '보통 밀도',
@@ -10,7 +10,49 @@ const HEAT_LEVEL_LABELS = {
   4: '집중 밀도',
 }
 
-const getOverviewLabel = (cell) => {
+interface CalendarLegendItem {
+  key: string
+  label: string
+  color: string
+  count: number
+}
+
+interface DominantCategory {
+  label: string
+  color: string
+  count: number
+}
+
+interface MonthlyCalendarCell {
+  dateStr: string
+  dayNumber: number
+  total: number
+  completed: number
+  completionRate: number
+  heatLevel: number
+  dominantCategory: DominantCategory | null
+  isCurrent: boolean
+  inCurrentMonth: boolean
+}
+
+interface BusiestDaySummary {
+  dayNumber: number
+  total: number
+}
+
+interface MonthlyCalendarViewProps {
+  monthLabel: string
+  cells?: MonthlyCalendarCell[]
+  legend?: CalendarLegendItem[]
+  scheduledDays?: number
+  averageCompletionRate?: number
+  busiestDay?: BusiestDaySummary | null
+  selectedDateStr?: string | null
+  onSelectDate?: (dateStr: string) => void
+  onQuickAdd?: (dateStr: string, label: string) => void
+}
+
+const getOverviewLabel = (cell: MonthlyCalendarCell) => {
   if (cell.total <= 0) {
     return null
   }
@@ -22,7 +64,7 @@ const getOverviewLabel = (cell) => {
   return HEAT_LEVEL_LABELS[cell.heatLevel] || '보통 밀도'
 }
 
-const getHeatOverlayStyle = (cell) => {
+const getHeatOverlayStyle = (cell: MonthlyCalendarCell) => {
   if (!cell?.dominantCategory || cell.heatLevel <= 0) {
     return null
   }
@@ -53,7 +95,7 @@ function MonthlyCalendarView({
   selectedDateStr = null,
   onSelectDate = () => {},
   onQuickAdd = () => {},
-}) {
+}: MonthlyCalendarViewProps) {
   return (
     <Card className="mb-6 p-6" data-testid="calendar-view-month">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">

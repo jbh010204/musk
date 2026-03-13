@@ -1,7 +1,8 @@
 import { Badge, Button, Card } from '../../../shared/ui'
 import { getStatusVisual, hexToRgba, slotToTime } from '../../../entities/planner'
+import type { TimeBoxStatus } from '../../../entities/planner/model/types'
 
-const HEAT_LEVEL_LABELS = {
+const HEAT_LEVEL_LABELS: Record<number, string> = {
   0: '비어 있음',
   1: '낮은 밀도',
   2: '보통 밀도',
@@ -9,7 +10,53 @@ const HEAT_LEVEL_LABELS = {
   4: '집중일',
 }
 
-const formatDateLabel = (dateStr) =>
+interface DayCategoryMixItem {
+  key: string
+  label: string
+  color: string
+  count: number
+}
+
+interface DominantCategorySummary {
+  label: string
+  color: string
+}
+
+interface MonthDayDetailItem {
+  id: string
+  content: string
+  startSlot: number
+  endSlot: number
+  status: TimeBoxStatus
+  plannedMinutes: number
+  actualMinutes: number | null
+  skipReason: string
+  categoryLabel: string | null
+  categoryColor: string | null
+}
+
+interface MonthDayDetail {
+  dateStr: string
+  dayLabel: string
+  dayNumber: number
+  total: number
+  completionRate: number
+  plannedMinutes: number
+  heatLevel: number
+  completed: number
+  dominantCategory: DominantCategorySummary | null
+  categoryMix?: DayCategoryMixItem[]
+  detailItems: MonthDayDetailItem[]
+}
+
+interface MonthDayDetailSheetProps {
+  day?: MonthDayDetail | null
+  onOpenDate?: (dateStr: string) => void
+  onQuickAdd?: (dateStr: string, label: string) => void
+  onClose?: () => void
+}
+
+const formatDateLabel = (dateStr: string) =>
   new Intl.DateTimeFormat('ko-KR', {
     year: 'numeric',
     month: 'long',
@@ -22,7 +69,7 @@ function MonthDayDetailSheet({
   onOpenDate = () => {},
   onQuickAdd = () => {},
   onClose = () => {},
-}) {
+}: MonthDayDetailSheetProps) {
   if (!day) {
     return (
       <Card
