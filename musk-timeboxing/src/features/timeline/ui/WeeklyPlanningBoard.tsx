@@ -1,6 +1,27 @@
 import { slotToTime } from '../../../entities/planner'
+import type { TimeBoxStatus } from '../../../entities/planner/model/types'
 
-function WeeklyPlanningBoard({ days = [], onJumpToDate = () => {} }) {
+interface WeeklyPlanningPreviewItem {
+  id: string
+  content: string
+  startSlot: number
+  status: TimeBoxStatus
+}
+
+interface WeeklyPlanningPreviewDay {
+  dateStr: string
+  dayLabel: string
+  dayNumber: number
+  total: number
+  previewItems: WeeklyPlanningPreviewItem[]
+}
+
+interface WeeklyPlanningBoardProps {
+  days?: WeeklyPlanningPreviewDay[]
+  onJumpToDate?: (dateStr: string) => void
+}
+
+function WeeklyPlanningBoard({ days = [], onJumpToDate = () => {} }: WeeklyPlanningBoardProps) {
   return (
     <div className="ui-panel mb-6 p-6 shadow-md dark:shadow-none">
       <div className="mb-4 flex items-center justify-between">

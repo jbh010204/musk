@@ -1,7 +1,38 @@
 import { Badge, Button, Card } from '../../../shared/ui'
 import { slotToTime } from '../../../entities/planner'
+import type { TimeBoxStatus } from '../../../entities/planner/model/types'
 
-function WeeklyCalendarView({ rangeLabel, days = [], onOpenDate = () => {}, onQuickAdd = () => {} }) {
+interface WeeklyCalendarPreviewItem {
+  id: string
+  content: string
+  startSlot: number
+  status: TimeBoxStatus
+}
+
+interface WeeklyCalendarDay {
+  dateStr: string
+  dayLabel: string
+  dayNumber: number
+  total: number
+  completionRate: number
+  plannedMinutes: number
+  isCurrent: boolean
+  previewItems: WeeklyCalendarPreviewItem[]
+}
+
+interface WeeklyCalendarViewProps {
+  rangeLabel: string
+  days?: WeeklyCalendarDay[]
+  onOpenDate?: (dateStr: string) => void
+  onQuickAdd?: (dateStr: string, label: string) => void
+}
+
+function WeeklyCalendarView({
+  rangeLabel,
+  days = [],
+  onOpenDate = () => {},
+  onQuickAdd = () => {},
+}: WeeklyCalendarViewProps) {
   return (
     <Card className="mb-6 p-6" data-testid="calendar-view-week">
       <div className="mb-4 flex items-center justify-between gap-3">
