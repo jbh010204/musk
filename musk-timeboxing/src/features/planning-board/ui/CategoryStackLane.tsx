@@ -96,16 +96,16 @@ function CategoryStackLane({
               : 'border-slate-300/70 bg-slate-50/70 dark:border-slate-700/70 dark:bg-slate-900/45'
         }`}
       >
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div>
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               Stack
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{lane.label}</p>
           </div>
-          <div className="flex items-center gap-2">
-            {headerActions}
-            <span className="rounded-xl bg-slate-200/70 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800/70 dark:text-slate-300">
+          <div className="flex min-w-0 max-w-full flex-1 flex-wrap items-center justify-end gap-2">
+            {headerActions ? <div className="min-w-0 max-w-full flex-1">{headerActions}</div> : null}
+            <span className="shrink-0 rounded-xl bg-slate-200/70 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800/70 dark:text-slate-300">
               {lane.items.length}개
             </span>
           </div>

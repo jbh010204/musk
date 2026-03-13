@@ -125,6 +125,7 @@ function PlanningCanvas({
     : []
   const [editingCard, setEditingCard] = useState<TaskCard | null>(null)
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
+  const [activeCardWidth, setActiveCardWidth] = useState<number | null>(null)
   const [inboxSearch, setInboxSearch] = useState('')
   const [internalSelectedCardId, setInternalSelectedCardId] = useState(
     controlledSelectedCardId ?? initialSelectedCardId,
@@ -325,10 +326,12 @@ function PlanningCanvas({
 
   const handleDragStart = ({ active }: DragStartEvent) => {
     setActiveCardId(typeof active?.id === 'string' ? active.id : null)
+    setActiveCardWidth(active.rect.current.initial?.width ?? null)
   }
 
   const handleDragCancel = (_event?: DragCancelEvent) => {
     setActiveCardId(null)
+    setActiveCardWidth(null)
     setLaneState(createLaneState(lanes))
   }
 
@@ -337,6 +340,7 @@ function PlanningCanvas({
     const overId = typeof over?.id === 'string' ? over.id : null
 
     setActiveCardId(null)
+    setActiveCardWidth(null)
 
     if (!activeId || !overId) {
       setLaneState(createLaneState(lanes))
@@ -650,7 +654,7 @@ function PlanningCanvas({
           </div>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[18rem_minmax(0,1fr)]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(20rem,22rem)_minmax(0,1fr)]">
           {uncategorizedLane ? (
             <CategoryStackLaneCompat
               lane={inboxLane}
@@ -662,18 +666,18 @@ function PlanningCanvas({
               collapsed={isInboxCollapsed}
               collapsedMessage="Inbox를 접어두었습니다."
               headerActions={
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2">
                   <input
                     type="text"
                     value={inboxSearch}
                     onChange={(event) => setInboxSearch(event.target.value)}
-                    className="ui-input h-8 w-36 px-3 py-1 text-xs"
+                    className="ui-input h-8 min-w-[10rem] flex-1 px-3 py-1 text-xs"
                     placeholder="Inbox 검색"
                     data-testid="planning-canvas-inbox-search"
                   />
                   <select
                     data-testid="planning-canvas-inbox-filter"
-                    className="ui-input h-8 w-28 px-2 py-1 text-xs"
+                    className="ui-input h-8 w-[6.5rem] shrink-0 px-2 py-1 text-xs"
                     value={inboxFilter}
                     onChange={(event) => onUpdateStackCanvasState({ inboxFilter: event.target.value })}
                   >
@@ -783,7 +787,7 @@ function PlanningCanvas({
 
         <DragOverlay>
           {activeCard ? (
-            <div className="w-[280px]">
+            <div className="pointer-events-none" style={{ width: activeCardWidth ?? 280 }}>
               <div className="rounded-2xl bg-white/95 p-4 shadow-xl dark:bg-slate-900/95">
                 <div className="flex items-center gap-2">
                   <span

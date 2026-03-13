@@ -81,6 +81,7 @@ function PlanningBoard({
 }: PlanningBoardProps) {
   const [editingCard, setEditingCard] = useState<Partial<TaskCard> | null>(null)
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
+  const [activeCardWidth, setActiveCardWidth] = useState<number | null>(null)
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
   const lanes = useMemo(() => groupBoardCardsByCategory(items, categories), [categories, items])
@@ -134,10 +135,12 @@ function PlanningBoard({
 
   const handleDragStart = ({ active }: DragStartEvent) => {
     setActiveCardId(typeof active?.id === 'string' ? active.id : null)
+    setActiveCardWidth(active.rect.current.initial?.width ?? null)
   }
 
   const handleDragCancel = (_event?: DragCancelEvent) => {
     setActiveCardId(null)
+    setActiveCardWidth(null)
     setLaneState(createLaneState(lanes))
   }
 
@@ -146,6 +149,7 @@ function PlanningBoard({
     const overId = typeof over?.id === 'string' ? over.id : null
 
     setActiveCardId(null)
+    setActiveCardWidth(null)
 
     if (!activeId || !overId) {
       setLaneState(createLaneState(lanes))
@@ -284,7 +288,7 @@ function PlanningBoard({
 
         <DragOverlay>
           {activeCard ? (
-            <div className="w-[280px]">
+            <div className="pointer-events-none" style={{ width: activeCardWidth ?? 280 }}>
               <BoardCard
                 item={activeCard}
                 color={
