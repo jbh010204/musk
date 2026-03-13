@@ -1,8 +1,21 @@
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
+import type { TaskCard } from '../../../entities/planner/model/types'
 import { createComposerCardDragPayload } from '../../planner-dnd/lib/payloads'
 
-function ComposerQueueCard({ item, color = '#94a3b8', isSelected = false, onSelect = () => {} }) {
+interface ComposerQueueCardProps {
+  item: TaskCard
+  color?: string
+  isSelected?: boolean
+  onSelect?: (itemId: string) => void
+}
+
+function ComposerQueueCard({
+  item,
+  color = '#94a3b8',
+  isSelected = false,
+  onSelect = () => {},
+}: ComposerQueueCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `composer-card-${item.id}`,
     data: createComposerCardDragPayload(item.id),

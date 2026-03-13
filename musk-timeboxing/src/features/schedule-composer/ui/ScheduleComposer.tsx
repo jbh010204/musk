@@ -1,4 +1,15 @@
-import { DndContext, DragOverlay, MouseSensor, closestCorners, pointerWithin, useSensor, useSensors } from '@dnd-kit/core'
+import {
+  DndContext,
+  DragOverlay,
+  MouseSensor,
+  closestCorners,
+  pointerWithin,
+  useSensor,
+  useSensors,
+  type CollisionDetection,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
 import { useMemo, useState } from 'react'
 import {
   getCategoryColor,
@@ -8,6 +19,7 @@ import {
   slotDurationMinutes,
   slotToTime,
 } from '../../../entities/planner'
+import type { BigThreeItem, CategoryViewModel, TaskCard, TimeBox } from '../../../entities/planner/model/types'
 import { Button, Card } from '../../../shared/ui'
 import { getPlannerQueueItemId } from '../../planner-dnd/lib/payloads'
 import { WORKSPACE_LAYOUT } from '../../planner-workspace/lib/workspaceLayout'
@@ -16,13 +28,34 @@ import ComposerTimeGrid from './ComposerTimeGrid'
 
 const SLOT_HEIGHT = WORKSPACE_LAYOUT.composerSlotHeightPx
 
-const resolveSlotFromOver = (overId) => {
+const resolveSlotFromOver = (overId: string | null): number | null => {
   if (typeof overId !== 'string' || !overId.startsWith('composer-slot-')) {
     return null
   }
 
   const slot = Number(overId.replace('composer-slot-', ''))
   return Number.isInteger(slot) ? slot : null
+}
+
+interface ScheduleComposerProps {
+  items?: TaskCard[]
+  categories?: CategoryViewModel[]
+  timeBoxes?: TimeBox[]
+  onScheduleCard?: (cardId: string, startSlot: number) => boolean
+  onScheduleCards?: (cardIds: string[], startSlot: number) => boolean
+  onScheduleBigThreeItem?: (bigThreeItemId: string, startSlot: number) => boolean
+  onJumpToDay?: () => void
+  onJumpToBoard?: () => void
+  selectedCardId?: string | null
+  selectedCardIds?: string[] | null
+  selectedBigThreeItem?: BigThreeItem | null
+  onSelectCard?: ((cardId: string | null) => void) | null
+  onSelectCards?: ((cardIds: string[]) => void) | null
+  onSelectBigThree?: (item: BigThreeItem | null) => void
+  hideQueue?: boolean
+  nativeDraggingCardId?: string | null
+  onNativeDragEnd?: () => void
+  embedded?: boolean
 }
 
 function ScheduleComposer({
@@ -44,10 +77,10 @@ function ScheduleComposer({
   nativeDraggingCardId = null,
   onNativeDragEnd = () => {},
   embedded = false,
-}) {
-  const [internalSelectedCardId, setInternalSelectedCardId] = useState(null)
-  const [activeCardId, setActiveCardId] = useState(null)
-  const [nativeOverSlot, setNativeOverSlot] = useState(null)
+}: ScheduleComposerProps) {
+  const [internalSelectedCardId, setInternalSelectedCardId] = useState<string | null>(null)
+  const [activeCardId, setActiveCardId] = useState<string | null>(null)
+  const [nativeOverSlot, setNativeOverSlot] = useState<number | null>(null)
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
   const lanes = useMemo(
     () => groupBoardCardsByCategory(items, categories).filter((lane) => lane.items.length > 0),
@@ -72,7 +105,7 @@ function ScheduleComposer({
     0,
   )
 
-  const handleCreateFromCard = (cardId, startSlot) => {
+  const handleCreateFromCard = (cardId: string, startSlot: number) => {
     const card = cardMap.get(cardId)
     if (!card) {
       return false
@@ -103,7 +136,7 @@ function ScheduleComposer({
     return success
   }
 
-  const handleCreateFromCards = (cardIds, startSlot) => {
+  const handleCreateFromCards = (cardIds: string[], startSlot: number) => {
     const normalizedIds = [...new Set(cardIds.filter((itemId) => cardMap.has(itemId)))]
     if (normalizedIds.length === 0) {
       return false
@@ -125,7 +158,7 @@ function ScheduleComposer({
     return success
   }
 
-  const handleCreateFromBigThree = (bigThreeId, startSlot) => {
+  const handleCreateFromBigThree = (bigThreeId: string, startSlot: number) => {
     const success = onScheduleBigThreeItem(bigThreeId, startSlot)
     if (success) {
       if (onSelectCard) {
@@ -142,7 +175,7 @@ function ScheduleComposer({
     return success
   }
 
-  const handleDragEnd = ({ active, over }) => {
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
     const cardId = getPlannerQueueItemId(active?.data?.current)
     const slotIndex = resolveSlotFromOver(typeof over?.id === 'string' ? over.id : null)
 
@@ -155,7 +188,7 @@ function ScheduleComposer({
     handleCreateFromCard(cardId, slotIndex)
   }
 
-  const collisionStrategy = (args) => {
+  const collisionStrategy: CollisionDetection = (args) => {
     const pointerCollisions = pointerWithin(args)
     if (pointerCollisions.length > 0) {
       return pointerCollisions
@@ -196,7 +229,7 @@ function ScheduleComposer({
       <DndContext
         sensors={sensors}
         collisionDetection={collisionStrategy}
-        onDragStart={({ active }) => {
+        onDragStart={({ active }: DragStartEvent) => {
           setActiveCardId(getPlannerQueueItemId(active?.data?.current))
         }}
         onDragCancel={() => setActiveCardId(null)}

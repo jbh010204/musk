@@ -2,6 +2,15 @@ import { useDroppable } from '@dnd-kit/core'
 import { slotToTime, TOTAL_SLOTS } from '../../../entities/planner'
 import { WORKSPACE_LAYOUT } from '../../planner-workspace/lib/workspaceLayout'
 
+interface ComposerSlotRowProps {
+  slotIndex: number
+  onSlotClick?: (slotIndex: number) => void
+  onNativeSlotDrop?: (slotIndex: number, cardId: string | null) => void
+  onNativeSlotHover?: (slotIndex: number | null) => void
+  nativeOverSlot?: number | null
+  nativeDragActive?: boolean
+}
+
 function ComposerSlotRow({
   slotIndex,
   onSlotClick = () => {},
@@ -9,7 +18,7 @@ function ComposerSlotRow({
   onNativeSlotHover = () => {},
   nativeOverSlot = null,
   nativeDragActive = false,
-}) {
+}: ComposerSlotRowProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `composer-slot-${slotIndex}`,
     data: {
@@ -80,13 +89,21 @@ function ComposerSlotRow({
   )
 }
 
+interface ComposerTimeGridProps {
+  onSlotClick?: (slotIndex: number) => void
+  onNativeSlotDrop?: (slotIndex: number, cardId: string | null) => void
+  onNativeSlotHover?: (slotIndex: number | null) => void
+  nativeOverSlot?: number | null
+  nativeDragActive?: boolean
+}
+
 function ComposerTimeGrid({
   onSlotClick = () => {},
   onNativeSlotDrop = () => {},
   onNativeSlotHover = () => {},
   nativeOverSlot = null,
   nativeDragActive = false,
-}) {
+}: ComposerTimeGridProps) {
   return (
     <div className="relative" data-testid="composer-time-grid">
       {Array.from({ length: TOTAL_SLOTS }).map((_, slotIndex) => (

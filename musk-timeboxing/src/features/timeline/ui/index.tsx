@@ -982,7 +982,7 @@ function Timeline({
           items={taskCards}
           categories={categories}
           timeBoxes={sortedBoxes}
-          onScheduleCard={handleScheduleBoardCard as unknown as () => boolean}
+          onScheduleCard={handleScheduleBoardCard}
           onJumpToDay={() => setViewMode('DAY')}
           onJumpToBoard={() => setViewMode('CANVAS')}
         />
