@@ -1,8 +1,16 @@
 import { useMemo, useState } from 'react'
 import { Card, IconButton } from '../../../shared/ui'
 import { getCategoryLabel, slotDurationMinutes } from '../../../entities/planner'
+import type { CategoryRecord, CategoryViewModel, TimeBox } from '../../../entities/planner/model/types'
 
-function DailyRecapCard({ timeBoxes, categoryMap }) {
+type CategoryMeta = CategoryRecord | CategoryViewModel
+
+interface DailyRecapCardProps {
+  timeBoxes: TimeBox[]
+  categoryMap: Map<string, CategoryMeta>
+}
+
+function DailyRecapCard({ timeBoxes, categoryMap }: DailyRecapCardProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const recap = useMemo(() => {
     const total = timeBoxes.length

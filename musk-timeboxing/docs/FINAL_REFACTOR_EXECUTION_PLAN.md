@@ -267,6 +267,7 @@
 - `features/category/index`, `features/category/ui/CategoryManagerModal`을 TS로 전환
 - `features/data-transfer/index`, `features/data-transfer/ui/DataTransferModal`을 TS로 전환
 - `features/timeline/ui/QuickAddModal`, `RescheduleAssistantModal`, `CompletionModal`을 TS로 전환
+- `features/timeline/ui/DailyRecapCard`, `WeeklyReportCard`를 TS로 전환
 - `features/planner-dnd/lib/payloads`를 `.ts`로 전환
 - `features/planner-dnd/usePlannerTimelineDnd`를 `.ts`로 추가
 - `app/hooks/usePlannerTimeBoxActions`를 `.ts`로 추가

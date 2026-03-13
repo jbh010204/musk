@@ -1,7 +1,41 @@
 import { useState } from 'react'
 import { Badge, Card, IconButton } from '../../../shared/ui'
 
-function WeeklyReportCard({ report }) {
+interface WeeklyReportDay {
+  dateStr: string
+  dayLabel: string
+  total: number
+  completed: number
+}
+
+interface WeeklySkipReasonCount {
+  reason: string
+  count: number
+}
+
+interface WeeklySkipReasonTrend {
+  reason: string
+  current: number
+  previous: number
+  delta: number
+}
+
+interface WeeklyReport {
+  total: number
+  completionRate: number
+  completedPlannedMinutes: number
+  completedActualMinutes: number
+  diff: number
+  byDay: WeeklyReportDay[]
+  topSkipReasons: WeeklySkipReasonCount[]
+  skipReasonTrend?: WeeklySkipReasonTrend[]
+}
+
+interface WeeklyReportCardProps {
+  report: WeeklyReport
+}
+
+function WeeklyReportCard({ report }: WeeklyReportCardProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const diffPrefix = report.diff > 0 ? '+' : ''
   const diffTone = report.diff > 0 ? 'text-orange-300' : report.diff < 0 ? 'text-green-300' : 'text-gray-300'
