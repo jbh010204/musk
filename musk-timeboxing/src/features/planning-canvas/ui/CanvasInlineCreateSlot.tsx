@@ -4,7 +4,16 @@ const DURATION_OPTIONS = [
   { slots: 1, label: '30분' },
   { slots: 2, label: '60분' },
   { slots: 3, label: '90분' },
-]
+ ] as const
+
+interface CanvasInlineCreateSlotProps {
+  testId: string
+  title: string
+  placeholder: string
+  color?: string
+  defaultEstimateSlots?: number
+  onCreate?: (payload: { title: string; estimateSlots: number }) => boolean
+}
 
 function CanvasInlineCreateSlot({
   testId,
@@ -13,7 +22,7 @@ function CanvasInlineCreateSlot({
   color = '#94a3b8',
   defaultEstimateSlots = 1,
   onCreate = () => false,
-}) {
+}: CanvasInlineCreateSlotProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [estimateSlots, setEstimateSlots] = useState(defaultEstimateSlots)
@@ -100,7 +109,10 @@ function CanvasInlineCreateSlot({
         onCompositionStart={() => setIsComposing(true)}
         onCompositionEnd={() => setIsComposing(false)}
         onKeyDown={(event) => {
-          const nativeComposing = event.nativeEvent?.isComposing || event.keyCode === 229
+          const nativeComposing =
+            'isComposing' in event.nativeEvent
+              ? event.nativeEvent.isComposing
+              : event.keyCode === 229
           if (isComposing || nativeComposing) {
             return
           }

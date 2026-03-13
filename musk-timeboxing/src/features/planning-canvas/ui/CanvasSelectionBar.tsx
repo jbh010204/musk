@@ -1,3 +1,12 @@
+interface CanvasSelectionBarProps {
+  selectedCount?: number
+  onMovePrev?: () => void
+  onMoveNext?: () => void
+  onSendToBigThree?: () => void
+  onSchedule?: () => void
+  onClear?: () => void
+}
+
 function CanvasSelectionBar({
   selectedCount = 0,
   onMovePrev = () => {},
@@ -5,7 +14,7 @@ function CanvasSelectionBar({
   onSendToBigThree = () => {},
   onSchedule = () => {},
   onClear = () => {},
-}) {
+}: CanvasSelectionBarProps) {
   if (selectedCount === 0) {
     return null
   }
