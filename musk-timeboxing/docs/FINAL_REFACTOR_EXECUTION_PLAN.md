@@ -60,6 +60,7 @@
 - day flow orchestration hook(`usePlannerDayFlow.ts`)
 - task / Big3 action orchestration hook(`usePlannerTaskActions.ts`)
 - category / template action orchestration hook(`usePlannerMetaActions.ts`)
+- App UI shell state hook(`usePlannerShellState.ts`)
 
 아직 큰 덩어리로 남아 있는 곳:
 
@@ -202,6 +203,7 @@
 - date navigation / daily suggestion / reschedule orchestration을 `usePlannerDayFlow` hook으로 이동
 - task remove / Big3 send / autofill orchestration을 `usePlannerTaskActions` hook으로 이동
 - category / template CRUD orchestration을 `usePlannerMetaActions` hook으로 이동
+- theme / modal / quick-add / persistence shell state를 `usePlannerShellState` hook으로 이동
 
 허용:
 
@@ -215,6 +217,7 @@
 - toast lifecycle helper
 - modal open/close wiring 보조 helper
 - cross-feature section composition 보조 selector
+- section-level presentational extraction
 
 ## Step 6. DnD payload 통합 [Mostly Done]
 
@@ -257,7 +260,7 @@
 
 다음 우선순위:
 
-1. `src/App.jsx`의 toast / modal / section composition 정리
+1. `src/App.jsx`의 toast / section composition 정리
 2. `shared/ui/*`, `features/*` 점진 TS 전환
 3. feature-level selector / view model 타입 고정
 
@@ -317,7 +320,7 @@
 
 다음 턴에서 바로 시작할 범위:
 
-1. `src/App.jsx`의 toast / modal / section composition helper 추가 추출
+1. `src/App.jsx`의 toast / section composition helper 추가 추출
 2. `features/*`에서 planner 관련 주요 UI부터 `.ts` / `.tsx` 전환 시작
 3. feature selector / payload 타입을 model 타입과 맞물리게 정리
 4. 관련 `lint` / `build` / `typecheck` / targeted E2E 확인

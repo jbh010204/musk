@@ -1,5 +1,5 @@
 import { DndContext, DragOverlay } from '@dnd-kit/core'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import BigThree from './features/big-three'
 import BrainDump from './features/brain-dump'
 import CategoryManagerModal from './features/category'
@@ -15,6 +15,7 @@ import {
   useDailyData,
   usePlannerDayFlow,
   usePlannerMetaActions,
+  usePlannerShellState,
   usePlannerTaskActions,
   usePlannerTimeBoxActions,
   useTemplateMeta,
@@ -28,20 +29,13 @@ import {
   buildWeeklyPlanningPreview,
   buildWeeklyReport,
   deriveBigThreeProgress,
-  getPlannerPersistenceStatus,
-  loadLastViewMode,
-  subscribePlannerPersistenceStatus,
 } from './entities/planner'
 import { usePlannerTimelineDnd } from './features/planner-dnd/usePlannerTimelineDnd'
 
 const BASE_SLOT_HEIGHT = 32
 const DETAIL_SLOT_HEIGHT = 64
-const THEME_KEY = 'musk-planner-theme'
-const TIMELINE_FOCUS_MODE_KEY = 'musk-planner-timeline-focus-mode'
 const THEME_DARK = 'dark'
-const THEME_LIGHT = 'light'
 const UNDO_TOAST_MS = 5000
-const BOOTSTRAP_NOTICE_KEY = 'musk-planner-bootstrap-notice-shown'
 
 const formatShortDateLabel = (dateStr) =>
   new Intl.DateTimeFormat('ko-KR', {
@@ -106,34 +100,44 @@ function App() {
   )
 
   const { showToast, ToastContainer } = useToast()
-  const [timelineViewMode, setTimelineViewMode] = useState(() => loadLastViewMode())
-  const [persistenceStatus, setPersistenceStatus] = useState(() => getPlannerPersistenceStatus())
-  const [theme, setTheme] = useState(() => {
-    if (typeof window === 'undefined') {
-      return THEME_DARK
-    }
-
-    const stored = window.localStorage.getItem(THEME_KEY)
-    return stored === THEME_LIGHT ? THEME_LIGHT : THEME_DARK
+  const {
+    setTimelineViewMode,
+    persistenceStatus,
+    theme,
+    toggleTheme,
+    mobileTab,
+    setMobileTab,
+    timelineScale,
+    setTimelineScale,
+    isTimelineFocusMode,
+    toggleTimelineFocusMode,
+    isCategoryManagerOpen,
+    openCategoryManager,
+    closeCategoryManager,
+    isDataModalOpen,
+    openDataModal,
+    closeDataModal,
+    isPatchNotesOpen,
+    openPatchNotes,
+    closePatchNotes,
+    isTemplateManagerOpen,
+    openTemplateManager,
+    closeTemplateManager,
+    isRescheduleModalOpen,
+    openRescheduleModal,
+    closeRescheduleModal,
+    quickAddContext,
+    openQuickAdd,
+    closeQuickAdd,
+    timelineSlotHeight,
+    showDesktopPlanningRail,
+    showMobilePlanningTabs,
+  } = usePlannerShellState({
+    showToast,
+    formatDateLabel: formatShortDateLabel,
+    baseSlotHeight: BASE_SLOT_HEIGHT,
+    detailSlotHeight: DETAIL_SLOT_HEIGHT,
   })
-  const [mobileTab, setMobileTab] = useState('timeline')
-  const [timelineScale, setTimelineScale] = useState('30')
-  const [isTimelineFocusMode, setIsTimelineFocusMode] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false
-    }
-
-    return window.localStorage.getItem(TIMELINE_FOCUS_MODE_KEY) === 'true'
-  })
-  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false)
-  const [isDataModalOpen, setIsDataModalOpen] = useState(false)
-  const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false)
-  const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false)
-  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false)
-  const [quickAddContext, setQuickAddContext] = useState(null)
-  const timelineSlotHeight = timelineScale === '15' ? DETAIL_SLOT_HEIGHT : BASE_SLOT_HEIGHT
-  const showDesktopPlanningRail = timelineViewMode === 'CANVAS' || timelineViewMode === 'COMPOSER'
-  const showMobilePlanningTabs = timelineViewMode === 'CANVAS' || timelineViewMode === 'COMPOSER'
   const {
     sensors,
     activeDragPreview,
@@ -232,58 +236,6 @@ function App() {
     removeTemplate,
   })
 
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    window.localStorage.setItem(THEME_KEY, theme)
-    const root = window.document.documentElement
-    if (theme === THEME_DARK) {
-      root.classList.add('dark')
-    } else {
-      root.classList.remove('dark')
-    }
-  }, [theme])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    const result = window.__MUSK_PLANNER_BOOTSTRAP_RESULT__
-    if (!result || window.sessionStorage.getItem(BOOTSTRAP_NOTICE_KEY) === 'true') {
-      return
-    }
-
-    if (result.mode === 'server-migrated-local') {
-      showToast(
-        `이 브라우저 데이터 ${result.migratedDays || 0}일치를 Docker 저장소로 이관했습니다`,
-        3200,
-      )
-    } else if (result.mode === 'server-hydrated' && Number(result.dayCount) > 0) {
-      showToast(`Docker 저장소에서 ${result.dayCount}일 데이터를 불러왔습니다`, 2400)
-    }
-
-    window.sessionStorage.setItem(BOOTSTRAP_NOTICE_KEY, 'true')
-  }, [showToast])
-
-  useEffect(() => {
-    const unsubscribe = subscribePlannerPersistenceStatus((status) => {
-      setPersistenceStatus(status)
-    })
-
-    return unsubscribe
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    window.localStorage.setItem(TIMELINE_FOCUS_MODE_KEY, isTimelineFocusMode ? 'true' : 'false')
-  }, [isTimelineFocusMode])
-
   const weekStrip = buildPlannerWeekStrip({
     currentDate,
     currentDayData: data,
@@ -310,14 +262,6 @@ function App() {
     () => deriveBigThreeProgress(data.bigThree, data.timeBoxes),
     [data.bigThree, data.timeBoxes],
   )
-
-  const openQuickAdd = (dateStr, options = {}) => {
-    setQuickAddContext({
-      dateStr,
-      dateLabel: options.dateLabel || formatShortDateLabel(dateStr),
-      initialTemplateId: options.templateId || '',
-    })
-  }
 
   const dumpSection = (
     <BrainDump
@@ -365,7 +309,7 @@ function App() {
       timelineScale={timelineScale}
       onTimelineScaleChange={setTimelineScale}
       focusMode={isTimelineFocusMode}
-      onToggleFocusMode={() => setIsTimelineFocusMode((prev) => !prev)}
+      onToggleFocusMode={toggleTimelineFocusMode}
       addTimeBox={addTimeBox}
       addBoardCard={addBoardCard}
       addBigThreeItem={addBigThreeItem}
@@ -380,8 +324,8 @@ function App() {
       onTimerComplete={handleTimerComplete}
       removeTimeBox={handleRemoveTimeBox}
       onDuplicateTimeBox={handleDuplicateTimeBox}
-      onOpenTemplateManager={() => setIsTemplateManagerOpen(true)}
-      onOpenCategoryManager={() => setIsCategoryManagerOpen(true)}
+      onOpenTemplateManager={openTemplateManager}
+      onOpenCategoryManager={openCategoryManager}
       onOpenQuickAdd={(dateStr, options = {}) => openQuickAdd(dateStr, options)}
       onApplyTemplate={(templateId, dateStr = currentDate) =>
         openQuickAdd(dateStr, {
@@ -415,10 +359,8 @@ function App() {
             bigThreeProgress={bigThreeProgress}
             theme={theme}
             persistenceStatus={persistenceStatus}
-            onOpenReschedule={() => setIsRescheduleModalOpen(true)}
-            onToggleTheme={() =>
-              setTheme((prev) => (prev === THEME_DARK ? THEME_LIGHT : THEME_DARK))
-            }
+            onOpenReschedule={openRescheduleModal}
+            onToggleTheme={toggleTheme}
           />
 
           <div className="hidden min-h-0 flex-1 gap-6 overflow-hidden px-6 pb-6 md:flex">
@@ -486,16 +428,16 @@ function App() {
 
         <ToastContainer />
         <FloatingActionDock
-          onOpenPatchNotes={() => setIsPatchNotesOpen(true)}
-          onOpenCategory={() => setIsCategoryManagerOpen(true)}
-          onOpenData={() => setIsDataModalOpen(true)}
-          onOpenTemplate={() => setIsTemplateManagerOpen(true)}
+          onOpenPatchNotes={openPatchNotes}
+          onOpenCategory={openCategoryManager}
+          onOpenData={openDataModal}
+          onOpenTemplate={openTemplateManager}
         />
-        {isPatchNotesOpen ? <PatchNotesModal onClose={() => setIsPatchNotesOpen(false)} /> : null}
+        {isPatchNotesOpen ? <PatchNotesModal onClose={closePatchNotes} /> : null}
         {isDataModalOpen ? (
           <DataTransferModal
             currentDate={currentDate}
-            onClose={() => setIsDataModalOpen(false)}
+            onClose={closeDataModal}
             onImported={handleImported}
             showToast={showToast}
           />
@@ -503,7 +445,7 @@ function App() {
         {isCategoryManagerOpen ? (
           <CategoryManagerModal
             categories={categories}
-            onClose={() => setIsCategoryManagerOpen(false)}
+            onClose={closeCategoryManager}
             onAddCategory={handleAddCategory}
             onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}
@@ -513,7 +455,7 @@ function App() {
           <TemplateManagerModal
             templates={templates}
             categories={categories}
-            onClose={() => setIsTemplateManagerOpen(false)}
+            onClose={closeTemplateManager}
             onAddTemplate={handleAddTemplate}
             onUpdateTemplate={handleUpdateTemplate}
             onDeleteTemplate={handleDeleteTemplate}
@@ -526,17 +468,17 @@ function App() {
             categories={categories}
             templates={templates}
             initialTemplateId={quickAddContext.initialTemplateId}
-            onClose={() => setQuickAddContext(null)}
+            onClose={closeQuickAdd}
             onSubmit={(payload) => createTimeBoxOnDate(payload)}
           />
         ) : null}
         {isRescheduleModalOpen ? (
           <RescheduleAssistantModal
             plan={buildReschedulePlan()}
-            onClose={() => setIsRescheduleModalOpen(false)}
+            onClose={closeRescheduleModal}
             onApply={(plan) => {
               if (applyReschedulePlan(plan)) {
-                setIsRescheduleModalOpen(false)
+                closeRescheduleModal()
               }
             }}
           />
