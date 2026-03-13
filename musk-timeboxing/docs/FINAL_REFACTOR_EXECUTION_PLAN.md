@@ -194,6 +194,7 @@
 - timeline slot hit-test / drag range 계산을 `planner-dnd` helper로 이동
 - timeline DnD state/sensor/handler orchestration을 `usePlannerTimelineDnd` hook으로 이동
 - timebox undo/duplicate/quick-add orchestration을 `usePlannerTimeBoxActions` hook으로 이동
+- date navigation / daily suggestion / reschedule orchestration을 `usePlannerDayFlow` hook으로 이동
 
 허용:
 
@@ -244,6 +245,7 @@
 - `features/planner-dnd/lib/payloads`를 `.ts`로 전환
 - `features/planner-dnd/usePlannerTimelineDnd`를 `.ts`로 추가
 - `app/hooks/usePlannerTimeBoxActions`를 `.ts`로 추가
+- `app/hooks/usePlannerDayFlow`를 `.ts`로 추가
 - JS model helper의 `createId` 추론을 `string`으로 고정해 TS import 경계를 안정화
 
 다음 우선순위:

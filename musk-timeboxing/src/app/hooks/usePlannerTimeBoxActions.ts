@@ -41,7 +41,7 @@ interface UsePlannerTimeBoxActionsOptions {
   completeTimeBoxByTimer: (id: string) => void
   removeTimeBox: (id: string) => void
   restoreTimeBox: (timeBox: TimeBox) => boolean
-  setCrossDateRevision: React.Dispatch<React.SetStateAction<number>>
+  bumpCrossDateRevision: () => void
 }
 
 const clamp = (value: number, min: number, max: number): number =>
@@ -84,7 +84,7 @@ export const usePlannerTimeBoxActions = ({
   completeTimeBoxByTimer,
   removeTimeBox,
   restoreTimeBox,
-  setCrossDateRevision,
+  bumpCrossDateRevision,
 }: UsePlannerTimeBoxActionsOptions) => {
   const handleUpdateTimeBox = (id: string, changes: UpdateTimeBoxChanges) => {
     const previous = data.timeBoxes.find((box) => box.id === id)
@@ -224,7 +224,7 @@ export const usePlannerTimeBoxActions = ({
         ...targetDay,
         timeBoxes: [...targetDay.timeBoxes, placement.timeBox],
       })
-      setCrossDateRevision((prev) => prev + 1)
+      bumpCrossDateRevision()
     }
 
     showToast(`${formatDateLabel(dateStr)}에 일정을 추가했습니다`)

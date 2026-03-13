@@ -10,24 +10,24 @@ import PatchNotesModal from './features/patch-notes'
 import TemplateManagerModal from './features/template'
 import Timeline, { RescheduleAssistantModal } from './features/timeline'
 import QuickAddModal from './features/timeline/ui/QuickAddModal'
-import { useCategoryMeta, useDailyData, usePlannerTimeBoxActions, useTemplateMeta, useToast } from './app/hooks'
 import {
-  applyTimeBoxReschedulePlan,
+  useCategoryMeta,
+  useDailyData,
+  usePlannerDayFlow,
+  usePlannerTimeBoxActions,
+  useTemplateMeta,
+  useToast,
+} from './app/hooks'
+import {
   buildManagedCategoryViewModels,
   buildPlannerWeekStrip,
   buildMonthCalendarSnapshot,
   buildWeekCalendarSnapshot,
-  buildTimeBoxReschedulePlan,
   buildWeeklyPlanningPreview,
   buildWeeklyReport,
   deriveBigThreeProgress,
-  deriveTopSkippedReason,
   getPlannerPersistenceStatus,
-  loadPlannerDayModel,
-  planTimeBoxPlacement,
   loadLastViewMode,
-  savePlannerDayModel,
-  shiftPlannerDate,
   subscribePlannerPersistenceStatus,
 } from './entities/planner'
 import { usePlannerTimelineDnd } from './features/planner-dnd/usePlannerTimelineDnd'
@@ -38,7 +38,6 @@ const THEME_KEY = 'musk-planner-theme'
 const TIMELINE_FOCUS_MODE_KEY = 'musk-planner-timeline-focus-mode'
 const THEME_DARK = 'dark'
 const THEME_LIGHT = 'light'
-const INSIGHTS_LOADING_MS = 220
 const UNDO_TOAST_MS = 5000
 const BOOTSTRAP_NOTICE_KEY = 'musk-planner-bootstrap-notice-shown'
 
@@ -48,68 +47,6 @@ const formatShortDateLabel = (dateStr) =>
     day: 'numeric',
     weekday: 'short',
   }).format(new Date(`${dateStr}T00:00:00`))
-
-const SKIP_SUGGESTION_BY_REASON = {
-  '외부 일정/방해': '자동 제안: 외부 일정 변동이 있었어요. 버퍼 30분 블록을 먼저 배치해보세요.',
-  '예상보다 오래 걸림': '자동 제안: 주요 일정 예상 시간을 +30분 늘려 계획해보세요.',
-  '우선순위 변경': '자동 제안: 타임라인 배치 전에 빅3를 먼저 확정해보세요.',
-  '컨디션 저하': '자동 제안: 오전 첫 블록을 30분 저강도 작업으로 시작해보세요.',
-  '자료/준비 부족': '자동 제안: 실행 전에 준비/정리 30분 블록을 먼저 잡아보세요.',
-  기타: '자동 제안: 건너뜀이 반복됩니다. 오늘은 버퍼 블록 1개를 먼저 배치해보세요.',
-}
-
-const SKIP_ACTION_TEMPLATE_BY_REASON = {
-  '외부 일정/방해': {
-    label: '버퍼 30분 블록 추가',
-    content: '버퍼 블록',
-    durationSlots: 1,
-    preferredStartSlot: 10,
-  },
-  '예상보다 오래 걸림': {
-    label: '집중 블록 60분 추가',
-    content: '집중 작업(보정)',
-    durationSlots: 2,
-    preferredStartSlot: 8,
-  },
-  '우선순위 변경': {
-    label: '빅3 재정렬 30분 추가',
-    content: '빅3 재정렬',
-    durationSlots: 1,
-    preferredStartSlot: 1,
-  },
-  '컨디션 저하': {
-    label: '저강도 시작 30분 추가',
-    content: '저강도 워밍업',
-    durationSlots: 1,
-    preferredStartSlot: 0,
-  },
-  '자료/준비 부족': {
-    label: '준비/정리 30분 추가',
-    content: '준비/정리',
-    durationSlots: 1,
-    preferredStartSlot: 2,
-  },
-  기타: {
-    label: '버퍼 30분 블록 추가',
-    content: '버퍼 블록',
-    durationSlots: 1,
-    preferredStartSlot: 10,
-  },
-}
-
-const showPlacementFailureToast = (reason, showToast, messages = {}) => {
-  if (reason === 'invalid-content') {
-    showToast(messages.invalidContent || '일정 내용을 입력해 주세요')
-    return
-  }
-
-  if (reason === 'overlap') {
-    showToast(messages.overlap || '해당 시간에 이미 일정이 있습니다')
-    return
-  }
-
-  showToast(messages.noSpace || '배치할 빈 시간이 없습니다')
-}
 
 function App() {
   const {
@@ -192,9 +129,6 @@ function App() {
   const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false)
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false)
   const [quickAddContext, setQuickAddContext] = useState(null)
-  const [isTimelineInsightsLoading, setIsTimelineInsightsLoading] = useState(true)
-  const [crossDateRevision, setCrossDateRevision] = useState(0)
-  const [dailySuggestion, setDailySuggestion] = useState(null)
   const timelineSlotHeight = timelineScale === '15' ? DETAIL_SLOT_HEIGHT : BASE_SLOT_HEIGHT
   const showDesktopPlanningRail = timelineViewMode === 'CANVAS' || timelineViewMode === 'COMPOSER'
   const showMobilePlanningTabs = timelineViewMode === 'CANVAS' || timelineViewMode === 'COMPOSER'
@@ -216,6 +150,31 @@ function App() {
     showToast,
   })
   const {
+    isTimelineInsightsLoading,
+    dailySuggestion,
+    setDailySuggestion,
+    crossDateRevision,
+    bumpCrossDateRevision,
+    goNextDay,
+    goPrevDay,
+    goToDate,
+    applySkipSuggestionAction,
+    buildReschedulePlan,
+    applyReschedulePlan,
+    handleImported,
+  } = usePlannerDayFlow({
+    currentDate,
+    data,
+    showToast,
+    goNextDayRaw,
+    goPrevDayRaw,
+    goToDateRaw,
+    addTimeBox,
+    reloadCurrentDay,
+    reloadCategories,
+    reloadTemplates,
+  })
+  const {
     handleUpdateTimeBox,
     handleTimerComplete,
     handleRemoveTimeBox,
@@ -232,7 +191,7 @@ function App() {
     completeTimeBoxByTimer,
     removeTimeBox,
     restoreTimeBox,
-    setCrossDateRevision,
+    bumpCrossDateRevision,
   })
 
   useEffect(() => {
@@ -280,56 +239,12 @@ function App() {
   }, [])
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setIsTimelineInsightsLoading(false)
-    }, INSIGHTS_LOADING_MS)
-
-    return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [currentDate])
-
-  useEffect(() => {
     if (typeof window === 'undefined') {
       return
     }
 
     window.localStorage.setItem(TIMELINE_FOCUS_MODE_KEY, isTimelineFocusMode ? 'true' : 'false')
   }, [isTimelineFocusMode])
-
-  const goNextDay = () => {
-    setIsTimelineInsightsLoading(true)
-    const skipReason = deriveTopSkippedReason(data.timeBoxes)
-    const nextDate = shiftPlannerDate(currentDate, 1)
-    const result = goNextDayRaw({ autoCarry: true })
-
-    if (result.moved > 0) {
-      showToast(`미완료 일정 ${result.moved}건을 다음 날로 이월했습니다`)
-    } else if (result.skipped > 0) {
-      showToast(`이월 가능한 일정이 없어 ${result.skipped}건을 건너뛰었습니다`)
-    }
-
-    if (skipReason) {
-      setDailySuggestion({
-        forDate: nextDate,
-        message: SKIP_SUGGESTION_BY_REASON[skipReason] || SKIP_SUGGESTION_BY_REASON.기타,
-        action: SKIP_ACTION_TEMPLATE_BY_REASON[skipReason] || SKIP_ACTION_TEMPLATE_BY_REASON.기타,
-      })
-      return
-    }
-
-    setDailySuggestion(null)
-  }
-  const goPrevDay = () => {
-    setIsTimelineInsightsLoading(true)
-    goPrevDayRaw()
-    setDailySuggestion(null)
-  }
-  const goToDate = (dateStr) => {
-    setIsTimelineInsightsLoading(true)
-    goToDateRaw(dateStr)
-    setDailySuggestion(null)
-  }
 
   const weekStrip = buildPlannerWeekStrip({
     currentDate,
@@ -416,69 +331,6 @@ function App() {
     return 0
   }
 
-  const applySkipSuggestionAction = () => {
-    const action = dailySuggestion?.action
-    if (!action) {
-      return
-    }
-
-    const placement = planTimeBoxPlacement(
-      data.timeBoxes,
-      {
-        content: action.content,
-        taskId: null,
-        preferredStartSlot: action.preferredStartSlot,
-        durationSlots: action.durationSlots,
-      },
-    )
-
-    if (!placement.timeBox) {
-      showPlacementFailureToast(placement.reason, showToast, {
-        noSpace: '추천 블록을 배치할 빈 시간이 없습니다',
-      })
-      return
-    }
-
-    addTimeBox(placement.timeBox)
-    showToast(`추천 블록을 추가했습니다: ${placement.timeBox.content}`)
-  }
-
-  const buildReschedulePlan = () => {
-    const targetDate = shiftPlannerDate(currentDate, 1)
-    const targetDay = loadPlannerDayModel(targetDate)
-    return buildTimeBoxReschedulePlan({
-      currentDate,
-      targetDate,
-      timeBoxes: data.timeBoxes,
-      targetTimeBoxes: targetDay.timeBoxes,
-    })
-  }
-
-  const applyReschedulePlan = (plan) => {
-    if (!plan || !Array.isArray(plan.planned) || plan.planned.length === 0) {
-      showToast('재배치할 일정이 없습니다')
-      return
-    }
-
-    const targetDay = loadPlannerDayModel(plan.targetDate)
-    const { appliedCount, nextTimeBoxes } = applyTimeBoxReschedulePlan(targetDay.timeBoxes, plan)
-    if (appliedCount === 0) {
-      showToast('이미 재배치된 일정입니다')
-      setIsRescheduleModalOpen(false)
-      return
-    }
-
-    const merged = {
-      ...targetDay,
-      timeBoxes: nextTimeBoxes,
-    }
-
-    savePlannerDayModel(plan.targetDate, merged)
-    setCrossDateRevision((prev) => prev + 1)
-    showToast(`다음 날(${plan.targetDate})로 ${appliedCount}건 재배치했습니다`, 2600)
-    setIsRescheduleModalOpen(false)
-  }
-
   const handleAddCategory = (name, color, parentId = null) => {
     const result = addCategory(name, color, parentId, {
       lockedParentIds: [...lockedParentIds],
@@ -517,13 +369,6 @@ function App() {
     clearTemplateCategory(id)
     showToast('카테고리를 삭제했습니다')
     return result
-  }
-
-  const handleImported = () => {
-    reloadCategories()
-    reloadTemplates()
-    reloadCurrentDay()
-    setCrossDateRevision((prev) => prev + 1)
   }
 
   const handleAddTemplate = (payload) => {
@@ -776,7 +621,11 @@ function App() {
           <RescheduleAssistantModal
             plan={buildReschedulePlan()}
             onClose={() => setIsRescheduleModalOpen(false)}
-            onApply={applyReschedulePlan}
+            onApply={(plan) => {
+              if (applyReschedulePlan(plan)) {
+                setIsRescheduleModalOpen(false)
+              }
+            }}
           />
         ) : null}
       </div>
