@@ -9,6 +9,14 @@ import {
   saveLastViewMode,
   TOTAL_SLOTS,
 } from '../../../entities/planner'
+import type {
+  BigThreeItem,
+  CategoryViewModel,
+  PlannerDay,
+  TaskCard,
+  TimeBox,
+  TimeBoxStatus,
+} from '../../../entities/planner/model/types'
 import PlanningCanvas from '../../planning-canvas'
 import PlannerWorkspace from '../../planner-workspace'
 import ScheduleComposer from '../../schedule-composer'
@@ -22,7 +30,205 @@ import WeeklyReportCard from './WeeklyReportCard'
 
 const DEFAULT_SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
-const VIEW_MODE_OPTIONS = [
+type TimelineViewMode = 'WORKSPACE' | 'CANVAS' | 'COMPOSER' | 'DAY' | 'WEEK' | 'MONTH'
+type TimelineScale = '30' | '15'
+type TimelineStatusFilter = 'ALL' | TimeBoxStatus
+
+interface TemplateSummary {
+  id: string
+  name: string
+  content: string
+  durationSlots: number
+}
+
+interface PreviewTimeBoxItem {
+  id: string
+  content: string
+  startSlot: number
+  status: TimeBoxStatus
+}
+
+interface WeeklyPlanningPreviewDay {
+  dateStr: string
+  dayLabel: string
+  dayNumber: number
+  total: number
+  previewItems: PreviewTimeBoxItem[]
+}
+
+interface WeeklyReportDay {
+  dateStr: string
+  dayLabel: string
+  total: number
+  completed: number
+}
+
+interface WeeklySkipReasonCount {
+  reason: string
+  count: number
+}
+
+interface WeeklySkipReasonTrend {
+  reason: string
+  current: number
+  previous: number
+  delta: number
+}
+
+interface WeeklyReport {
+  total: number
+  completionRate: number
+  completedPlannedMinutes: number
+  completedActualMinutes: number
+  diff: number
+  byDay: WeeklyReportDay[]
+  topSkipReasons: WeeklySkipReasonCount[]
+  skipReasonTrend?: WeeklySkipReasonTrend[]
+}
+
+interface WeekCalendarDay {
+  dateStr: string
+  dayLabel: string
+  dayNumber: number
+  total: number
+  completionRate: number
+  plannedMinutes: number
+  isCurrent: boolean
+  previewItems: PreviewTimeBoxItem[]
+}
+
+interface WeekCalendarSnapshot {
+  rangeLabel: string
+  days: WeekCalendarDay[]
+}
+
+interface MonthLegendItem {
+  key: string
+  label: string
+  color: string
+  count: number
+}
+
+interface MonthCategorySummary {
+  key: string
+  label: string
+  color: string
+  count: number
+}
+
+interface MonthDetailItem {
+  id: string
+  content: string
+  startSlot: number
+  endSlot: number
+  status: TimeBoxStatus
+  plannedMinutes: number
+  actualMinutes: number | null
+  skipReason: string
+  categoryLabel: string | null
+  categoryColor: string | null
+}
+
+interface MonthCalendarCell {
+  dateStr: string
+  dayLabel: string
+  dayNumber: number
+  total: number
+  completed: number
+  plannedMinutes: number
+  completionRate: number
+  heatLevel: number
+  dominantCategory: { label: string; color: string; count: number } | null
+  categoryMix: MonthCategorySummary[]
+  detailItems: MonthDetailItem[]
+  isCurrent: boolean
+  inCurrentMonth: boolean
+}
+
+interface MonthCalendarSnapshot {
+  monthLabel: string
+  cells: MonthCalendarCell[]
+  legend: MonthLegendItem[]
+  scheduledDays: number
+  averageCompletionRate: number
+  busiestDay: { dayNumber: number; total: number } | null
+}
+
+interface SuggestionAction {
+  label: string
+}
+
+interface MovingTimeBoxPreview {
+  startSlot: number
+  endSlot: number
+  hasConflict: boolean
+}
+
+interface CreateBoxParams {
+  content: string
+  taskId?: string | null
+  startSlot: number
+  durationSlots?: number
+  category?: string | null
+  categoryId?: string | null
+}
+
+interface TimelineProps {
+  data: PlannerDay
+  currentDate: string
+  categories: CategoryViewModel[]
+  taskCards?: TaskCard[]
+  bigThree?: BigThreeItem[]
+  templates?: TemplateSummary[]
+  weeklyReport: WeeklyReport
+  weeklyPlanningPreview?: WeeklyPlanningPreviewDay[]
+  weekCalendar?: WeekCalendarSnapshot
+  monthCalendar?: MonthCalendarSnapshot
+  isInsightsLoading?: boolean
+  onJumpToDate?: (dateStr: string) => void
+  onViewModeChange?: (viewMode: TimelineViewMode) => void
+  initialFocusSlot?: number | null
+  suggestionMessage?: string | null
+  suggestionAction?: SuggestionAction | null
+  onApplySuggestionAction?: () => void
+  onDismissSuggestion?: () => void
+  dropPreviewSlot?: number | null
+  movingTimeBoxPreview?: MovingTimeBoxPreview | null
+  slotHeight?: number
+  timelineScale?: TimelineScale
+  onTimelineScaleChange?: (scale: TimelineScale) => void
+  addTimeBox: (payload: {
+    content: string
+    taskId: string | null
+    startSlot: number
+    endSlot: number
+    category: string | null
+    categoryId: string | null
+  }) => void
+  addBoardCard?: (...args: any[]) => boolean
+  addBigThreeItem?: (...args: any[]) => boolean
+  removeBigThreeItem?: (id: string) => void
+  onSendCardsToBigThree?: (...args: any[]) => number
+  updateTaskCard?: (...args: any[]) => void
+  applyTaskCardBoardLayout?: (...args: any[]) => void
+  updateStackCanvasState?: (...args: any[]) => void
+  updateTimeBox: (id: string, patch: Record<string, unknown>) => void
+  onTimerStart?: (id: string) => void
+  onTimerPause?: (id: string) => void
+  onTimerComplete?: (id: string) => void
+  removeTimeBox: (id: string) => void
+  showToast: (message: string) => void
+  showDropGuide?: boolean
+  focusMode?: boolean
+  onToggleFocusMode?: () => void
+  onDuplicateTimeBox?: (id: string) => boolean
+  onOpenTemplateManager?: () => void
+  onOpenCategoryManager?: () => void
+  onOpenQuickAdd?: (dateStr: string, payload: { dateLabel: string }) => void
+  onApplyTemplate?: (templateId: string, dateStr: string) => void
+}
+
+const VIEW_MODE_OPTIONS: Array<{ value: TimelineViewMode; label: string }> = [
   { value: 'WORKSPACE', label: '워크스페이스' },
   { value: 'CANVAS', label: '캔버스' },
   { value: 'COMPOSER', label: '편성기' },
@@ -30,16 +236,16 @@ const VIEW_MODE_OPTIONS = [
   { value: 'WEEK', label: '주간' },
   { value: 'MONTH', label: '월간' },
 ]
-const STATUS_FILTER_OPTIONS = [
+const STATUS_FILTER_OPTIONS: Array<{ value: TimelineStatusFilter; label: string }> = [
   { value: 'ALL', label: '전체 상태' },
   { value: 'PLANNED', label: '예정' },
   { value: 'COMPLETED', label: '완료' },
   { value: 'SKIPPED', label: '스킵' },
 ]
 
-const resolveInitialViewMode = (data) => {
+const resolveInitialViewMode = (data: PlannerDay): TimelineViewMode => {
   const persistedViewMode = loadLastViewMode()
-  if (persistedViewMode) {
+  if (VIEW_MODE_OPTIONS.some((option) => option.value === persistedViewMode)) {
     return persistedViewMode
   }
 
@@ -103,7 +309,14 @@ function Timeline({
   weeklyReport,
   weeklyPlanningPreview = [],
   weekCalendar = { rangeLabel: '', days: [] },
-  monthCalendar = { monthLabel: '', cells: [] },
+  monthCalendar = {
+    monthLabel: '',
+    cells: [],
+    legend: [],
+    scheduledDays: 0,
+    averageCompletionRate: 0,
+    busiestDay: null,
+  },
   isInsightsLoading = false,
   onJumpToDate = () => {},
   onViewModeChange = () => {},
@@ -139,12 +352,12 @@ function Timeline({
   onOpenCategoryManager = () => {},
   onOpenQuickAdd = () => {},
   onApplyTemplate = () => {},
-}) {
-  const sectionRef = useRef(null)
-  const [viewMode, setViewMode] = useState(() => resolveInitialViewMode(data))
-  const [statusFilter, setStatusFilter] = useState('ALL')
+}: TimelineProps) {
+  const sectionRef = useRef<HTMLElement | null>(null)
+  const [viewMode, setViewMode] = useState<TimelineViewMode>(() => resolveInitialViewMode(data))
+  const [statusFilter, setStatusFilter] = useState<TimelineStatusFilter>('ALL')
   const [categoryFilter, setCategoryFilter] = useState('ALL')
-  const [selectedMonthDate, setSelectedMonthDate] = useState(null)
+  const [selectedMonthDate, setSelectedMonthDate] = useState<string | null>(null)
   const isDayView = viewMode === 'DAY'
   const isWorkspaceView = viewMode === 'WORKSPACE'
   const isCanvasView = viewMode === 'CANVAS'
@@ -576,7 +789,7 @@ function Timeline({
             <span className="font-semibold uppercase tracking-wide">상태 필터</span>
             <select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
+              onChange={(event) => setStatusFilter(event.target.value as TimelineStatusFilter)}
               className="ui-select !p-2 text-xs"
               data-testid="timeline-status-filter"
             >
@@ -751,7 +964,6 @@ function Timeline({
       {isCanvasView ? (
         <PlanningCanvas
           key={currentDate}
-          currentDate={currentDate}
           stackCanvasState={data.stackCanvasState}
           taskCards={taskCards}
           categories={categories}
@@ -770,7 +982,7 @@ function Timeline({
           items={taskCards}
           categories={categories}
           timeBoxes={sortedBoxes}
-          onScheduleCard={handleScheduleBoardCard}
+          onScheduleCard={handleScheduleBoardCard as unknown as () => boolean}
           onJumpToDay={() => setViewMode('DAY')}
           onJumpToBoard={() => setViewMode('CANVAS')}
         />

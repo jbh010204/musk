@@ -272,6 +272,7 @@
 - `features/timeline/ui/MonthlyCalendarView`, `MonthDayDetailSheet`를 TS로 전환
 - `features/timeline/ui/timeBoxLayout`, `TimeBoxCard`를 TS로 전환
 - `features/timeline/ui/TimeSlotGrid`, `TimelineRailSurface`를 TS로 전환
+- `features/timeline/ui/index`, `features/timeline/index`를 TS로 전환
 - `features/planner-dnd/lib/payloads`를 `.ts`로 전환
 - `features/planner-dnd/usePlannerTimelineDnd`를 `.ts`로 추가
 - `app/hooks/usePlannerTimeBoxActions`를 `.ts`로 추가
