@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import {
-  applyStackCanvasStatePatch,
   DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
   addManualBigThreeItem,
   addManyTaskCardsToBigThree,
@@ -31,16 +30,17 @@ import {
   savePlannerDayModel,
   startTimeBoxTimerRecord,
   shiftPlannerDate,
-  syncTaskCardLinksWithTimeBoxes,
   TOTAL_SLOTS,
   updateTimeBoxRecord,
   updateTaskCardRecord,
   pauseTimeBoxTimerRecord,
+  replacePlannerDayBigThree,
+  replacePlannerDayStackCanvasState,
+  replacePlannerDayTaskCards,
+  replacePlannerDayTimeBoxes,
 } from '../../entities/planner'
 
 const createId = () => crypto.randomUUID()
-
-const syncTaskCardLinks = (taskCards, timeBoxes) => syncTaskCardLinksWithTimeBoxes(taskCards, timeBoxes)
 
 export const useDailyData = () => {
   const today = formatPlannerDate(new Date())
@@ -107,19 +107,21 @@ export const useDailyData = () => {
     const trimmed = title.trim()
     if (!trimmed) return
 
-    setData((prev) => ({
-      ...prev,
-      taskCards: addTaskCardRecord(prev.taskCards, {
-        title: trimmed,
-        isDone: false,
-        priority: 0,
-        categoryId: null,
-        estimateSlots: DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
-        linkedTimeBoxIds: [],
-        note: '',
-        origin: 'list',
-      }),
-    }))
+    setData((prev) =>
+      replacePlannerDayTaskCards(
+        prev,
+        addTaskCardRecord(prev.taskCards, {
+          title: trimmed,
+          isDone: false,
+          priority: 0,
+          categoryId: null,
+          estimateSlots: DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
+          linkedTimeBoxIds: [],
+          note: '',
+          origin: 'list',
+        }),
+      ),
+    )
   }
 
   const addBoardCard = ({ title, categoryId = null, estimateSlots = 1, note = '' }) => {
@@ -128,28 +130,27 @@ export const useDailyData = () => {
       return false
     }
 
-    setData((prev) => ({
-      ...prev,
-      taskCards: addTaskCardRecord(prev.taskCards, {
-        title: trimmed,
-        isDone: false,
-        priority: 0,
-        categoryId,
-        estimateSlots,
-        linkedTimeBoxIds: [],
-        note,
-        origin: 'board',
-      }),
-    }))
+    setData((prev) =>
+      replacePlannerDayTaskCards(
+        prev,
+        addTaskCardRecord(prev.taskCards, {
+          title: trimmed,
+          isDone: false,
+          priority: 0,
+          categoryId,
+          estimateSlots,
+          linkedTimeBoxIds: [],
+          note,
+          origin: 'board',
+        }),
+      ),
+    )
 
     return true
   }
 
   const removeTaskCard = (id) => {
-    setData((prev) => ({
-      ...prev,
-      taskCards: removeTaskCardRecord(prev.taskCards, id),
-    }))
+    setData((prev) => replacePlannerDayTaskCards(prev, removeTaskCardRecord(prev.taskCards, id)))
   }
 
   const restoreTaskCard = (item, index = null) => {
@@ -158,10 +159,7 @@ export const useDailyData = () => {
       const nextTaskCards = restoreTaskCardRecord(prev.taskCards, item, index)
       restored = nextTaskCards.length !== prev.taskCards.length
 
-      return {
-        ...prev,
-        taskCards: nextTaskCards,
-      }
+      return replacePlannerDayTaskCards(prev, nextTaskCards)
     })
 
     return restored
@@ -177,38 +175,32 @@ export const useDailyData = () => {
       }
       nextPriority = resolvedPriority
 
-      return {
-        ...prev,
-        taskCards: nextTaskCards,
-      }
+      return replacePlannerDayTaskCards(prev, nextTaskCards)
     })
 
     return nextPriority
   }
 
   const updateTaskCard = (id, changes = {}) => {
-    setData((prev) => {
-      const nextTaskCards = updateTaskCardRecord(prev.taskCards, id, changes)
-
-      return {
-        ...prev,
-        taskCards: syncTaskCardLinks(nextTaskCards, prev.timeBoxes),
-      }
-    })
+    setData((prev) =>
+      replacePlannerDayTaskCards(prev, updateTaskCardRecord(prev.taskCards, id, changes), {
+        syncLinks: true,
+      }),
+    )
   }
 
   const applyTaskCardBoardLayout = (layoutEntries = []) => {
-    setData((prev) => ({
-      ...prev,
-      taskCards: applyTaskCardBoardLayoutCommand(prev.taskCards, layoutEntries),
-    }))
+    setData((prev) =>
+      replacePlannerDayTaskCards(prev, applyTaskCardBoardLayoutCommand(prev.taskCards, layoutEntries)),
+    )
   }
 
   const clearTaskCardCategoryState = (categoryId) => {
-    setData((prev) => ({
-      ...prev,
-      taskCards: syncTaskCardLinks(clearTaskCardCategory(prev.taskCards, categoryId), prev.timeBoxes),
-    }))
+    setData((prev) =>
+      replacePlannerDayTaskCards(prev, clearTaskCardCategory(prev.taskCards, categoryId), {
+        syncLinks: true,
+      }),
+    )
   }
 
   const sendToBigThree = (taskCardId) => {
@@ -226,10 +218,7 @@ export const useDailyData = () => {
       }
 
       inserted = didInsert
-      return {
-        ...prev,
-        bigThree: nextBigThree,
-      }
+      return replacePlannerDayBigThree(prev, nextBigThree)
     })
 
     return inserted
@@ -250,10 +239,7 @@ export const useDailyData = () => {
       }
 
       insertedCount = nextInsertedCount
-      return {
-        ...prev,
-        bigThree: nextBigThree,
-      }
+      return replacePlannerDayBigThree(prev, nextBigThree)
     })
 
     return insertedCount
@@ -273,10 +259,7 @@ export const useDailyData = () => {
       }
 
       insertedCount = nextInsertedCount
-      return {
-        ...prev,
-        bigThree: nextBigThree,
-      }
+      return replacePlannerDayBigThree(prev, nextBigThree)
     })
 
     return insertedCount
@@ -296,20 +279,14 @@ export const useDailyData = () => {
       }
 
       inserted = didInsert
-      return {
-        ...prev,
-        bigThree: nextBigThree,
-      }
+      return replacePlannerDayBigThree(prev, nextBigThree)
     })
 
     return inserted
   }
 
   const removeBigThreeItem = (id) => {
-    setData((prev) => ({
-      ...prev,
-      bigThree: removeBigThreeItemRecord(prev.bigThree, id),
-    }))
+    setData((prev) => replacePlannerDayBigThree(prev, removeBigThreeItemRecord(prev.bigThree, id)))
   }
 
   const addTimeBox = ({ content, taskId, startSlot, endSlot, category = null, categoryId = null }) => {
@@ -334,11 +311,7 @@ export const useDailyData = () => {
 
       insertedId = nextInsertedId
 
-      return {
-        ...prev,
-        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
-        timeBoxes: nextTimeBoxes,
-      }
+      return replacePlannerDayTimeBoxes(prev, nextTimeBoxes)
     })
 
     if (insertedId) {
@@ -354,73 +327,33 @@ export const useDailyData = () => {
       rememberFocus(changes.startSlot)
     }
 
-    setData((prev) => {
-      const nextTimeBoxes = updateTimeBoxRecord(prev.timeBoxes, id, changes)
-
-      return {
-        ...prev,
-        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
-        timeBoxes: nextTimeBoxes,
-      }
-    })
+    setData((prev) => replacePlannerDayTimeBoxes(prev, updateTimeBoxRecord(prev.timeBoxes, id, changes)))
   }
 
   const startTimeBoxTimer = (id) => {
     const now = Date.now()
 
-    setData((prev) => {
-      const nextTimeBoxes = startTimeBoxTimerRecord(prev.timeBoxes, id, now)
-
-      return {
-        ...prev,
-        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
-        timeBoxes: nextTimeBoxes,
-      }
-    })
+    setData((prev) => replacePlannerDayTimeBoxes(prev, startTimeBoxTimerRecord(prev.timeBoxes, id, now)))
   }
 
   const pauseTimeBoxTimer = (id) => {
     const now = Date.now()
-    setData((prev) => {
-      const nextTimeBoxes = pauseTimeBoxTimerRecord(prev.timeBoxes, id, now)
-
-      return {
-        ...prev,
-        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
-        timeBoxes: nextTimeBoxes,
-      }
-    })
+    setData((prev) => replacePlannerDayTimeBoxes(prev, pauseTimeBoxTimerRecord(prev.timeBoxes, id, now)))
   }
 
   const completeTimeBoxByTimer = (id) => {
     const now = Date.now()
-    setData((prev) => {
-      const nextTimeBoxes = completeTimeBoxByTimerRecord(prev.timeBoxes, id, now)
-
-      return {
-        ...prev,
-        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
-        timeBoxes: nextTimeBoxes,
-      }
-    })
+    setData((prev) => replacePlannerDayTimeBoxes(prev, completeTimeBoxByTimerRecord(prev.timeBoxes, id, now)))
   }
 
   const clearTimeBoxCategory = (categoryId) => {
-    setData((prev) => ({
-      ...prev,
-      timeBoxes: clearTimeBoxCategoryRecord(prev.timeBoxes, categoryId),
-    }))
+    setData((prev) => replacePlannerDayTimeBoxes(prev, clearTimeBoxCategoryRecord(prev.timeBoxes, categoryId)))
   }
 
   const removeTimeBox = (id) => {
     setData((prev) => {
       const nextTimeBoxes = removeTimeBoxRecord(prev.timeBoxes, id)
-
-      return {
-        ...prev,
-        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
-        timeBoxes: nextTimeBoxes,
-      }
+      return replacePlannerDayTimeBoxes(prev, nextTimeBoxes)
     })
   }
 
@@ -435,11 +368,7 @@ export const useDailyData = () => {
 
       restored = didRestore
 
-      return {
-        ...prev,
-        taskCards: syncTaskCardLinks(prev.taskCards, nextTimeBoxes),
-        timeBoxes: nextTimeBoxes,
-      }
+      return replacePlannerDayTimeBoxes(prev, nextTimeBoxes)
     })
 
     if (restored) {
@@ -455,12 +384,7 @@ export const useDailyData = () => {
   }
 
   const updateStackCanvasState = (nextStackCanvasState) => {
-    setData((prev) => {
-      return {
-        ...prev,
-        stackCanvasState: applyStackCanvasStatePatch(prev.stackCanvasState, nextStackCanvasState),
-      }
-    })
+    setData((prev) => replacePlannerDayStackCanvasState(prev, nextStackCanvasState))
   }
 
   return {
