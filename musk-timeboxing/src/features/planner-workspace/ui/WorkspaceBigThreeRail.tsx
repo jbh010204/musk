@@ -1,5 +1,18 @@
 import { useMemo, useState } from 'react'
+import type { BigThreeItem, TaskCard } from '../../../entities/planner/model/types'
 import { Button } from '../../../shared/ui'
+
+interface WorkspaceBigThreeRailProps {
+  bigThree?: BigThreeItem[]
+  taskCards?: TaskCard[]
+  selectedCardIds?: string[]
+  selectedCardId?: string | null
+  selectedBigThreeId?: string | null
+  onAddBigThreeItem?: (content: string) => boolean
+  onRemoveBigThreeItem?: (slotId: string) => void
+  onSelectBigThree?: (slot: BigThreeItem | null) => void
+  onSendSelectedCardsToBigThree?: (cardIds: string[]) => number
+}
 
 function WorkspaceBigThreeRail({
   bigThree = [],
@@ -11,8 +24,8 @@ function WorkspaceBigThreeRail({
   onRemoveBigThreeItem = () => {},
   onSelectBigThree = () => {},
   onSendSelectedCardsToBigThree = () => 0,
-}) {
-  const [editingSlotIndex, setEditingSlotIndex] = useState(null)
+}: WorkspaceBigThreeRailProps) {
+  const [editingSlotIndex, setEditingSlotIndex] = useState<number | null>(null)
   const [draft, setDraft] = useState('')
   const [isComposing, setIsComposing] = useState(false)
   const sourceCardMap = useMemo(
@@ -93,7 +106,10 @@ function WorkspaceBigThreeRail({
                     onCompositionStart={() => setIsComposing(true)}
                     onCompositionEnd={() => setIsComposing(false)}
                     onKeyDown={(event) => {
-                      const nativeComposing = event.nativeEvent?.isComposing || event.keyCode === 229
+                      const nativeComposing =
+                        'isComposing' in event.nativeEvent
+                          ? event.nativeEvent.isComposing
+                          : event.keyCode === 229
 
                       if (isComposing || nativeComposing) {
                         return

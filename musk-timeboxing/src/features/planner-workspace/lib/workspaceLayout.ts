@@ -4,4 +4,4 @@ export const WORKSPACE_LAYOUT = {
   composerLabelWidthPx: 72,
   composerSlotHeightPx: 34,
   composerBlocksInsetRightPx: 8,
-}
+} as const
