@@ -1,15 +1,51 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ComponentType, type CSSProperties } from 'react'
 import {
   createClearedStackCanvasSelectionPatch,
   createStackCanvasBigThreeSelectionPatch,
   createStackCanvasCardSelectionPatch,
   resolveStackCanvasSelectedCardIds,
 } from '../../../entities/planner'
+import type { BigThreeItem, CategoryViewModel, PlannerDay, TaskCard } from '../../../entities/planner/model/types'
 import { Card } from '../../../shared/ui'
 import PlanningCanvas from '../../planning-canvas'
 import TimelineRailSurface from '../../timeline/ui/TimelineRailSurface'
 import { WORKSPACE_LAYOUT } from '../lib/workspaceLayout'
 import WorkspaceBigThreeRail from './WorkspaceBigThreeRail'
+
+const PlanningCanvasCompat = PlanningCanvas as unknown as ComponentType<Record<string, unknown>>
+
+interface PlannerWorkspaceProps {
+  currentDate: string
+  data: PlannerDay
+  categories: CategoryViewModel[]
+  taskCards: TaskCard[]
+  bigThree?: BigThreeItem[]
+  addBoardCard: (...args: unknown[]) => boolean
+  addBigThreeItem: (content: string) => boolean
+  removeBigThreeItem: (slotId: string) => void
+  updateTaskCard: (...args: unknown[]) => void
+  applyTaskCardBoardLayout: (...args: unknown[]) => void
+  updateStackCanvasState: (patch: Record<string, unknown>) => void
+  onOpenCategoryManager: () => void
+  onSendCardsToBigThree: (cardIds: string[]) => number
+  onScheduleBoardCard: (cardId: string, startSlot: number) => boolean
+  onScheduleBoardCards: (cardIds: string[], startSlot: number) => boolean
+  onScheduleSelectedCardsToFirstOpen: (cardIds: string[]) => boolean
+  onScheduleBigThreeItem: (bigThreeItemId: string, startSlot: number) => boolean
+  onCreateManualTimeBox: (payload: {
+    content: string
+    startSlot: number
+    durationSlots: number
+  }) => boolean
+  onResizeTimeBox: ((id: string, endSlot: number) => void) | null
+  updateTimeBox: (id: string, patch: Record<string, unknown>) => void
+  removeTimeBox: (id: string) => void
+  onDuplicateTimeBox: (id: string) => boolean
+  onTimerStart: (id: string) => void
+  onTimerPause: (id: string) => void
+  onTimerComplete: (id: string) => void
+  onJumpToDay: () => void
+}
 
 function PlannerWorkspace({
   currentDate,
@@ -38,13 +74,20 @@ function PlannerWorkspace({
   onTimerPause,
   onTimerComplete,
   onJumpToDay,
-}) {
-  const [nativeDraggingCardId, setNativeDraggingCardId] = useState(null)
-  const selectedCardId = data.stackCanvasState?.selectedCardId ?? null
-  const selectedBigThreeId = data.stackCanvasState?.selectedBigThreeId ?? null
+}: PlannerWorkspaceProps) {
+  const [nativeDraggingCardId, setNativeDraggingCardId] = useState<string | null>(null)
+  const selectedCardId =
+    typeof data.stackCanvasState?.selectedCardId === 'string' ? data.stackCanvasState.selectedCardId : null
+  const selectedBigThreeId =
+    typeof data.stackCanvasState?.selectedBigThreeId === 'string'
+      ? data.stackCanvasState.selectedBigThreeId
+      : null
+  const rawSelectedCardIds = Array.isArray(data.stackCanvasState?.selectedCardIds)
+    ? data.stackCanvasState.selectedCardIds.filter((item): item is string => typeof item === 'string')
+    : []
   const selectedCardIds = useMemo(
-    () => resolveStackCanvasSelectedCardIds(selectedCardId, data.stackCanvasState?.selectedCardIds ?? []),
-    [data.stackCanvasState?.selectedCardIds, selectedCardId],
+    () => resolveStackCanvasSelectedCardIds(selectedCardId, rawSelectedCardIds),
+    [rawSelectedCardIds, selectedCardId],
   )
   const selectedBigThreeItem = useMemo(
     () => bigThree.find((item) => item.id === selectedBigThreeId) || null,
@@ -56,21 +99,25 @@ function PlannerWorkspace({
     }
   }, [bigThree, selectedBigThreeId, updateStackCanvasState])
 
-  const syncSelection = (nextIds, preferredId = null, nextBigThreeId = null) => {
+  const syncSelection = (
+    nextIds: string[],
+    preferredId: string | null = null,
+    nextBigThreeId: string | null = null,
+  ) => {
     updateStackCanvasState(
       createStackCanvasCardSelectionPatch(taskCards, nextIds, preferredId, nextBigThreeId),
     )
   }
 
-  const handleSelectCard = (nextId) => {
+  const handleSelectCard = (nextId: string | null) => {
     syncSelection(nextId ? [nextId] : [], nextId, null)
   }
 
-  const handleSelectCards = (nextIds) => {
-    syncSelection(nextIds, nextIds.at(-1) ?? null, null)
+  const handleSelectCards = (nextIds: string[]) => {
+    syncSelection(nextIds, nextIds[nextIds.length - 1] ?? null, null)
   }
 
-  const handleSelectBigThree = (slot) => {
+  const handleSelectBigThree = (slot: BigThreeItem | null) => {
     if (!slot) {
       updateStackCanvasState({ selectedBigThreeId: null })
       return
@@ -105,10 +152,10 @@ function PlannerWorkspace({
 
         <div
           className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(0,var(--workspace-timeline-rail))]"
-          style={{ '--workspace-timeline-rail': WORKSPACE_LAYOUT.timelineRailWidth }}
+          style={{ '--workspace-timeline-rail': WORKSPACE_LAYOUT.timelineRailWidth } as CSSProperties}
         >
           <div className="min-w-0 p-5">
-            <PlanningCanvas
+            <PlanningCanvasCompat
               key={`${currentDate}-workspace`}
               currentDate={currentDate}
               stackCanvasState={data.stackCanvasState}
@@ -128,7 +175,7 @@ function PlannerWorkspace({
               onSendSelectedCardsToBigThree={onSendCardsToBigThree}
               onScheduleSelectedCardsToFirstOpen={onScheduleSelectedCardsToFirstOpen}
               scheduleDraggable
-              onScheduleDragStart={(item) => setNativeDraggingCardId(item.id)}
+              onScheduleDragStart={(item: { id: string }) => setNativeDraggingCardId(item.id)}
               onScheduleDragEnd={() => setNativeDraggingCardId(null)}
               embedded
             />
