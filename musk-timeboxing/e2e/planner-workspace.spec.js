@@ -189,7 +189,8 @@ test('planner workspace keeps the last selected timeline view after refresh', as
   await page.reload()
 
   await page.locator('[data-testid="timeline-view-week"]:visible').first().click()
-  await expect(page.locator('text=주간 계획을 한 번에 확인합니다.').first()).toBeVisible()
+  await expect(page.locator('[data-testid="timeline-week-prev"]:visible').first()).toBeVisible()
+  await expect(page.locator('[data-testid="timeline-week-next"]:visible').first()).toBeVisible()
 
   await page.reload()
   await expect(page.locator('[data-testid="timeline-view-week"][aria-pressed="true"]:visible').first()).toBeVisible()

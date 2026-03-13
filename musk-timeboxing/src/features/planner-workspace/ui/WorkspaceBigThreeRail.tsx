@@ -56,12 +56,9 @@ function WorkspaceBigThreeRail({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-              Focus
-            </p>
-            <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">오늘의 Big3</p>
-          </div>
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-700 dark:text-slate-100">
+            Focus
+          </p>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
             {bigThree.length}/3
           </span>

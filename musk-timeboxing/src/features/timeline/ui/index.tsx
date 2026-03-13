@@ -37,6 +37,25 @@ type TimelineViewMode = 'WORKSPACE' | 'CANVAS' | 'COMPOSER' | 'DAY' | 'WEEK' | '
 type TimelineScale = '30' | '15'
 type TimelineStatusFilter = 'ALL' | TimeBoxStatus
 
+const shiftDateString = (dateStr: string | null | undefined, dayDelta: number): string | null => {
+  if (typeof dateStr !== 'string') {
+    return null
+  }
+
+  const [year, month, day] = dateStr.split('-').map(Number)
+  if (![year, month, day].every(Number.isFinite)) {
+    return null
+  }
+
+  const date = new Date(year, month - 1, day)
+  date.setDate(date.getDate() + dayDelta)
+
+  const nextYear = date.getFullYear()
+  const nextMonth = String(date.getMonth() + 1).padStart(2, '0')
+  const nextDay = String(date.getDate()).padStart(2, '0')
+  return `${nextYear}-${nextMonth}-${nextDay}`
+}
+
 interface TemplateSummary extends PlannerTemplate {}
 
 interface PreviewTimeBoxItem {
@@ -239,7 +258,7 @@ interface TimelineProps {
 }
 
 const VIEW_MODE_OPTIONS: Array<{ value: TimelineViewMode; label: string }> = [
-  { value: 'WORKSPACE', label: '워크스페이스' },
+  { value: 'WORKSPACE', label: 'Workspace' },
   { value: 'CANVAS', label: '캔버스' },
   { value: 'COMPOSER', label: '편성기' },
   { value: 'DAY', label: '일간' },
@@ -373,12 +392,18 @@ function Timeline({
   const isCanvasView = viewMode === 'CANVAS'
   const isComposerView = viewMode === 'COMPOSER'
   const sectionTitle = isWorkspaceView
-    ? '🧠 플래너 워크스페이스'
+    ? 'Workspace'
     : isCanvasView
       ? '🪄 플래닝 캔버스'
       : isComposerView
         ? '🗓 편성기'
         : '⏱ 타임라인'
+  const previousWeekDate = weekCalendar.days[0]?.dateStr
+    ? shiftDateString(weekCalendar.days[0].dateStr, -7)
+    : null
+  const nextWeekDate = weekCalendar.days[0]?.dateStr
+    ? shiftDateString(weekCalendar.days[0].dateStr, 7)
+    : null
 
   const sortedBoxes = useMemo(
     () => [...data.timeBoxes].sort((a, b) => a.startSlot - b.startSlot),
@@ -742,11 +767,46 @@ function Timeline({
         ) : null}
       </div>
 
-      {!isDayView && !isWorkspaceView && !isCanvasView && !isComposerView ? (
+      {viewMode === 'WEEK' ? (
+        <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl bg-slate-100/80 px-4 py-3 dark:bg-slate-800/35">
+          <button
+            type="button"
+            data-testid="timeline-week-prev"
+            disabled={!previousWeekDate}
+            onClick={() => {
+              if (previousWeekDate) {
+                onJumpToDate(previousWeekDate)
+              }
+            }}
+            className="rounded-xl px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-white hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+          >
+            ←
+          </button>
+          <div className="min-w-0 text-center">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+              Week
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-100">
+              {weekCalendar.rangeLabel}
+            </p>
+          </div>
+          <button
+            type="button"
+            data-testid="timeline-week-next"
+            disabled={!nextWeekDate}
+            onClick={() => {
+              if (nextWeekDate) {
+                onJumpToDate(nextWeekDate)
+              }
+            }}
+            className="rounded-xl px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-white hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+          >
+            →
+          </button>
+        </div>
+      ) : !isDayView && !isWorkspaceView && !isCanvasView && !isComposerView ? (
         <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
-          {viewMode === 'WEEK'
-            ? `${weekCalendar.rangeLabel} 구간의 주간 계획을 한 번에 확인합니다.`
-            : `${monthCalendar.monthLabel} 전체 일정을 캘린더 그리드로 확인합니다.`}
+          {monthCalendar.monthLabel} 전체 일정을 캘린더 그리드로 확인합니다.
         </div>
       ) : null}
 
