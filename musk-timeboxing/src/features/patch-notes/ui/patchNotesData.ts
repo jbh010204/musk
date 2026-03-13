@@ -1,4 +1,14 @@
-export const PATCH_NOTES = [
+export interface PatchNoteEntry {
+  version: string
+  date: string
+  title: string
+  summary: string
+  focus: string[]
+  improvements: string[]
+  validation: string[]
+}
+
+export const PATCH_NOTES: PatchNoteEntry[] = [
   {
     version: 'v0.22.9',
     date: '2026-03-12',

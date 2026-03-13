@@ -1,14 +1,18 @@
 import { useState } from 'react'
 import { Button } from '../../../shared/ui'
 import { PatchNoteItem } from './components'
-import { PATCH_NOTES } from './patchNotesData'
+import { PATCH_NOTES, type PatchNoteEntry } from './patchNotesData'
 
-function PatchNotesModal({ onClose }) {
-  const [expandedVersions, setExpandedVersions] = useState(() => ({
+interface PatchNotesModalProps {
+  onClose: () => void
+}
+
+function PatchNotesModal({ onClose }: PatchNotesModalProps) {
+  const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>(() => ({
     [PATCH_NOTES[0]?.version ?? '']: true,
   }))
 
-  const toggleExpanded = (version) => {
+  const toggleExpanded = (version: PatchNoteEntry['version']) => {
     setExpandedVersions((prev) => ({
       ...prev,
       [version]: !prev[version],

@@ -1,4 +1,11 @@
-function DetailColumn({ title, items }) {
+import type { PatchNoteEntry } from '../patchNotesData'
+
+interface DetailColumnProps {
+  title: string
+  items: string[]
+}
+
+function DetailColumn({ title, items }: DetailColumnProps) {
   return (
     <div className="rounded-2xl bg-slate-200/60 p-3 dark:bg-slate-900/45">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -15,7 +22,11 @@ function DetailColumn({ title, items }) {
   )
 }
 
-function PatchNoteDetail({ note }) {
+interface PatchNoteDetailProps {
+  note: PatchNoteEntry
+}
+
+function PatchNoteDetail({ note }: PatchNoteDetailProps) {
   return (
     <div
       id={`patch-note-detail-${note.version}`}

@@ -1,8 +1,15 @@
 import { Card } from '../../../../shared/ui'
 import PatchNoteDetail from './PatchNoteDetail'
 import PatchNoteHeader from './PatchNoteHeader'
+import type { PatchNoteEntry } from '../patchNotesData'
 
-function PatchNoteItem({ note, isExpanded, onToggle }) {
+interface PatchNoteItemProps {
+  note: PatchNoteEntry
+  isExpanded: boolean
+  onToggle: () => void
+}
+
+function PatchNoteItem({ note, isExpanded, onToggle }: PatchNoteItemProps) {
   return (
     <Card as="section" tone="subtle" className="p-4">
       <PatchNoteHeader note={note} isExpanded={isExpanded} onToggle={onToggle} />

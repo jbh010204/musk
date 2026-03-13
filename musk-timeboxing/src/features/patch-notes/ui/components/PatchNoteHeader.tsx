@@ -1,6 +1,13 @@
 import { Badge, Button } from '../../../../shared/ui'
+import type { PatchNoteEntry } from '../patchNotesData'
 
-function PatchNoteHeader({ note, isExpanded, onToggle }) {
+interface PatchNoteHeaderProps {
+  note: PatchNoteEntry
+  isExpanded: boolean
+  onToggle: () => void
+}
+
+function PatchNoteHeader({ note, isExpanded, onToggle }: PatchNoteHeaderProps) {
   return (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0 flex-1">
