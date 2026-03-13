@@ -1,5 +1,14 @@
 import { Badge, Button, Card } from '../../../shared/ui'
 
+interface BoardToolbarProps {
+  totalCards?: number
+  scheduledCards?: number
+  uncategorizedCount?: number
+  onCreateCard?: () => void
+  onOpenCategoryManager?: () => void
+  embedded?: boolean
+}
+
 function BoardToolbar({
   totalCards = 0,
   scheduledCards = 0,
@@ -7,7 +16,7 @@ function BoardToolbar({
   onCreateCard = () => {},
   onOpenCategoryManager = () => {},
   embedded = false,
-}) {
+}: BoardToolbarProps) {
   return (
     <Card className={embedded ? 'p-4' : 'p-5'}>
       <div className="flex flex-wrap items-start justify-between gap-4">

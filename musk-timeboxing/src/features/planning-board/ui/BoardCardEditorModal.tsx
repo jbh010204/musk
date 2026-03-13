@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { CategoryViewModel, TaskCard } from '../../../entities/planner/model/types'
 import { Button } from '../../../shared/ui'
 
 const DURATION_OPTIONS = [
@@ -6,14 +7,26 @@ const DURATION_OPTIONS = [
   { value: 2, label: '60분' },
   { value: 3, label: '90분' },
   { value: 4, label: '120분' },
-]
+ ] as const
+
+interface BoardCardEditorModalProps {
+  categories?: CategoryViewModel[]
+  initialCard?: TaskCard | null
+  onClose?: () => void
+  onSubmit?: (payload: {
+    title: string
+    categoryId: string
+    estimateSlots: number
+    note: string
+  }) => boolean | void
+}
 
 function BoardCardEditorModal({
   categories = [],
   initialCard = null,
   onClose = () => {},
   onSubmit = () => false,
-}) {
+}: BoardCardEditorModalProps) {
   const assignableCategories = useMemo(
     () => categories.filter((category) => category?.isLeaf !== false),
     [categories],

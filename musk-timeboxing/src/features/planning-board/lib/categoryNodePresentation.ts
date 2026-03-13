@@ -1,4 +1,4 @@
-const hexToRgba = (hex, alpha) => {
+const hexToRgba = (hex: string | null | undefined, alpha: number): string => {
   if (typeof hex !== 'string') {
     return `rgba(99, 102, 241, ${alpha})`
   }
@@ -22,13 +22,21 @@ const hexToRgba = (hex, alpha) => {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`
 }
 
+interface CategoryNodePresentationInput {
+  color: string
+  count: number
+  isOver: boolean
+  isArmed: boolean
+  isActive: boolean
+}
+
 export const getCategoryNodePresentation = ({
   color,
   count,
   isOver,
   isArmed,
   isActive,
-}) => {
+}: CategoryNodePresentationInput) => {
   const hasCards = count > 0
   const isHighlighted = isOver || isArmed || isActive
   const showGradient = hasCards || isArmed || isActive
