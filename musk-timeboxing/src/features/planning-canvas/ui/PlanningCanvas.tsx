@@ -591,7 +591,7 @@ function PlanningCanvas({
   const canvasContent: ReactNode = (
     <div
       data-testid="planning-canvas-surface"
-      className={`rounded-[28px] bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.25)_1px,transparent_0)] bg-[length:24px_24px] ${embedded ? 'p-4' : 'p-5'} dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.35)_1px,transparent_0)]`}
+      className={`rounded-[28px] bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.16)_1px,transparent_0)] bg-[length:24px_24px] ${embedded ? 'p-4' : 'p-5'} dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.24)_1px,transparent_0)]`}
     >
       <div className="space-y-5">
         <CanvasSelectionBar
@@ -606,8 +606,8 @@ function PlanningCanvas({
         <div
           className={`${
             embedded
-              ? 'rounded-2xl bg-slate-50/85 p-4 dark:bg-slate-900/40'
-              : 'rounded-3xl bg-white/55 p-4 shadow-sm backdrop-blur-sm dark:bg-slate-950/35'
+              ? 'rounded-[1.65rem] border border-slate-200/75 bg-white/78 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:border-slate-800/75 dark:bg-slate-950/38'
+              : 'rounded-[1.85rem] border border-slate-200/70 bg-white/74 p-4 shadow-[0_12px_32px_rgba(15,23,42,0.05)] backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/35'
           }`}
         >
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -618,7 +618,7 @@ function PlanningCanvas({
             </div>
             <button
               type="button"
-              className="rounded-xl px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-white hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+              className="rounded-full border border-slate-200/80 bg-white/82 px-3 py-1.5 text-[11px] font-medium text-slate-500 transition-colors hover:border-slate-300/90 hover:text-slate-900 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-slate-100"
               data-testid="planning-canvas-inbox-collapse-toggle"
               onClick={() =>
                 onUpdateStackCanvasState({
@@ -630,8 +630,8 @@ function PlanningCanvas({
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <div className="flex min-w-max items-start gap-3 pb-1">
+          <div className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-max items-stretch gap-2 rounded-[1.45rem] border border-slate-200/70 bg-slate-100/72 p-2 dark:border-slate-800/70 dark:bg-slate-900/55">
               {dockLanes.map((lane) => (
                 <CategoryNodeCompat
                   key={lane.id}

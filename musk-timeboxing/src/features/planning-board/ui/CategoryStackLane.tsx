@@ -97,15 +97,29 @@ function CategoryStackLane({
         }`}
       >
         <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Stack
-            </p>
-            <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{lane.label}</p>
+          <div className="flex min-w-0 items-start gap-3">
+            <span
+              className={`mt-0.5 shrink-0 rounded-full ${compactSurface ? 'h-8 w-1.5' : 'h-10 w-2'} ${
+                isNodeActive ? 'opacity-100' : 'opacity-70'
+              }`}
+              style={{ backgroundColor: lane.color }}
+            />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Stack
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{lane.label}</p>
+            </div>
           </div>
           <div className="flex min-w-0 max-w-full flex-1 flex-wrap items-center justify-end gap-2">
             {headerActions ? <div className="min-w-0 max-w-full flex-1">{headerActions}</div> : null}
-            <span className="shrink-0 rounded-xl bg-slate-200/70 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800/70 dark:text-slate-300">
+            <span
+              className={`shrink-0 rounded-xl px-2 py-0.5 text-[11px] ${
+                isNodeActive
+                  ? 'bg-white/88 text-slate-700 dark:bg-slate-900/88 dark:text-slate-100'
+                  : 'bg-slate-200/70 text-slate-500 dark:bg-slate-800/70 dark:text-slate-300'
+              }`}
+            >
               {lane.items.length}개
             </span>
           </div>

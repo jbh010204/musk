@@ -38,31 +38,63 @@ export const getCategoryNodePresentation = ({
   isActive,
 }: CategoryNodePresentationInput) => {
   const hasCards = count > 0
-  const isHighlighted = isOver || isArmed || isActive
-  const showGradient = hasCards || isArmed || isActive
-  const glowAlpha = isHighlighted ? 0.34 : hasCards ? 0.2 : 0
-  const edgeAlpha = isHighlighted ? 0.2 : hasCards ? 0.12 : 0.04
+  const isHighlighted = isOver || isActive
+  const borderAlpha = isOver ? 0.42 : isActive ? 0.28 : hasCards ? 0.16 : isArmed ? 0.12 : 0.08
+  const topTintAlpha = isOver ? 0.24 : isActive ? 0.18 : hasCards ? 0.08 : 0
+  const bottomTintAlpha = isOver ? 0.12 : isActive ? 0.08 : hasCards ? 0.03 : 0
+  const glowAlpha = isOver ? 0.18 : isActive ? 0.14 : 0
+  const accentAlpha = isOver ? 1 : isActive ? 0.9 : hasCards ? 0.74 : 0.48
+  const metaLabel = isOver ? '여기로 이동' : isActive ? '현재 열림' : hasCards ? `${count}개 카드` : '비어 있음'
 
   return {
     isHighlighted,
     hasCards,
-    className: isHighlighted
-      ? 'scale-[1.04] border-transparent shadow-xl'
+    metaLabel,
+    className: isOver
+      ? 'border-transparent -translate-y-0.5 shadow-lg'
+      : isActive
+        ? 'border-transparent shadow-md'
+        : hasCards
+          ? 'border-slate-200/90 shadow-sm dark:border-slate-800/90'
+          : isArmed
+            ? 'border-slate-300/80 dark:border-slate-700/80'
+            : 'border-dashed border-slate-300/80 dark:border-slate-700/80',
+    countClassName: isHighlighted
+      ? 'bg-white/88 text-slate-900 dark:bg-slate-950/80 dark:text-slate-100'
       : hasCards
-        ? 'border-slate-300/70 shadow-lg dark:border-slate-700/70'
-        : isArmed
-          ? 'scale-[1.02] border-transparent shadow-lg'
-          : 'border-slate-300/80 dark:border-slate-700/80',
+        ? 'bg-slate-900/6 text-slate-700 dark:bg-slate-100/10 dark:text-slate-200'
+        : 'bg-transparent text-slate-500 dark:text-slate-400',
+    metaClassName: isHighlighted
+      ? 'text-slate-700 dark:text-slate-200'
+      : 'text-slate-500 dark:text-slate-400',
     style: {
-      backgroundImage: showGradient
-        ? `radial-gradient(circle at 50% 15%, ${hexToRgba(color, isHighlighted ? 0.28 : 0.18)} 0%, transparent 52%), linear-gradient(180deg, ${hexToRgba(color, isHighlighted ? 0.24 : hasCards ? 0.16 : 0.1)} 0%, ${hexToRgba(color, 0.05)} 100%)`
-        : undefined,
+      borderColor: hexToRgba(color, borderAlpha),
+      backgroundImage:
+        topTintAlpha > 0
+          ? `linear-gradient(135deg, ${hexToRgba(color, topTintAlpha)} 0%, ${hexToRgba(color, bottomTintAlpha)} 100%)`
+          : undefined,
       boxShadow:
         glowAlpha > 0
-          ? `0 0 0 1px ${hexToRgba(color, 0.16)}, 0 0 0 5px ${hexToRgba(color, 0.1)}, 0 18px 38px ${hexToRgba(color, glowAlpha)}`
+          ? `0 0 0 1px ${hexToRgba(color, 0.12)}, 0 10px 28px ${hexToRgba(color, glowAlpha)}`
           : hasCards
-            ? `inset 0 1px 0 ${hexToRgba(color, edgeAlpha)}, 0 12px 26px ${hexToRgba(color, 0.12)}`
-            : `inset 0 1px 0 ${hexToRgba(color, edgeAlpha)}`,
+            ? `inset 0 1px 0 ${hexToRgba('#ffffff', 0.45)}, 0 6px 16px ${hexToRgba(color, 0.08)}`
+            : 'inset 0 1px 0 rgba(255,255,255,0.45)',
+    },
+    accentStyle: {
+      backgroundColor: hexToRgba(color, accentAlpha),
+      boxShadow: isHighlighted ? `0 0 0 1px ${hexToRgba(color, 0.12)}` : undefined,
+    },
+    badgeStyle: isHighlighted
+      ? {
+          borderColor: hexToRgba(color, 0.2),
+        }
+      : hasCards
+        ? {
+            borderColor: hexToRgba(color, 0.12),
+          }
+        : undefined,
+    surfaceStyle: {
+      backgroundColor: hasCards || isHighlighted ? hexToRgba('#ffffff', 0.72) : hexToRgba('#ffffff', 0.58),
     },
   }
 }

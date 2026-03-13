@@ -53,19 +53,48 @@ function CategoryNode({
         }
       }}
       aria-pressed={isActive}
-      className={`relative flex flex-col items-center justify-center rounded-full border border-dashed bg-white/70 px-3 text-center shadow-sm transition-all dark:bg-slate-900/80 ${
-        compact ? 'h-[5.5rem] w-[5.5rem]' : 'mx-auto h-24 w-24'
+      className={`group relative overflow-hidden border text-left transition-all dark:bg-slate-900/80 ${
+        compact
+          ? 'min-h-[5.25rem] min-w-[8.75rem] max-w-[8.75rem] rounded-[1.6rem] px-3 py-3'
+          : 'mx-auto min-h-[6.25rem] w-full max-w-[14rem] rounded-[1.75rem] px-4 py-4'
       } ${presentation.className} ${isEmpty ? 'opacity-90' : ''} ${isArmed || isActive ? 'cursor-pointer' : ''}`}
-      style={presentation.style}
+      style={{
+        ...presentation.surfaceStyle,
+        ...presentation.style,
+      }}
     >
-      <span
-        className={`rounded-full ${compact ? 'mb-1.5 h-2.5 w-2.5' : 'mb-2 h-3 w-3'}`}
-        style={{ backgroundColor: color }}
-      />
-      <span className={`line-clamp-2 font-semibold text-slate-700 dark:text-slate-100 ${compact ? 'text-[11px] leading-4' : 'text-xs'}`}>
-        {label}
-      </span>
-      <span className={`text-slate-500 dark:text-slate-400 ${compact ? 'mt-0.5 text-[10px]' : 'mt-1 text-[11px]'}`}>{count}개</span>
+      <div className="flex min-w-0 items-start gap-3">
+        <span
+          className={`mt-0.5 shrink-0 rounded-full ${compact ? 'h-8 w-1.5' : 'h-10 w-2'}`}
+          style={presentation.accentStyle}
+        />
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <span
+              className={`min-w-0 truncate font-semibold text-slate-800 dark:text-slate-100 ${
+                compact ? 'text-[12px] leading-5' : 'text-sm leading-6'
+              }`}
+            >
+              {label}
+            </span>
+            <span
+              className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${presentation.countClassName}`}
+              style={presentation.badgeStyle}
+            >
+              {count}개
+            </span>
+          </div>
+
+          <p
+            className={`mt-1 truncate ${presentation.metaClassName} ${
+              compact ? 'text-[11px] leading-4' : 'text-xs leading-5'
+            }`}
+          >
+            {presentation.metaLabel}
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
