@@ -85,18 +85,15 @@ function BoardCard({
       }}
     >
       <div className="relative z-0 flex items-start justify-between gap-3">
-        <div className="relative min-w-0 flex-1">
-          {scheduleDraggable ? (
-            <div
-              draggable
-              aria-hidden="true"
-              data-testid={`planning-board-card-drag-surface-${item.id}`}
-              className="absolute inset-0 z-10 rounded-2xl bg-white/[0.001] cursor-grab active:cursor-grabbing"
-              onDragStart={startNativeScheduleDrag}
-              onDragEnd={endNativeScheduleDrag}
-            />
-          ) : null}
-
+        <div
+          data-testid={scheduleDraggable ? `planning-board-card-drag-body-${item.id}` : undefined}
+          draggable={scheduleDraggable}
+          onDragStart={scheduleDraggable ? startNativeScheduleDrag : undefined}
+          onDragEnd={scheduleDraggable ? endNativeScheduleDrag : undefined}
+          className={`relative min-w-0 flex-1 ${
+            scheduleDraggable ? 'cursor-grab active:cursor-grabbing' : ''
+          }`}
+        >
           <div className="relative z-0">
             <div className="flex flex-wrap items-center gap-2">
               <span
