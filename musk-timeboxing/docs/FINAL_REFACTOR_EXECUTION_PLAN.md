@@ -277,6 +277,7 @@
 - `features/planner-workspace/lib/workspaceLayout`, `ui/WorkspaceBigThreeRail`, `index`를 TS로 전환
 - `features/planner-workspace/ui/PlannerWorkspace`를 TS로 전환
 - `features/planning-canvas/lib/inboxFilters`, `ui/CanvasInlineCreateSlot`, `ui/CanvasSelectionBar`, `index`를 TS로 전환
+- `features/planning-canvas/ui/PlanningCanvas`, `ui/index`를 TS로 전환
 - Tailwind content glob을 `ts/tsx`까지 확장해 TS 전환된 UI 유틸이 purge 대상에서 빠지지 않도록 고정
 - `features/planner-dnd/lib/payloads`를 `.ts`로 전환
 - `features/planner-dnd/usePlannerTimelineDnd`를 `.ts`로 추가

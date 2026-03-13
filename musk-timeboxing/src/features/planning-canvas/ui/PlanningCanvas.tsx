@@ -6,9 +6,13 @@ import {
   pointerWithin,
   useSensor,
   useSensors,
+  type CollisionDetection,
+  type DragCancelEvent,
+  type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react'
 import {
   buildBoardLayoutEntries,
   createStackCanvasCardSelectionPatch,
@@ -19,15 +23,55 @@ import {
   groupBoardCardsByCategory,
   UNCATEGORIZED_BOARD_LANE,
 } from '../../../entities/planner'
+import type { CategoryViewModel, TaskCard, TimeBox } from '../../../entities/planner/model/types'
 import { Button, Card } from '../../../shared/ui'
-import { INBOX_FILTER_OPTIONS, filterInboxItems } from '../lib/inboxFilters'
+import { INBOX_FILTER_OPTIONS, filterInboxItems, type InboxFilterValue } from '../lib/inboxFilters'
 import CanvasInlineCreateSlot from './CanvasInlineCreateSlot'
 import CanvasSelectionBar from './CanvasSelectionBar'
 import BoardCardEditorModal from '../../planning-board/ui/BoardCardEditorModal'
 import CategoryNode from '../../planning-board/ui/CategoryNode'
 import CategoryStackLane from '../../planning-board/ui/CategoryStackLane'
 
-const resolveLaneIdFromOver = (overId, lanes) => {
+const BoardCardEditorModalCompat = BoardCardEditorModal as unknown as ComponentType<Record<string, unknown>>
+const CategoryNodeCompat = CategoryNode as unknown as ComponentType<Record<string, unknown>>
+const CategoryStackLaneCompat = CategoryStackLane as unknown as ComponentType<Record<string, unknown>>
+
+interface LaneStateEntry {
+  id: string
+  items: string[]
+}
+
+interface LaneViewModel {
+  id: string
+  label: string
+  color: string
+  items: TaskCard[]
+}
+
+interface PlanningCanvasProps {
+  stackCanvasState?: Record<string, unknown>
+  taskCards?: TaskCard[]
+  categories?: CategoryViewModel[]
+  timeBoxes?: TimeBox[]
+  onUpdateStackCanvasState?: (patch: Record<string, unknown>) => void
+  onCreateCard?: (payload: Record<string, unknown>) => boolean
+  onUpdateCard?: (id: string, payload: Record<string, unknown>) => void
+  onApplyLayout?: (entries: unknown[]) => void
+  onOpenCategoryManager?: () => void
+  onOpenComposer?: () => void
+  selectedCardId?: string | null
+  selectedCardIds?: string[] | null
+  onSelectCard?: ((cardId: string | null) => void) | null
+  onSelectCards?: ((cardIds: string[]) => void) | null
+  onSendSelectedCardsToBigThree?: (cardIds: string[]) => number
+  onScheduleSelectedCardsToFirstOpen?: (cardIds: string[]) => boolean
+  scheduleDraggable?: boolean
+  onScheduleDragStart?: (item: TaskCard) => void
+  onScheduleDragEnd?: () => void
+  embedded?: boolean
+}
+
+const resolveLaneIdFromOver = (overId: string | null, lanes: LaneViewModel[]): string | null => {
   if (typeof overId !== 'string') {
     return null
   }
@@ -43,13 +87,13 @@ const resolveLaneIdFromOver = (overId, lanes) => {
   return lanes.find((lane) => lane.items.some((item) => item.id === overId))?.id || null
 }
 
-const createLaneState = (lanes) =>
+const createLaneState = (lanes: LaneViewModel[]): LaneStateEntry[] =>
   lanes.map((lane) => ({
     id: lane.id,
     items: lane.items.map((item) => item.id),
   }))
 
-const areIdsEqual = (left = [], right = []) =>
+const areIdsEqual = (left: string[] = [], right: string[] = []) =>
   left.length === right.length && left.every((itemId, index) => itemId === right[index])
 
 function PlanningCanvas({
@@ -73,21 +117,26 @@ function PlanningCanvas({
   onScheduleDragStart = () => {},
   onScheduleDragEnd = () => {},
   embedded = false,
-}) {
-  const [editingCard, setEditingCard] = useState(null)
-  const [activeCardId, setActiveCardId] = useState(null)
+}: PlanningCanvasProps) {
+  const initialSelectedCardId =
+    typeof stackCanvasState?.selectedCardId === 'string' ? stackCanvasState.selectedCardId : null
+  const initialSelectedCardIds = Array.isArray(stackCanvasState?.selectedCardIds)
+    ? stackCanvasState.selectedCardIds.filter((item): item is string => typeof item === 'string')
+    : []
+  const [editingCard, setEditingCard] = useState<TaskCard | null>(null)
+  const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [inboxSearch, setInboxSearch] = useState('')
   const [internalSelectedCardId, setInternalSelectedCardId] = useState(
-    controlledSelectedCardId ?? stackCanvasState?.selectedCardId ?? null,
+    controlledSelectedCardId ?? initialSelectedCardId,
   )
   const [internalSelectedCardIds, setInternalSelectedCardIds] = useState(
     Array.isArray(controlledSelectedCardIds)
       ? controlledSelectedCardIds
-      : stackCanvasState?.selectedCardIds ?? [],
+      : initialSelectedCardIds,
   )
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
   const lanes = useMemo(() => groupBoardCardsByCategory(taskCards, categories), [taskCards, categories])
-  const [laneState, setLaneState] = useState(() => createLaneState(lanes))
+  const [laneState, setLaneState] = useState<LaneStateEntry[]>(() => createLaneState(lanes))
   const cardMap = useMemo(() => new Map(taskCards.map((item) => [item.id, item])), [taskCards])
   const laneMap = useMemo(() => new Map(lanes.map((lane) => [lane.id, lane])), [lanes])
   const isControlledSelection = typeof onSelectCard === 'function' || typeof onSelectCards === 'function'
@@ -96,7 +145,7 @@ function PlanningCanvas({
     () =>
       isControlledSelection
         ? Array.isArray(controlledSelectedCardIds)
-          ? controlledSelectedCardIds
+          ? controlledSelectedCardIds.filter((item): item is string => typeof item === 'string')
           : []
         : internalSelectedCardIds,
     [controlledSelectedCardIds, internalSelectedCardIds, isControlledSelection],
@@ -109,8 +158,14 @@ function PlanningCanvas({
     () => sanitizeStackCanvasCardSelection(cardMap, rawSelectedCardId, rawSelectedCardIds),
     [cardMap, rawSelectedCardId, rawSelectedCardIds],
   )
-  const focusedLaneId = stackCanvasState?.focusedLaneId ?? UNCATEGORIZED_BOARD_LANE
-  const inboxFilter = stackCanvasState?.inboxFilter ?? 'ALL'
+  const focusedLaneId =
+    typeof stackCanvasState?.focusedLaneId === 'string' ? stackCanvasState.focusedLaneId : UNCATEGORIZED_BOARD_LANE
+  const inboxFilter: InboxFilterValue =
+    stackCanvasState?.inboxFilter === 'TODO' ||
+    stackCanvasState?.inboxFilter === 'SCHEDULED' ||
+    stackCanvasState?.inboxFilter === 'COMPLETED'
+      ? stackCanvasState.inboxFilter
+      : 'ALL'
   const isInboxCollapsed = Boolean(stackCanvasState?.isInboxCollapsed)
 
   const visualLanes = useMemo(
@@ -195,7 +250,7 @@ function PlanningCanvas({
     }
   }, [onSelectCard, onSelectCards, rawSelectedCardId, resolvedRawSelectedCardIds, selectedCardId, selectedCardIds])
 
-  const applySelection = (nextSelectedCardIds, nextSelectedCardId = null) => {
+  const applySelection = (nextSelectedCardIds: string[], nextSelectedCardId: string | null = null) => {
     const nextSelectionPatch = createStackCanvasCardSelectionPatch(
       cardMap,
       nextSelectedCardIds,
@@ -217,12 +272,12 @@ function PlanningCanvas({
     onUpdateStackCanvasState(nextSelectionPatch)
   }
 
-  const setSelectedCard = (itemOrId) => {
+  const setSelectedCard = (itemOrId: TaskCard | string | null) => {
     const nextId = typeof itemOrId === 'string' ? itemOrId : itemOrId?.id || null
     applySelection(nextId ? [nextId] : [], nextId)
   }
 
-  const toggleSelectedCard = (itemOrId) => {
+  const toggleSelectedCard = (itemOrId: TaskCard | string | null) => {
     const nextId = typeof itemOrId === 'string' ? itemOrId : itemOrId?.id || null
     if (!nextId) {
       applySelection([], null)
@@ -231,19 +286,19 @@ function PlanningCanvas({
 
     if (selectedCardIds.includes(nextId)) {
       const nextSelectedCardIds = selectedCardIds.filter((itemId) => itemId !== nextId)
-      applySelection(nextSelectedCardIds, nextSelectedCardIds.at(-1) ?? null)
+      applySelection(nextSelectedCardIds, nextSelectedCardIds[nextSelectedCardIds.length - 1] ?? null)
       return
     }
 
     applySelection([...selectedCardIds, nextId], nextId)
   }
 
-  const commitLaneState = useCallback((nextLaneState) => {
+  const commitLaneState = useCallback((nextLaneState: LaneStateEntry[]) => {
     setLaneState(nextLaneState)
     onApplyLayout(buildBoardLayoutEntries(nextLaneState))
   }, [onApplyLayout])
 
-  const moveCardsToLane = useCallback((cardIds, targetLaneId) => {
+  const moveCardsToLane = useCallback((cardIds: string[], targetLaneId: string) => {
     const uniqueCardIds = [...new Set(cardIds)].filter(Boolean)
     if (uniqueCardIds.length === 0) {
       return
@@ -268,16 +323,16 @@ function PlanningCanvas({
     commitLaneState(nextLaneState)
   }, [commitLaneState, visualLanes])
 
-  const handleDragStart = ({ active }) => {
+  const handleDragStart = ({ active }: DragStartEvent) => {
     setActiveCardId(typeof active?.id === 'string' ? active.id : null)
   }
 
-  const handleDragCancel = () => {
+  const handleDragCancel = (_event?: DragCancelEvent) => {
     setActiveCardId(null)
     setLaneState(createLaneState(lanes))
   }
 
-  const handleDragEnd = ({ active, over }) => {
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
     const activeId = typeof active?.id === 'string' ? active.id : null
     const overId = typeof over?.id === 'string' ? over.id : null
 
@@ -348,7 +403,7 @@ function PlanningCanvas({
     commitLaneState(nextLaneState)
   }
 
-  const handleSelectNode = useCallback((laneId) => {
+  const handleSelectNode = useCallback((laneId: string) => {
     const armedCardIds = resolveStackCanvasSelectedCardIds(selectedCardId, selectedCardIds)
     if (armedCardIds.length === 0) {
       onUpdateStackCanvasState({
@@ -359,19 +414,19 @@ function PlanningCanvas({
 
     moveCardsToLane(armedCardIds, laneId)
     onUpdateStackCanvasState({
-      selectedCardId: armedCardIds.at(-1) ?? null,
+      selectedCardId: armedCardIds[armedCardIds.length - 1] ?? null,
       selectedCardIds: armedCardIds,
       focusedLaneId: laneId,
     })
   }, [moveCardsToLane, onUpdateStackCanvasState, selectedCardId, selectedCardIds])
 
-  const moveSelectionAcrossDock = useCallback((offset) => {
+  const moveSelectionAcrossDock = useCallback((offset: number) => {
     const armedCardIds = resolveStackCanvasSelectedCardIds(selectedCardId, selectedCardIds)
     if (armedCardIds.length === 0 || orderedDockLaneIds.length === 0) {
       return
     }
 
-    const anchorCard = cardMap.get(armedCardIds.at(-1)) || null
+    const anchorCard = cardMap.get(armedCardIds[armedCardIds.length - 1]) || null
     const currentLaneId = anchorCard
       ? anchorCard.categoryId || UNCATEGORIZED_BOARD_LANE
       : focusedLaneId || UNCATEGORIZED_BOARD_LANE
@@ -388,7 +443,7 @@ function PlanningCanvas({
     handleSelectNode(orderedDockLaneIds[nextIndex])
   }, [cardMap, focusedLaneId, handleSelectNode, orderedDockLaneIds, selectedCardId, selectedCardIds])
 
-  const handleSubmitEditor = (payload) => {
+  const handleSubmitEditor = (payload: Record<string, unknown>) => {
     if (editingCard?.id) {
       onUpdateCard(editingCard.id, payload)
       onUpdateStackCanvasState({
@@ -406,7 +461,15 @@ function PlanningCanvas({
     return inserted
   }
 
-  const handleInlineCreate = ({ title, estimateSlots = 1, categoryId = null }) =>
+  const handleInlineCreate = ({
+    title,
+    estimateSlots = 1,
+    categoryId = null,
+  }: {
+    title: string
+    estimateSlots?: number
+    categoryId?: string | null
+  }) =>
     onCreateCard({
       title,
       estimateSlots,
@@ -414,7 +477,7 @@ function PlanningCanvas({
       note: '',
     })
 
-  const collisionStrategy = (args) => {
+  const collisionStrategy: CollisionDetection = (args) => {
     const pointerCollisions = pointerWithin(args)
     if (pointerCollisions.length > 0) {
       return pointerCollisions
@@ -424,7 +487,7 @@ function PlanningCanvas({
   }
 
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented) {
         return
       }
@@ -475,7 +538,7 @@ function PlanningCanvas({
     }
   }, [editingCard, moveSelectionAcrossDock, onScheduleSelectedCardsToFirstOpen, onSendSelectedCardsToBigThree, selectedCardId, selectedCardIds])
 
-  const headerContent = (
+  const headerContent: ReactNode = (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
@@ -521,7 +584,7 @@ function PlanningCanvas({
     </div>
   )
 
-  const canvasContent = (
+  const canvasContent: ReactNode = (
     <div
       data-testid="planning-canvas-surface"
       className={`rounded-[28px] bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.25)_1px,transparent_0)] bg-[length:24px_24px] ${embedded ? 'p-4' : 'p-5'} dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.35)_1px,transparent_0)]`}
@@ -566,7 +629,7 @@ function PlanningCanvas({
           <div className="overflow-x-auto">
             <div className="flex min-w-max items-start gap-3 pb-1">
               {dockLanes.map((lane) => (
-                <CategoryNode
+                <CategoryNodeCompat
                   key={lane.id}
                   laneId={lane.id}
                   label={lane.label}
@@ -589,7 +652,7 @@ function PlanningCanvas({
 
         <div className="grid gap-4 xl:grid-cols-[18rem_minmax(0,1fr)]">
           {uncategorizedLane ? (
-            <CategoryStackLane
+            <CategoryStackLaneCompat
               lane={inboxLane}
               selectedCardId={selectedCardId}
               selectedCardIds={selectedCardIds}
@@ -649,7 +712,7 @@ function PlanningCanvas({
           ) : null}
 
           {activeLane ? (
-            <CategoryStackLane
+            <CategoryStackLaneCompat
               key={activeLane.id}
               lane={activeLane}
               selectedCardId={selectedCardId}
@@ -748,7 +811,7 @@ function PlanningCanvas({
       </DndContext>
 
       {editingCard !== null ? (
-        <BoardCardEditorModal
+        <BoardCardEditorModalCompat
           categories={categories}
           initialCard={editingCard}
           onClose={() => setEditingCard(null)}
