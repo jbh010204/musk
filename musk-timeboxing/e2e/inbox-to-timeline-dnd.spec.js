@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('stack canvas schedule handle can drop a card into workspace timeline rail', async ({ page }) => {
+test('stack canvas schedule drag can drop a card into workspace timeline rail', async ({ page }) => {
   await page.goto('/')
 
   await page.evaluate(() => {

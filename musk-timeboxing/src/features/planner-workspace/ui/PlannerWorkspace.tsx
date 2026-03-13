@@ -200,7 +200,7 @@ function PlannerWorkspace({
                   </span>
                 ) : (
                   <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
-                    빈 슬롯에서 바로 생성
+                    카드 드래그 또는 빈 슬롯에서 바로 생성
                   </span>
                 )}
               </div>
@@ -244,7 +244,7 @@ function PlannerWorkspace({
                     ? '원하는 시간 슬롯을 눌러 배치'
                     : selectedCardIds.length > 0
                       ? `${selectedCardIds.length}개 선택됨 · 슬롯 클릭으로 바로 배치`
-                      : '빈 슬롯을 눌러 일정 만들기'}
+                      : '카드를 끌어 놓거나 빈 슬롯을 눌러 일정 만들기'}
                 </div>
               }
             />
