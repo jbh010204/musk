@@ -11,9 +11,54 @@ const PRESET_COLORS = [
   '#ea580c',
   '#dc2626',
   '#c026d3',
-]
+] as const
 
-function CategoryRow({ category, categories, onUpdate, onDelete }) {
+interface CategoryViewModelLike {
+  id: string
+  name: string
+  color: string
+  parentId?: string | null
+  pathLabel?: string | null
+  childCount: number
+  depth: number
+  canAcceptChildren?: boolean
+}
+
+interface CategoryMutationResult {
+  ok: boolean
+  error?: string
+}
+
+interface CategoryRowProps {
+  category: CategoryViewModelLike
+  categories: CategoryViewModelLike[]
+  onUpdate: (
+    categoryId: string,
+    name: string,
+    color: string,
+    parentId: string | null,
+  ) => CategoryMutationResult | undefined
+  onDelete: (categoryId: string) => CategoryMutationResult | undefined
+}
+
+interface CategoryManagerModalProps {
+  categories: CategoryViewModelLike[]
+  onClose: () => void
+  onAddCategory: (
+    name: string,
+    color: string,
+    parentId: string | null,
+  ) => CategoryMutationResult | undefined
+  onUpdateCategory: (
+    categoryId: string,
+    name: string,
+    color: string,
+    parentId: string | null,
+  ) => CategoryMutationResult | undefined
+  onDeleteCategory: (categoryId: string) => CategoryMutationResult | undefined
+}
+
+function CategoryRow({ category, categories, onUpdate, onDelete }: CategoryRowProps) {
   const [name, setName] = useState(category.name)
   const [color, setColor] = useState(category.color)
   const [parentId, setParentId] = useState(category.parentId ?? '')
@@ -120,9 +165,15 @@ function CategoryRow({ category, categories, onUpdate, onDelete }) {
   )
 }
 
-function CategoryManagerModal({ categories, onClose, onAddCategory, onUpdateCategory, onDeleteCategory }) {
+function CategoryManagerModal({
+  categories,
+  onClose,
+  onAddCategory,
+  onUpdateCategory,
+  onDeleteCategory,
+}: CategoryManagerModalProps) {
   const [newName, setNewName] = useState('')
-  const [newColor, setNewColor] = useState(PRESET_COLORS[0])
+  const [newColor, setNewColor] = useState<string>(PRESET_COLORS[0])
   const [newParentId, setNewParentId] = useState('')
   const [feedback, setFeedback] = useState('')
 
