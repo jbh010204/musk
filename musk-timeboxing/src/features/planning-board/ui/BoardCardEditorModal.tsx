@@ -11,7 +11,7 @@ const DURATION_OPTIONS = [
 
 interface BoardCardEditorModalProps {
   categories?: CategoryViewModel[]
-  initialCard?: TaskCard | null
+  initialCard?: Partial<TaskCard> | null
   onClose?: () => void
   onSubmit?: (payload: {
     title: string

@@ -1,9 +1,24 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import type { TaskCard } from '../../../entities/planner/model/types'
 import { Button, IconButton } from '../../../shared/ui'
 import { createBoardCardDragPayload } from '../../planner-dnd/lib/payloads'
 
 const formatDurationLabel = (estimateSlots = 1) => `${estimateSlots * 30}분`
+
+interface BoardCardProps {
+  item: TaskCard
+  color?: string
+  onEdit?: (item: TaskCard) => void
+  onSelect?: (item: TaskCard) => void
+  onToggleSelect?: (item: TaskCard) => void
+  sortable?: boolean
+  isSelected?: boolean
+  isMultiSelected?: boolean
+  scheduleDraggable?: boolean
+  onScheduleDragStart?: (item: TaskCard) => void
+  onScheduleDragEnd?: (item: TaskCard) => void
+}
 
 function BoardCard({
   item,
@@ -17,7 +32,7 @@ function BoardCard({
   scheduleDraggable = false,
   onScheduleDragStart = () => {},
   onScheduleDragEnd = () => {},
-}) {
+}: BoardCardProps) {
   const sortableState = useSortable({
     id: item.id,
     data: createBoardCardDragPayload(item.id),

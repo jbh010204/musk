@@ -1,7 +1,38 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import type { ReactNode } from 'react'
+import type { TaskCard } from '../../../entities/planner/model/types'
 import BoardCard from './BoardCard'
 import CategoryNode from './CategoryNode'
+
+interface LaneViewModel {
+  id: string
+  label: string
+  color: string
+  items: TaskCard[]
+}
+
+interface CategoryStackLaneProps {
+  lane: LaneViewModel
+  selectedCardId?: string | null
+  selectedCardIds?: string[]
+  showNode?: boolean
+  compactNode?: boolean
+  isNodeActive?: boolean
+  emptyMessage?: string
+  onEditCard?: (item: TaskCard) => void
+  onSelectCard?: (item: TaskCard) => void
+  onToggleCardSelect?: (item: TaskCard) => void
+  onSelectNode?: (laneId: string) => void
+  scheduleDraggable?: boolean
+  onScheduleDragStart?: (item: TaskCard) => void
+  onScheduleDragEnd?: (item: TaskCard) => void
+  headerActions?: ReactNode
+  leadingContent?: ReactNode
+  collapsed?: boolean
+  collapsedMessage?: string
+  compactSurface?: boolean
+}
 
 function CategoryStackLane({
   lane,
@@ -23,7 +54,7 @@ function CategoryStackLane({
   collapsed = false,
   collapsedMessage = '접힌 상태입니다.',
   compactSurface = false,
-}) {
+}: CategoryStackLaneProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `lane:${lane.id}`,
     data: {

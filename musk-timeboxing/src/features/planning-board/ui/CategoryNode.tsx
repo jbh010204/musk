@@ -1,6 +1,18 @@
 import { useDroppable } from '@dnd-kit/core'
 import { getCategoryNodePresentation } from '../lib/categoryNodePresentation'
 
+interface CategoryNodeProps {
+  laneId: string
+  label: string
+  color: string
+  count: number
+  isEmpty?: boolean
+  isArmed?: boolean
+  isActive?: boolean
+  compact?: boolean
+  onClick?: (laneId: string) => void
+}
+
 function CategoryNode({
   laneId,
   label,
@@ -11,7 +23,7 @@ function CategoryNode({
   isActive = false,
   compact = false,
   onClick = () => {},
-}) {
+}: CategoryNodeProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `node:${laneId}`,
     data: {

@@ -6,6 +6,10 @@ import {
   pointerWithin,
   useSensor,
   useSensors,
+  type CollisionDetection,
+  type DragCancelEvent,
+  type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import { useEffect, useMemo, useState } from 'react'
@@ -15,13 +19,36 @@ import {
   groupBoardCardsByCategory,
   UNCATEGORIZED_BOARD_LANE,
 } from '../../../entities/planner'
+import type { CategoryViewModel, TaskCard } from '../../../entities/planner/model/types'
 import { Card } from '../../../shared/ui'
 import BoardCard from './BoardCard'
 import BoardCardEditorModal from './BoardCardEditorModal'
 import BoardToolbar from './BoardToolbar'
 import CategoryStackLane from './CategoryStackLane'
 
-const resolveLaneIdFromOver = (overId, lanes) => {
+interface LaneStateEntry {
+  id: string
+  items: string[]
+}
+
+interface LaneViewModel {
+  id: string
+  label: string
+  color: string
+  items: TaskCard[]
+}
+
+interface PlanningBoardProps {
+  items?: TaskCard[]
+  categories?: CategoryViewModel[]
+  onCreateCard?: (payload: Record<string, unknown>) => boolean
+  onUpdateCard?: (id: string, payload: Record<string, unknown>) => void
+  onApplyLayout?: (entries: unknown[]) => void
+  onOpenCategoryManager?: () => void
+  embedded?: boolean
+}
+
+const resolveLaneIdFromOver = (overId: string | null, lanes: LaneViewModel[]): string | null => {
   if (typeof overId !== 'string') {
     return null
   }
@@ -37,7 +64,7 @@ const resolveLaneIdFromOver = (overId, lanes) => {
   return lanes.find((lane) => lane.items.some((item) => item.id === overId))?.id || null
 }
 
-const createLaneState = (lanes) =>
+const createLaneState = (lanes: LaneViewModel[]): LaneStateEntry[] =>
   lanes.map((lane) => ({
     id: lane.id,
     items: lane.items.map((item) => item.id),
@@ -51,13 +78,13 @@ function PlanningBoard({
   onApplyLayout = () => {},
   onOpenCategoryManager = () => {},
   embedded = false,
-}) {
-  const [editingCard, setEditingCard] = useState(null)
-  const [activeCardId, setActiveCardId] = useState(null)
-  const [selectedCardId, setSelectedCardId] = useState(null)
+}: PlanningBoardProps) {
+  const [editingCard, setEditingCard] = useState<Partial<TaskCard> | null>(null)
+  const [activeCardId, setActiveCardId] = useState<string | null>(null)
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }))
   const lanes = useMemo(() => groupBoardCardsByCategory(items, categories), [categories, items])
-  const [laneState, setLaneState] = useState(() => createLaneState(lanes))
+  const [laneState, setLaneState] = useState<LaneStateEntry[]>(() => createLaneState(lanes))
 
   const cardMap = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
   const laneMap = useMemo(() => new Map(lanes.map((lane) => [lane.id, lane])), [lanes])
@@ -86,7 +113,7 @@ function PlanningBoard({
   const uncategorizedCount =
     visualLanes.find((lane) => lane.id === UNCATEGORIZED_BOARD_LANE)?.items.length || 0
   const activeCard = activeCardId ? cardMap.get(activeCardId) || null : null
-  const moveCardToLane = (cardId, targetLaneId) => {
+  const moveCardToLane = (cardId: string, targetLaneId: string) => {
     const nextLaneState = createLaneState(visualLanes)
     const sourceLane = nextLaneState.find((lane) => lane.items.includes(cardId))
     const targetLane = nextLaneState.find((lane) => lane.id === targetLaneId)
@@ -100,21 +127,21 @@ function PlanningBoard({
     commitLaneState(nextLaneState)
   }
 
-  const commitLaneState = (nextLaneState) => {
+  const commitLaneState = (nextLaneState: LaneStateEntry[]) => {
     setLaneState(nextLaneState)
     onApplyLayout(buildBoardLayoutEntries(nextLaneState))
   }
 
-  const handleDragStart = ({ active }) => {
+  const handleDragStart = ({ active }: DragStartEvent) => {
     setActiveCardId(typeof active?.id === 'string' ? active.id : null)
   }
 
-  const handleDragCancel = () => {
+  const handleDragCancel = (_event?: DragCancelEvent) => {
     setActiveCardId(null)
     setLaneState(createLaneState(lanes))
   }
 
-  const handleDragEnd = ({ active, over }) => {
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
     const activeId = typeof active?.id === 'string' ? active.id : null
     const overId = typeof over?.id === 'string' ? over.id : null
 
@@ -187,7 +214,7 @@ function PlanningBoard({
     commitLaneState(nextLaneState)
   }
 
-  const handleSelectNode = (laneId) => {
+  const handleSelectNode = (laneId: string) => {
     if (!selectedCardId) {
       return
     }
@@ -196,7 +223,7 @@ function PlanningBoard({
     setSelectedCardId(null)
   }
 
-  const handleSubmitEditor = (payload) => {
+  const handleSubmitEditor = (payload: Record<string, unknown>) => {
     if (editingCard?.id) {
       onUpdateCard(editingCard.id, payload)
       return true
@@ -205,7 +232,7 @@ function PlanningBoard({
     return onCreateCard(payload)
   }
 
-  const collisionStrategy = (args) => {
+  const collisionStrategy: CollisionDetection = (args) => {
     const pointerCollisions = pointerWithin(args)
     if (pointerCollisions.length > 0) {
       return pointerCollisions
