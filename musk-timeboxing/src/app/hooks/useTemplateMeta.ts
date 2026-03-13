@@ -1,12 +1,21 @@
 import { useEffect, useState } from 'react'
 import { loadMeta, saveMeta, TOTAL_SLOTS } from '../../entities/planner'
 
-const normalizeName = (value) => String(value || '').trim()
-const normalizeContent = (value) => String(value || '').trim()
-const normalizeDurationSlots = (value) =>
-  Math.max(1, Math.min(TOTAL_SLOTS, Number.parseInt(value, 10) || 1))
+type PlannerTemplate = ReturnType<typeof loadMeta>['templates'][number]
 
-const normalizeCategoryId = (value) => {
+interface TemplateInput {
+  name: string
+  content: string
+  durationSlots: number
+  categoryId?: string | null
+}
+
+const normalizeName = (value: unknown): string => String(value || '').trim()
+const normalizeContent = (value: unknown): string => String(value || '').trim()
+const normalizeDurationSlots = (value: unknown): number =>
+  Math.max(1, Math.min(TOTAL_SLOTS, Number.parseInt(String(value), 10) || 1))
+
+const normalizeCategoryId = (value: unknown): string | null => {
   if (typeof value !== 'string') {
     return null
   }
@@ -15,7 +24,11 @@ const normalizeCategoryId = (value) => {
   return trimmed.length > 0 ? trimmed : null
 }
 
-const hasDuplicateName = (templates, name, excludeId = null) =>
+const hasDuplicateName = (
+  templates: PlannerTemplate[],
+  name: string,
+  excludeId: string | null = null,
+): boolean =>
   templates.some((template) => {
     if (excludeId && template.id === excludeId) {
       return false
@@ -25,13 +38,18 @@ const hasDuplicateName = (templates, name, excludeId = null) =>
   })
 
 export const useTemplateMeta = () => {
-  const [templates, setTemplates] = useState(() => loadMeta().templates || [])
+  const [templates, setTemplates] = useState<PlannerTemplate[]>(() => loadMeta().templates || [])
 
   useEffect(() => {
     saveMeta({ templates })
   }, [templates])
 
-  const addTemplate = ({ name, content, durationSlots, categoryId = null }) => {
+  const addTemplate = ({
+    name,
+    content,
+    durationSlots,
+    categoryId = null,
+  }: TemplateInput): { ok: boolean; error?: string } => {
     const normalizedName = normalizeName(name)
     const normalizedContent = normalizeContent(content)
 
@@ -61,7 +79,10 @@ export const useTemplateMeta = () => {
     return { ok: true }
   }
 
-  const updateTemplate = (id, { name, content, durationSlots, categoryId = null }) => {
+  const updateTemplate = (
+    id: string,
+    { name, content, durationSlots, categoryId = null }: TemplateInput,
+  ): { ok: boolean; error?: string } => {
     const normalizedName = normalizeName(name)
     const normalizedContent = normalizeContent(content)
 
@@ -94,11 +115,11 @@ export const useTemplateMeta = () => {
     return { ok: true }
   }
 
-  const removeTemplate = (id) => {
+  const removeTemplate = (id: string): void => {
     setTemplates((prev) => prev.filter((template) => template.id !== id))
   }
 
-  const clearTemplateCategory = (categoryId) => {
+  const clearTemplateCategory = (categoryId: string | null): void => {
     setTemplates((prev) =>
       prev.map((template) =>
         template.categoryId === categoryId
@@ -111,7 +132,7 @@ export const useTemplateMeta = () => {
     )
   }
 
-  const reloadTemplates = () => {
+  const reloadTemplates = (): void => {
     setTemplates(loadMeta().templates || [])
   }
 

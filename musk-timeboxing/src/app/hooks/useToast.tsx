@@ -1,10 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-export const useToast = () => {
-  const [toasts, setToasts] = useState([])
-  const timeoutMapRef = useRef(new Map())
+interface ToastOptions {
+  actionLabel?: string | null
+  onAction?: (() => void) | null
+}
 
-  const removeToast = useCallback((id) => {
+interface ToastRecord {
+  id: string
+  message: string
+  actionLabel: string | null
+  onAction: (() => void) | null
+}
+
+export const useToast = () => {
+  const [toasts, setToasts] = useState<ToastRecord[]>([])
+  const timeoutMapRef = useRef<Map<string, number>>(new Map())
+
+  const removeToast = useCallback((id: string) => {
     const timeoutId = timeoutMapRef.current.get(id)
     if (timeoutId) {
       window.clearTimeout(timeoutId)
@@ -14,22 +26,25 @@ export const useToast = () => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id))
   }, [])
 
-  const showToast = useCallback((message, duration = 2000, options = null) => {
-    const id = crypto.randomUUID()
-    const actionLabel =
-      typeof options?.actionLabel === 'string' && options.actionLabel.trim().length > 0
-        ? options.actionLabel.trim()
-        : null
-    const onAction = typeof options?.onAction === 'function' ? options.onAction : null
-    setToasts((prev) => [...prev, { id, message, actionLabel, onAction }])
+  const showToast = useCallback(
+    (message: string, duration = 2000, options: ToastOptions | null = null): string => {
+      const id = crypto.randomUUID()
+      const actionLabel =
+        typeof options?.actionLabel === 'string' && options.actionLabel.trim().length > 0
+          ? options.actionLabel.trim()
+          : null
+      const onAction = typeof options?.onAction === 'function' ? options.onAction : null
+      setToasts((prev) => [...prev, { id, message, actionLabel, onAction }])
 
-    const timeoutId = window.setTimeout(() => {
-      removeToast(id)
-    }, duration)
-    timeoutMapRef.current.set(id, timeoutId)
+      const timeoutId = window.setTimeout(() => {
+        removeToast(id)
+      }, duration)
+      timeoutMapRef.current.set(id, timeoutId)
 
-    return id
-  }, [removeToast])
+      return id
+    },
+    [removeToast],
+  )
 
   useEffect(
     () => () => {

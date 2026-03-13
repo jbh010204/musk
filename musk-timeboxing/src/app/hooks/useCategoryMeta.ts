@@ -8,9 +8,18 @@ import {
   savePlannerMetaModel,
   updateCategoryRecord,
 } from '../../entities/planner'
+import type { CategoryRecord } from '../../entities/planner/model/types'
+
+interface CategoryMutationOptions {
+  lockedParentIds?: string[]
+}
+
+type CategoryAddResult = ReturnType<typeof addCategoryRecord>
+type CategoryUpdateResult = ReturnType<typeof updateCategoryRecord>
+type CategoryRemoveResult = ReturnType<typeof removeCategoryRecord>
 
 export const useCategoryMeta = () => {
-  const [categories, setCategories] = useState(() => loadPlannerMetaModel().categories)
+  const [categories, setCategories] = useState<CategoryRecord[]>(() => loadPlannerMetaModel().categories)
 
   useEffect(() => {
     const currentMeta = loadPlannerMetaModel()
@@ -23,8 +32,13 @@ export const useCategoryMeta = () => {
   const categoryViewModels = useMemo(() => getCategoryViewModels(categories), [categories])
   const assignableCategories = useMemo(() => getAssignableCategories(categories), [categories])
 
-  const addCategory = (name, color, parentId = null, options = {}) => {
-    if (Array.isArray(options.lockedParentIds) && options.lockedParentIds.includes(parentId)) {
+  const addCategory = (
+    name: string,
+    color: string,
+    parentId: string | null = null,
+    options: CategoryMutationOptions = {},
+  ): CategoryAddResult | { ok: true; category: CategoryRecord | undefined } => {
+    if (Array.isArray(options.lockedParentIds) && options.lockedParentIds.includes(parentId ?? '')) {
       return { ok: false, error: '일정이 연결된 카테고리 아래에는 하위 카테고리를 만들 수 없습니다' }
     }
 
@@ -37,12 +51,23 @@ export const useCategoryMeta = () => {
     return { ok: true, category: result.category }
   }
 
-  const updateCategory = (id, name, color, parentId = null, options = {}) => {
+  const updateCategory = (
+    id: string,
+    name: string,
+    color: string,
+    parentId: string | null = null,
+    options: CategoryMutationOptions = {},
+  ): CategoryUpdateResult | { ok: true } => {
     const previous = categories.find((category) => category.id === id) || null
-    const normalizedParentId = typeof parentId === 'string' && parentId.trim().length > 0 ? parentId : null
+    const normalizedParentId =
+      typeof parentId === 'string' && parentId.trim().length > 0 ? parentId : null
     const parentChanged = (previous?.parentId ?? null) !== normalizedParentId
 
-    if (parentChanged && Array.isArray(options.lockedParentIds) && options.lockedParentIds.includes(normalizedParentId)) {
+    if (
+      parentChanged &&
+      Array.isArray(options.lockedParentIds) &&
+      options.lockedParentIds.includes(normalizedParentId ?? '')
+    ) {
       return { ok: false, error: '일정이 연결된 카테고리 아래에는 하위 카테고리를 둘 수 없습니다' }
     }
 
@@ -59,7 +84,7 @@ export const useCategoryMeta = () => {
     return { ok: true }
   }
 
-  const removeCategory = (id) => {
+  const removeCategory = (id: string): CategoryRemoveResult | { ok: true } => {
     const result = removeCategoryRecord(categories, id)
     if (!result.ok) {
       return result
@@ -69,7 +94,7 @@ export const useCategoryMeta = () => {
     return { ok: true }
   }
 
-  const reloadCategories = () => {
+  const reloadCategories = (): void => {
     setCategories(loadPlannerMetaModel().categories)
   }
 
