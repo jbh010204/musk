@@ -36,6 +36,75 @@ import {
   PLANNER_META_KEY,
   PLANNER_SCHEMA_VERSION,
 } from './schema'
+import type {
+  PersistedPlannerDay,
+  PersistedPlannerMeta,
+} from './schema'
+import type { LastFocusSnapshot, PlannerMetaModel } from '../../model/types'
+
+type PlannerDayModel = ReturnType<typeof toPlannerDayModel>
+type PlannerViewMode = 'WORKSPACE' | 'CANVAS' | 'COMPOSER' | 'DAY' | 'WEEK' | 'MONTH'
+type AutoSyncMode = 'merge' | 'replace'
+type AutoSyncStatus = 'idle' | 'pending' | 'syncing' | 'synced' | 'error'
+type ServerAvailability = 'unknown' | 'disabled' | 'online' | 'offline'
+
+interface PlannerSnapshot {
+  schemaVersion: number
+  exportedAt: string
+  days: Record<string, PersistedPlannerDay>
+  meta: PersistedPlannerMeta
+  lastActiveDate: string | null
+  lastFocus: LastFocusSnapshot | null
+  lastViewMode: PlannerViewMode | null
+}
+
+interface PlannerPersistenceStatus {
+  serverEnabled: boolean
+  serverAvailability: ServerAvailability
+  hasLocalData: boolean
+  autoSyncIntervalMs: number
+  autoSyncDirty: boolean
+  autoSyncLastSuccessAt: number | null
+  autoSyncLastAttemptAt: number | null
+  autoSyncLastStatus: AutoSyncStatus
+}
+
+interface SyncPlannerOptions {
+  mode?: AutoSyncMode
+  force?: boolean
+  dateStr?: string | null
+}
+
+interface SyncPlannerResult {
+  ok: boolean
+  mode: AutoSyncMode | 'disabled'
+  skipped?: boolean
+  localDayCount?: number
+  stats?: unknown
+}
+
+interface ImportPlannerOptions {
+  mode?: AutoSyncMode
+}
+
+type ImportPlannerResult =
+  | {
+      ok: true
+      importedDays: number
+      skippedDays: number
+      importedCategories: number
+      importedTemplates: number
+    }
+  | {
+      ok: false
+      error: string
+    }
+
+type PersistenceListener = (status: PlannerPersistenceStatus) => void
+
+interface PlannerRuntimeWindow extends Window {
+  __MUSK_PLANNER_AUTO_SYNC_INTERVAL_MS__?: number
+}
 
 const DEFAULT_AUTO_SYNC_INTERVAL_MS = Number(import.meta.env.VITE_STORAGE_AUTO_SYNC_INTERVAL_MS || 20000)
 const MIN_AUTO_SYNC_INTERVAL_MS = 5000
@@ -46,22 +115,48 @@ const LAST_ACTIVE_DATE_KEY = PLANNER_LAST_ACTIVE_DATE_KEY
 const LAST_FOCUS_KEY = PLANNER_LAST_FOCUS_KEY
 const LAST_VIEW_MODE_KEY = PLANNER_LAST_VIEW_MODE_KEY
 const AUTO_SYNC_INTERVAL_KEY = PLANNER_AUTO_SYNC_INTERVAL_KEY
-const VALID_VIEW_MODES = new Set(['WORKSPACE', 'CANVAS', 'COMPOSER', 'DAY', 'WEEK', 'MONTH'])
+const VALID_VIEW_MODES = new Set<PlannerViewMode>([
+  'WORKSPACE',
+  'CANVAS',
+  'COMPOSER',
+  'DAY',
+  'WEEK',
+  'MONTH',
+])
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+
+const isViewMode = (value: unknown): value is PlannerViewMode =>
+  value === 'WORKSPACE' ||
+  value === 'CANVAS' ||
+  value === 'COMPOSER' ||
+  value === 'DAY' ||
+  value === 'WEEK' ||
+  value === 'MONTH'
+
+const isLastFocusSnapshot = (value: unknown): value is LastFocusSnapshot =>
+  isRecord(value) &&
+  DATE_STR_PATTERN.test(String(value.date)) &&
+  Number.isInteger(value.slot)
+
+const normalizeMaybeDate = (value: unknown): string | null =>
+  DATE_STR_PATTERN.test(String(value)) ? String(value) : null
 
 let autoSyncStarted = false
-let autoSyncTimerId = null
+let autoSyncTimerId: number | null = null
 let autoSyncDirty = false
-let autoSyncMode = 'merge'
-let autoSyncInFlight = null
-let autoSyncLastSuccessAt = null
-let autoSyncLastAttemptAt = null
-let autoSyncLastStatus = 'idle'
-let autoSyncListenersCleanup = null
+let autoSyncMode: AutoSyncMode = 'merge'
+let autoSyncInFlight: Promise<SyncPlannerResult> | null = null
+let autoSyncLastSuccessAt: number | null = null
+let autoSyncLastAttemptAt: number | null = null
+let autoSyncLastStatus: AutoSyncStatus = 'idle'
+let autoSyncListenersCleanup: (() => void) | null = null
 let plannerChangeVersion = 0
-const persistenceListeners = new Set()
-let stopServerAvailabilitySubscription = null
+const persistenceListeners = new Set<PersistenceListener>()
+let stopServerAvailabilitySubscription: (() => void) | null = null
 
-const clearPlannerDataLocal = () => {
+const clearPlannerDataLocal = (): void => {
   if (typeof window === 'undefined') {
     return
   }
@@ -79,7 +174,7 @@ const clearPlannerDataLocal = () => {
   })
 }
 
-const saveDayLocal = (dateStr, data) => {
+const saveDayLocal = (dateStr: string, data: unknown): void => {
   if (typeof window === 'undefined') {
     return
   }
@@ -88,7 +183,9 @@ const saveDayLocal = (dateStr, data) => {
   window.localStorage.setItem(getPersistedDayKey(dateStr), JSON.stringify(payload))
 }
 
-const saveMetaLocal = (meta) => {
+const saveMetaLocal = (
+  meta: Partial<PersistedPlannerMeta> | Partial<PlannerMetaModel> | null | undefined,
+): void => {
   if (typeof window === 'undefined') {
     return
   }
@@ -102,7 +199,7 @@ const saveMetaLocal = (meta) => {
   window.localStorage.setItem(META_KEY, JSON.stringify(payload))
 }
 
-const saveLastActiveDateLocal = (dateStr) => {
+const saveLastActiveDateLocal = (dateStr: string): void => {
   if (typeof window === 'undefined' || !DATE_STR_PATTERN.test(String(dateStr))) {
     return
   }
@@ -110,7 +207,11 @@ const saveLastActiveDateLocal = (dateStr) => {
   window.localStorage.setItem(LAST_ACTIVE_DATE_KEY, dateStr)
 }
 
-const saveLastFocusLocal = ({ date, slot, ts = Date.now() }) => {
+const saveLastFocusLocal = ({
+  date,
+  slot,
+  ts = Date.now(),
+}: LastFocusSnapshot): void => {
   if (typeof window === 'undefined') {
     return
   }
@@ -129,15 +230,15 @@ const saveLastFocusLocal = ({ date, slot, ts = Date.now() }) => {
   )
 }
 
-const saveLastViewModeLocal = (viewMode) => {
-  if (typeof window === 'undefined' || !VALID_VIEW_MODES.has(String(viewMode))) {
+const saveLastViewModeLocal = (viewMode: PlannerViewMode): void => {
+  if (typeof window === 'undefined' || !isViewMode(viewMode)) {
     return
   }
 
   window.localStorage.setItem(LAST_VIEW_MODE_KEY, String(viewMode))
 }
 
-const parseImportPayload = (input) => {
+const parseImportPayload = (input: string | unknown): unknown => {
   if (typeof input === 'string') {
     return JSON.parse(input)
   }
@@ -145,12 +246,12 @@ const parseImportPayload = (input) => {
   return input
 }
 
-const readLocalDaysSnapshot = (dateStr = null) => {
+const readLocalDaysSnapshot = (dateStr: string | null = null): Record<string, PersistedPlannerDay> => {
   if (typeof window === 'undefined') {
     return {}
   }
 
-  const days = {}
+  const days: Record<string, PersistedPlannerDay> = {}
 
   if (dateStr) {
     days[dateStr] = loadDay(dateStr)
@@ -167,7 +268,7 @@ const readLocalDaysSnapshot = (dateStr = null) => {
   return days
 }
 
-const buildSnapshotPayload = (dateStr = null) => ({
+const buildSnapshotPayload = (dateStr: string | null = null): PlannerSnapshot => ({
   schemaVersion: PLANNER_SCHEMA_VERSION,
   exportedAt: new Date().toISOString(),
   days: readLocalDaysSnapshot(dateStr),
@@ -177,7 +278,7 @@ const buildSnapshotPayload = (dateStr = null) => ({
   lastViewMode: loadLastViewMode(),
 })
 
-const hasPlannerLocalData = () => {
+const hasPlannerLocalData = (): boolean => {
   if (typeof window === 'undefined') {
     return false
   }
@@ -194,15 +295,18 @@ const hasPlannerLocalData = () => {
   )
 }
 
-const applySnapshotToLocal = (snapshot) => {
-  if (typeof window === 'undefined' || !snapshot || typeof snapshot !== 'object') {
+const applySnapshotToLocal = (snapshot: unknown): void => {
+  if (typeof window === 'undefined' || !isRecord(snapshot)) {
     return
   }
 
   clearPlannerDataLocal()
 
-  if (snapshot.days && typeof snapshot.days === 'object') {
-    Object.entries(snapshot.days).forEach(([dateStr, dayData]) => {
+  const days = isRecord(snapshot.days) ? snapshot.days : null
+  const meta = isRecord(snapshot.meta) ? snapshot.meta : null
+
+  if (days) {
+    Object.entries(days).forEach(([dateStr, dayData]) => {
       if (!DATE_STR_PATTERN.test(dateStr)) {
         return
       }
@@ -211,29 +315,25 @@ const applySnapshotToLocal = (snapshot) => {
     })
   }
 
-  if (snapshot.meta && typeof snapshot.meta === 'object') {
-    saveMetaLocal(snapshot.meta)
+  if (meta) {
+    saveMetaLocal(meta)
   }
 
-  if (DATE_STR_PATTERN.test(String(snapshot.lastActiveDate))) {
-    saveLastActiveDateLocal(snapshot.lastActiveDate)
+  const lastActiveDate = normalizeMaybeDate(snapshot.lastActiveDate)
+  if (lastActiveDate) {
+    saveLastActiveDateLocal(lastActiveDate)
   }
 
-  if (
-    snapshot.lastFocus &&
-    typeof snapshot.lastFocus === 'object' &&
-    DATE_STR_PATTERN.test(String(snapshot.lastFocus.date)) &&
-    Number.isInteger(snapshot.lastFocus.slot)
-  ) {
+  if (isLastFocusSnapshot(snapshot.lastFocus)) {
     saveLastFocusLocal(snapshot.lastFocus)
   }
 
-  if (VALID_VIEW_MODES.has(String(snapshot.lastViewMode))) {
+  if (isViewMode(snapshot.lastViewMode)) {
     saveLastViewModeLocal(snapshot.lastViewMode)
   }
 }
 
-const emitPersistenceStatus = () => {
+const emitPersistenceStatus = (): void => {
   const status = getPlannerPersistenceStatus()
   persistenceListeners.forEach((listener) => {
     try {
@@ -244,7 +344,7 @@ const emitPersistenceStatus = () => {
   })
 }
 
-const ensurePersistenceStatusSubscription = () => {
+const ensurePersistenceStatusSubscription = (): void => {
   if (stopServerAvailabilitySubscription || typeof window === 'undefined') {
     return
   }
@@ -254,12 +354,12 @@ const ensurePersistenceStatusSubscription = () => {
   })
 }
 
-const getAutoSyncIntervalMs = () => {
+const getAutoSyncIntervalMs = (): number => {
   if (typeof window === 'undefined') {
     return Math.max(MIN_AUTO_SYNC_INTERVAL_MS, DEFAULT_AUTO_SYNC_INTERVAL_MS)
   }
 
-  const runtimeOverride = Number(window.__MUSK_PLANNER_AUTO_SYNC_INTERVAL_MS__)
+  const runtimeOverride = Number((window as PlannerRuntimeWindow).__MUSK_PLANNER_AUTO_SYNC_INTERVAL_MS__)
   if (Number.isFinite(runtimeOverride) && runtimeOverride >= MIN_AUTO_SYNC_INTERVAL_MS) {
     return runtimeOverride
   }
@@ -272,7 +372,7 @@ const getAutoSyncIntervalMs = () => {
   return Math.max(MIN_AUTO_SYNC_INTERVAL_MS, DEFAULT_AUTO_SYNC_INTERVAL_MS)
 }
 
-const markPlannerDirty = (mode = 'merge') => {
+const markPlannerDirty = (mode: AutoSyncMode = 'merge'): void => {
   plannerChangeVersion += 1
   autoSyncDirty = true
   autoSyncLastStatus = 'pending'
@@ -282,7 +382,7 @@ const markPlannerDirty = (mode = 'merge') => {
   emitPersistenceStatus()
 }
 
-const finalizePlannerSync = (syncedVersion) => {
+const finalizePlannerSync = (syncedVersion: number): void => {
   autoSyncLastSuccessAt = Date.now()
   if (syncedVersion >= plannerChangeVersion) {
     autoSyncDirty = false
@@ -297,11 +397,11 @@ const finalizePlannerSync = (syncedVersion) => {
   emitPersistenceStatus()
 }
 
-export const getKey = (dateStr) => getPersistedDayKey(dateStr)
+export const getKey = (dateStr: string): string => getPersistedDayKey(dateStr)
 
-export const isDayKey = (key) => isPersistedDayKey(key)
+export const isDayKey = (key: unknown): boolean => isPersistedDayKey(key)
 
-export const loadDay = (dateStr) => {
+export const loadDay = (dateStr: string): PersistedPlannerDay => {
   if (typeof window === 'undefined') {
     return createEmptyDay(dateStr)
   }
@@ -319,7 +419,7 @@ export const loadDay = (dateStr) => {
   }
 }
 
-export const saveDay = (dateStr, data) => {
+export const saveDay = (dateStr: string, data: unknown): void => {
   if (typeof window === 'undefined') {
     return
   }
@@ -330,7 +430,7 @@ export const saveDay = (dateStr, data) => {
   void saveDayToServer(dateStr, payload)
 }
 
-export const loadMeta = () => {
+export const loadMeta = (): PersistedPlannerMeta => {
   if (typeof window === 'undefined') {
     return createEmptyMeta()
   }
@@ -348,7 +448,9 @@ export const loadMeta = () => {
   }
 }
 
-export const saveMeta = (meta) => {
+export const saveMeta = (
+  meta: Partial<PersistedPlannerMeta> | Partial<PlannerMetaModel> | null | undefined,
+): void => {
   if (typeof window === 'undefined') {
     return
   }
@@ -363,7 +465,7 @@ export const saveMeta = (meta) => {
   void saveMetaToServer(payload)
 }
 
-export const loadLastActiveDate = () => {
+export const loadLastActiveDate = (): string | null => {
   if (typeof window === 'undefined') {
     return null
   }
@@ -372,19 +474,20 @@ export const loadLastActiveDate = () => {
   return DATE_STR_PATTERN.test(String(value)) ? value : null
 }
 
-export const loadPlannerDayModel = (dateStr) => toPlannerDayModel(loadDay(dateStr))
+export const loadPlannerDayModel = (dateStr: string): PlannerDayModel =>
+  toPlannerDayModel(loadDay(dateStr))
 
-export const savePlannerDayModel = (dateStr, plannerDay) => {
+export const savePlannerDayModel = (dateStr: string, plannerDay: PlannerDayModel): void => {
   saveDay(dateStr, fromPlannerDayModel(plannerDay))
 }
 
-export const loadPlannerMetaModel = () => toPlannerMetaModel(loadMeta())
+export const loadPlannerMetaModel = (): PlannerMetaModel => toPlannerMetaModel(loadMeta())
 
-export const savePlannerMetaModel = (plannerMeta) => {
+export const savePlannerMetaModel = (plannerMeta: PlannerMetaModel): void => {
   saveMeta(fromPlannerMetaModel(plannerMeta))
 }
 
-export const saveLastActiveDate = (dateStr) => {
+export const saveLastActiveDate = (dateStr: string): void => {
   if (typeof window === 'undefined' || !DATE_STR_PATTERN.test(String(dateStr))) {
     return
   }
@@ -394,7 +497,7 @@ export const saveLastActiveDate = (dateStr) => {
   void saveLastActiveDateToServer(dateStr)
 }
 
-export const getMostRecentStoredDate = () => {
+export const getMostRecentStoredDate = (): string | null => {
   if (typeof window === 'undefined') {
     return null
   }
@@ -408,7 +511,7 @@ export const getMostRecentStoredDate = () => {
   return dates.length > 0 ? dates[dates.length - 1] : null
 }
 
-export const loadLastFocus = () => {
+export const loadLastFocus = (): LastFocusSnapshot | null => {
   if (typeof window === 'undefined') {
     return null
   }
@@ -434,7 +537,10 @@ export const loadLastFocus = () => {
   }
 }
 
-export const saveLastFocus = ({ date, slot }) => {
+export const saveLastFocus = ({
+  date,
+  slot,
+}: Pick<LastFocusSnapshot, 'date' | 'slot'>): void => {
   if (typeof window === 'undefined') {
     return
   }
@@ -454,25 +560,25 @@ export const saveLastFocus = ({ date, slot }) => {
   void saveLastFocusToServer(payload)
 }
 
-export const loadLastViewMode = () => {
+export const loadLastViewMode = (): PlannerViewMode | null => {
   if (typeof window === 'undefined') {
     return null
   }
 
   const value = window.localStorage.getItem(LAST_VIEW_MODE_KEY)
-  return VALID_VIEW_MODES.has(String(value)) ? String(value) : null
+  return isViewMode(value) ? value : null
 }
 
-export const saveLastViewMode = (viewMode) => {
-  if (typeof window === 'undefined' || !VALID_VIEW_MODES.has(String(viewMode))) {
+export const saveLastViewMode = (viewMode: PlannerViewMode): void => {
+  if (typeof window === 'undefined' || !isViewMode(viewMode)) {
     return
   }
 
-  saveLastViewModeLocal(String(viewMode))
+  saveLastViewModeLocal(viewMode)
   markPlannerDirty('merge')
 }
 
-export const exportPlannerData = (dateStr = null) => {
+export const exportPlannerData = (dateStr: string | null = null): PlannerSnapshot => {
   if (typeof window === 'undefined') {
     return {
       schemaVersion: PLANNER_SCHEMA_VERSION,
@@ -481,13 +587,14 @@ export const exportPlannerData = (dateStr = null) => {
       meta: createEmptyMeta(),
       lastActiveDate: null,
       lastFocus: null,
+      lastViewMode: null,
     }
   }
 
   return buildSnapshotPayload(dateStr)
 }
 
-export const clearPlannerData = () => {
+export const clearPlannerData = (): void => {
   if (typeof window === 'undefined') {
     return
   }
@@ -497,13 +604,16 @@ export const clearPlannerData = () => {
   void syncPlannerDataToServer({ mode: 'replace', force: true })
 }
 
-export const importPlannerData = (input, options = {}) => {
+export const importPlannerData = (
+  input: string | unknown,
+  options: ImportPlannerOptions = {},
+): ImportPlannerResult => {
   if (typeof window === 'undefined') {
     return { ok: false, error: '브라우저 환경에서만 가져올 수 있습니다' }
   }
 
   const mode = options.mode === 'replace' ? 'replace' : 'merge'
-  let payload
+  let payload: unknown
 
   try {
     payload = parseImportPayload(input)
@@ -511,21 +621,15 @@ export const importPlannerData = (input, options = {}) => {
     return { ok: false, error: '유효한 JSON 형식이 아닙니다' }
   }
 
-  if (!payload || typeof payload !== 'object') {
+  if (!isRecord(payload)) {
     return { ok: false, error: '가져오기 데이터 형식이 올바르지 않습니다' }
   }
 
-  const days = payload.days && typeof payload.days === 'object' ? payload.days : null
-  const meta = payload.meta && typeof payload.meta === 'object' ? payload.meta : null
-  const lastActiveDate = DATE_STR_PATTERN.test(String(payload.lastActiveDate)) ? payload.lastActiveDate : null
-  const lastFocus =
-    payload.lastFocus &&
-    typeof payload.lastFocus === 'object' &&
-    DATE_STR_PATTERN.test(String(payload.lastFocus.date)) &&
-    Number.isInteger(payload.lastFocus.slot)
-      ? payload.lastFocus
-      : null
-  const lastViewMode = VALID_VIEW_MODES.has(String(payload.lastViewMode)) ? String(payload.lastViewMode) : null
+  const days = isRecord(payload.days) ? payload.days : null
+  const meta = isRecord(payload.meta) ? payload.meta : null
+  const lastActiveDate = normalizeMaybeDate(payload.lastActiveDate)
+  const lastFocus = isLastFocusSnapshot(payload.lastFocus) ? payload.lastFocus : null
+  const lastViewMode = isViewMode(payload.lastViewMode) ? payload.lastViewMode : null
 
   if (!days && !meta && !lastActiveDate && !lastFocus && !lastViewMode) {
     return { ok: false, error: 'days 또는 meta 데이터가 필요합니다' }
@@ -610,7 +714,9 @@ export const hydratePlannerStorageFromServer = () => {
   })
 }
 
-export const syncPlannerDataToServer = async (options = {}) => {
+export const syncPlannerDataToServer = async (
+  options: SyncPlannerOptions = {},
+): Promise<SyncPlannerResult> => {
   if (typeof window === 'undefined') {
     return { ok: false, mode: 'disabled' }
   }
@@ -647,7 +753,7 @@ export const syncPlannerDataToServer = async (options = {}) => {
   emitPersistenceStatus()
 
   autoSyncInFlight = syncSnapshotToServer(payload, { mode: requestedMode })
-    .then((result) => {
+    .then((result: { ok?: unknown; stats?: unknown } | null | undefined): SyncPlannerResult => {
       if (result?.ok) {
         finalizePlannerSync(syncVersion)
       } else {
@@ -656,7 +762,9 @@ export const syncPlannerDataToServer = async (options = {}) => {
       }
 
       return {
-        ...result,
+        ok: Boolean(result?.ok),
+        mode: requestedMode,
+        stats: result?.stats ?? null,
         localDayCount: Object.keys(payload.days).length,
       }
     })
@@ -667,7 +775,7 @@ export const syncPlannerDataToServer = async (options = {}) => {
   return autoSyncInFlight
 }
 
-export const startPlannerAutoSync = () => {
+export const startPlannerAutoSync = (): (() => void) => {
   if (typeof window === 'undefined' || autoSyncStarted || !isServerPersistenceEnabled()) {
     return () => {}
   }
@@ -676,7 +784,7 @@ export const startPlannerAutoSync = () => {
   ensurePersistenceStatusSubscription()
   emitPersistenceStatus()
 
-  const flushIfDirty = (options = {}) => {
+  const flushIfDirty = (options: SyncPlannerOptions = {}): void => {
     if (!autoSyncDirty && options.force !== true) {
       return
     }
@@ -723,9 +831,9 @@ export const startPlannerAutoSync = () => {
   }
 }
 
-export const getPlannerPersistenceStatus = () => ({
+export const getPlannerPersistenceStatus = (): PlannerPersistenceStatus => ({
   serverEnabled: isServerPersistenceEnabled(),
-  serverAvailability: getServerAvailability(),
+  serverAvailability: getServerAvailability() as ServerAvailability,
   hasLocalData: hasPlannerLocalData(),
   autoSyncIntervalMs: getAutoSyncIntervalMs(),
   autoSyncDirty,
@@ -734,16 +842,17 @@ export const getPlannerPersistenceStatus = () => ({
   autoSyncLastStatus,
 })
 
-export const subscribePlannerPersistenceStatus = (listener) => {
+export const subscribePlannerPersistenceStatus = (listener: unknown): (() => void) => {
   if (typeof listener !== 'function') {
     return () => {}
   }
 
   ensurePersistenceStatusSubscription()
-  persistenceListeners.add(listener)
-  listener(getPlannerPersistenceStatus())
+  const typedListener = listener as PersistenceListener
+  persistenceListeners.add(typedListener)
+  typedListener(getPlannerPersistenceStatus())
 
   return () => {
-    persistenceListeners.delete(listener)
+    persistenceListeners.delete(typedListener)
   }
 }
