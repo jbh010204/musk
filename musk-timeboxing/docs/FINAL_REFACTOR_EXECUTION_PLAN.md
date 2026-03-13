@@ -29,7 +29,7 @@
 - `storage/schema.js`
 - `storage/migrations.js`
 - `storage/adapters.js`
-- `model/taskCards.js`
+- `model/taskCards.ts`
 - `model/timeBoxes.js`
 - `model/dayState.ts`
 - `model/plannerDay.ts`
@@ -38,7 +38,7 @@
 - persisted `brainDump -> taskCards` internal adapter 경계
 - internal task card naming(`title`, `estimateSlots`, `origin`) 도입
 - `model/categoryTree.js`
-- `model/bigThree.js`
+- `model/bigThree.ts`
 - internal `sourceId -> taskId` adapter boundary
 - `boardCanvas -> stackCanvasState` 전환
 - workspace / selection helper extraction
@@ -220,14 +220,15 @@
 - `npm run typecheck` 추가
 - `model/types.ts` 도입
 - `model/selectors`, `model/dayState`, `model/plannerDay`를 `.ts`로 전환
+- `model/taskCards`, `model/bigThree`를 `.ts`로 전환
 - JS model helper의 `createId` 추론을 `string`으로 고정해 TS import 경계를 안정화
 
 다음 우선순위:
 
 1. `entities/planner/model/timeBoxes.js`
-2. `entities/planner/model/taskCards.js`
-3. `entities/planner/model/bigThree.js`
-4. `entities/planner/lib/storage/*`
+2. `entities/planner/model/categoryTree.js`
+3. `entities/planner/lib/storage/*`
+4. `app/hooks/useDailyData.js`의 타입 경계 초안
 
 순서:
 
