@@ -1,8 +1,36 @@
+import type { CategoryRecord, TimeBoxStatus } from '../model/types'
+
 const DEFAULT_CATEGORY_COLOR = '#4f46e5'
 
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
+interface CategoryMetaLike {
+  name?: unknown
+  color?: unknown
+}
 
-const hslToHex = (h, s, l) => {
+interface LegacyTimeBoxCategoryLike {
+  category?: unknown
+}
+
+interface StatusVisual {
+  label: string
+  color: string
+}
+
+interface TimeBoxVisual {
+  cardBackground: string
+  categoryStripe: string
+  categoryBadgeBackground: string
+  categoryBadgeBorder: string
+  statusLabel: string
+  statusColor: string
+  statusBadgeBackground: string
+  statusBadgeBorder: string
+}
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.max(min, Math.min(max, value))
+
+const hslToHex = (h: number, s: number, l: number): string => {
   const sat = clamp(s, 0, 100) / 100
   const lig = clamp(l, 0, 100) / 100
   const chroma = (1 - Math.abs(2 * lig - 1)) * sat
@@ -34,7 +62,7 @@ const hslToHex = (h, s, l) => {
   }
 
   const m = lig - chroma / 2
-  const toHex = (channel) => {
+  const toHex = (channel: number): string => {
     const value = Math.round((channel + m) * 255)
     return clamp(value, 0, 255).toString(16).padStart(2, '0')
   }
@@ -42,7 +70,7 @@ const hslToHex = (h, s, l) => {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }
 
-const hashString = (value) => {
+const hashString = (value: string): number => {
   let hash = 0
   for (let index = 0; index < value.length; index += 1) {
     hash = (hash * 31 + value.charCodeAt(index)) >>> 0
@@ -51,7 +79,7 @@ const hashString = (value) => {
   return hash
 }
 
-export const colorFromCategoryName = (name) => {
+export const colorFromCategoryName = (name: unknown): string => {
   const normalized = String(name || '').trim()
   if (!normalized) {
     return DEFAULT_CATEGORY_COLOR
@@ -61,7 +89,7 @@ export const colorFromCategoryName = (name) => {
   return hslToHex(hue, 68, 56)
 }
 
-export const hexToRgba = (hex, alpha) => {
+export const hexToRgba = (hex: unknown, alpha: number): string => {
   const normalized = String(hex || '').trim()
   const matched = normalized.match(/^#([0-9a-fA-F]{6})$/)
 
@@ -77,7 +105,10 @@ export const hexToRgba = (hex, alpha) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-export const getCategoryLabel = (categoryMeta, timeBox) => {
+export const getCategoryLabel = (
+  categoryMeta: Pick<CategoryRecord, 'name'> | CategoryMetaLike | null | undefined,
+  timeBox: LegacyTimeBoxCategoryLike | null | undefined,
+): string | null => {
   const metaName = typeof categoryMeta?.name === 'string' ? categoryMeta.name.trim() : ''
   if (metaName) {
     return metaName
@@ -91,7 +122,10 @@ export const getCategoryLabel = (categoryMeta, timeBox) => {
   return null
 }
 
-export const getCategoryColor = (categoryMeta, timeBox) => {
+export const getCategoryColor = (
+  categoryMeta: Pick<CategoryRecord, 'name' | 'color'> | CategoryMetaLike | null | undefined,
+  timeBox: LegacyTimeBoxCategoryLike | null | undefined,
+): string => {
   const metaColor = typeof categoryMeta?.color === 'string' ? categoryMeta.color.trim() : ''
   if (/^#[0-9a-fA-F]{6}$/.test(metaColor)) {
     return metaColor
@@ -105,7 +139,7 @@ export const getCategoryColor = (categoryMeta, timeBox) => {
   return DEFAULT_CATEGORY_COLOR
 }
 
-export const getStatusVisual = (status) => {
+export const getStatusVisual = (status: TimeBoxStatus | unknown): StatusVisual => {
   if (status === 'COMPLETED') {
     return {
       label: '완료',
@@ -126,9 +160,12 @@ export const getStatusVisual = (status) => {
   }
 }
 
-export const getTimeBoxVisual = (categoryColor, status) => {
+export const getTimeBoxVisual = (
+  categoryColor: unknown,
+  status: TimeBoxStatus | unknown,
+): TimeBoxVisual => {
   const baseColor = /^#[0-9a-fA-F]{6}$/.test(String(categoryColor || ''))
-    ? categoryColor
+    ? String(categoryColor)
     : DEFAULT_CATEGORY_COLOR
   const statusVisual = getStatusVisual(status)
 

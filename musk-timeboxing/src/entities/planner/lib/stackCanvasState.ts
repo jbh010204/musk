@@ -1,9 +1,57 @@
 import { deriveTaskCardStatus } from '../model'
 import { UNCATEGORIZED_BOARD_LANE } from './boardCard'
+import type { StackCanvasStateRecord, TaskCard, TimeBox } from '../model/types'
 
 export const STACK_CANVAS_STATE_VERSION = 2
 
-export const createEmptyStackCanvasState = () => ({
+type StackCanvasInboxFilter = 'ALL' | 'TODO' | 'SCHEDULED' | 'COMPLETED'
+type StackCanvasLayoutMode = 'stack'
+
+interface StackCanvasStateLike {
+  version?: unknown
+  layoutMode?: unknown
+  selectedCardId?: unknown
+  selectedCardIds?: unknown
+  selectedBigThreeId?: unknown
+  focusedLaneId?: unknown
+  inboxFilter?: unknown
+  isInboxCollapsed?: unknown
+  migratedFromLegacyBoard?: unknown
+  lastSyncedAt?: unknown
+  document?: unknown
+  session?: unknown
+}
+
+interface BigThreeSlotLike {
+  id?: unknown
+  taskId?: unknown
+}
+
+type TaskCardCollection = TaskCard[] | Map<string, TaskCard> | null | undefined
+
+export interface StackCanvasStateValue extends StackCanvasStateRecord {
+  version: number
+  layoutMode: StackCanvasLayoutMode
+  selectedCardId: string | null
+  selectedCardIds: string[]
+  selectedBigThreeId: string | null
+  focusedLaneId: string
+  inboxFilter: StackCanvasInboxFilter
+  isInboxCollapsed: boolean
+  migratedFromLegacyBoard: boolean
+  lastSyncedAt: number | null
+}
+
+export interface StackCanvasCardSelection extends StackCanvasStateRecord {
+  selectedCardId: string | null
+  selectedCardIds: string[]
+}
+
+type StackCanvasPatch =
+  | StackCanvasStateRecord
+  | ((current: StackCanvasStateRecord | undefined) => StackCanvasStateRecord)
+
+export const createEmptyStackCanvasState = (): StackCanvasStateValue => ({
   version: STACK_CANVAS_STATE_VERSION,
   layoutMode: 'stack',
   selectedCardId: null,
@@ -16,14 +64,27 @@ export const createEmptyStackCanvasState = () => ({
   lastSyncedAt: null,
 })
 
-const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-const normalizeSelectionId = (value) =>
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+
+const normalizeSelectionId = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null
-const normalizeSelectionIds = (value) =>
+
+const normalizeSelectionIds = (value: unknown): string[] =>
   Array.isArray(value)
-    ? [...new Set(value.map((itemId) => normalizeSelectionId(itemId)).filter(Boolean))]
+    ? [
+        ...new Set(
+          value
+            .map((itemId) => normalizeSelectionId(itemId))
+            .filter((itemId): itemId is string => Boolean(itemId)),
+        ),
+      ]
     : []
-const resolveTaskCardFromCollection = (taskCards, taskCardId) => {
+
+const resolveTaskCardFromCollection = (
+  taskCards: TaskCardCollection,
+  taskCardId: unknown,
+): TaskCard | null => {
   const normalizedTaskCardId = normalizeSelectionId(taskCardId)
   if (!normalizedTaskCardId) {
     return null
@@ -40,11 +101,14 @@ const resolveTaskCardFromCollection = (taskCards, taskCardId) => {
   return null
 }
 
-export const normalizeStackCanvasState = (value) => {
-  const safeValue = isObject(value) ? value : {}
+export const normalizeStackCanvasState = (value: unknown): StackCanvasStateValue => {
+  const safeValue = isObject(value) ? (value as StackCanvasStateLike) : {}
   const hadLegacySnapshot = isObject(safeValue.document) || isObject(safeValue.session)
   const selectedCardIds = normalizeSelectionIds(safeValue.selectedCardIds)
-  const selectedCardId = normalizeSelectionId(safeValue.selectedCardId) ?? selectedCardIds.at(-1) ?? null
+  const selectedCardId =
+    normalizeSelectionId(safeValue.selectedCardId) ??
+    selectedCardIds[selectedCardIds.length - 1] ??
+    null
 
   const normalizedSelectedCardIds =
     selectedCardId && !selectedCardIds.includes(selectedCardId)
@@ -77,9 +141,15 @@ export const normalizeStackCanvasState = (value) => {
   }
 }
 
-export const getTaskCardStackCanvasStatus = (item, timeBoxes = []) => deriveTaskCardStatus(item, timeBoxes)
+export const getTaskCardStackCanvasStatus = (
+  item: TaskCard | null | undefined,
+  timeBoxes: TimeBox[] = [],
+): ReturnType<typeof deriveTaskCardStatus> => deriveTaskCardStatus(item, timeBoxes)
 
-export const resolveStackCanvasSelectedCardIds = (selectedCardId = null, selectedCardIds = []) => {
+export const resolveStackCanvasSelectedCardIds = (
+  selectedCardId: unknown = null,
+  selectedCardIds: unknown = [],
+): string[] => {
   const normalizedSelectedCardId = normalizeSelectionId(selectedCardId)
   const normalizedSelectedCardIds = normalizeSelectionIds(selectedCardIds)
 
@@ -93,17 +163,19 @@ export const resolveStackCanvasSelectedCardIds = (selectedCardId = null, selecte
 }
 
 export const sanitizeStackCanvasCardSelection = (
-  taskCards,
-  selectedCardId = null,
-  selectedCardIds = [],
-) => {
-  const resolvedSelectedCardIds = resolveStackCanvasSelectedCardIds(selectedCardId, selectedCardIds)
-    .filter((itemId) => Boolean(resolveTaskCardFromCollection(taskCards, itemId)))
+  taskCards: TaskCardCollection,
+  selectedCardId: unknown = null,
+  selectedCardIds: unknown = [],
+): StackCanvasCardSelection => {
+  const resolvedSelectedCardIds = resolveStackCanvasSelectedCardIds(
+    selectedCardId,
+    selectedCardIds,
+  ).filter((itemId) => Boolean(resolveTaskCardFromCollection(taskCards, itemId)))
   const normalizedSelectedCardId = normalizeSelectionId(selectedCardId)
   const nextSelectedCardId =
     normalizedSelectedCardId && resolvedSelectedCardIds.includes(normalizedSelectedCardId)
       ? normalizedSelectedCardId
-      : resolvedSelectedCardIds.at(-1) ?? null
+      : resolvedSelectedCardIds[resolvedSelectedCardIds.length - 1] ?? null
 
   return {
     selectedCardId: nextSelectedCardId,
@@ -112,12 +184,16 @@ export const sanitizeStackCanvasCardSelection = (
 }
 
 export const createStackCanvasCardSelectionPatch = (
-  taskCards,
-  selectedCardIds = [],
-  preferredCardId = null,
-  selectedBigThreeId = null,
-) => {
-  const sanitizedSelection = sanitizeStackCanvasCardSelection(taskCards, preferredCardId, selectedCardIds)
+  taskCards: TaskCardCollection,
+  selectedCardIds: unknown = [],
+  preferredCardId: unknown = null,
+  selectedBigThreeId: unknown = null,
+): StackCanvasCardSelection & { selectedBigThreeId: string | null; focusedLaneId: string } => {
+  const sanitizedSelection = sanitizeStackCanvasCardSelection(
+    taskCards,
+    preferredCardId,
+    selectedCardIds,
+  )
   const nextCard = resolveTaskCardFromCollection(taskCards, sanitizedSelection.selectedCardId)
 
   return {
@@ -128,13 +204,24 @@ export const createStackCanvasCardSelectionPatch = (
   }
 }
 
-export const createClearedStackCanvasSelectionPatch = () => ({
+export const createClearedStackCanvasSelectionPatch = (): {
+  selectedCardId: null
+  selectedCardIds: string[]
+  selectedBigThreeId: null
+} => ({
   selectedCardId: null,
   selectedCardIds: [],
   selectedBigThreeId: null,
 })
 
-export const createStackCanvasBigThreeSelectionPatch = (taskCards, slot) => {
+export const createStackCanvasBigThreeSelectionPatch = (
+  taskCards: TaskCardCollection,
+  slot: BigThreeSlotLike | null | undefined,
+):
+  | ReturnType<typeof createStackCanvasCardSelectionPatch>
+  | ReturnType<typeof createClearedStackCanvasSelectionPatch>
+  | { selectedBigThreeId: null }
+  | { selectedCardId: null; selectedCardIds: string[]; selectedBigThreeId: string } => {
   const slotId = normalizeSelectionId(slot?.id)
   const taskId = normalizeSelectionId(slot?.taskId)
   const sourceCard = resolveTaskCardFromCollection(taskCards, taskId)
@@ -154,17 +241,18 @@ export const createStackCanvasBigThreeSelectionPatch = (taskCards, slot) => {
 }
 
 export const applyStackCanvasStatePatch = (
-  currentStackCanvasState,
-  nextStackCanvasState,
+  currentStackCanvasState: unknown,
+  nextStackCanvasState: StackCanvasPatch,
   lastSyncedAt = Date.now(),
-) => {
+): StackCanvasStateValue => {
+  const normalizedCurrentState = normalizeStackCanvasState(currentStackCanvasState)
   const resolvedPatch =
     typeof nextStackCanvasState === 'function'
-      ? nextStackCanvasState(currentStackCanvasState)
+      ? nextStackCanvasState(normalizedCurrentState)
       : nextStackCanvasState
 
   return normalizeStackCanvasState({
-    ...currentStackCanvasState,
+    ...normalizedCurrentState,
     ...resolvedPatch,
     lastSyncedAt,
   })

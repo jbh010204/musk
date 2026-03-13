@@ -1,19 +1,54 @@
 import { getCategoryColor, getCategoryLabel } from './categoryVisual'
 import { loadDay } from './storage'
 import { slotDurationMinutes } from './timeSlot'
+import type { CategoryRecord, TimeBoxStatus } from '../model/types'
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
 
-const parseDate = (dateStr) => new Date(`${dateStr}T00:00:00`)
+interface CalendarTimeBoxLike {
+  id: string
+  content: string
+  startSlot: number
+  endSlot: number
+  status: TimeBoxStatus
+  actualMinutes?: unknown
+  category?: string | null
+  categoryId?: string | null
+  skipReason?: unknown
+}
 
-const formatDate = (date) => {
+interface CalendarDayData {
+  timeBoxes?: CalendarTimeBoxLike[]
+}
+
+interface CalendarSummaryArgs {
+  currentDate: string
+  currentDayData: CalendarDayData | null | undefined
+}
+
+interface MonthCalendarArgs extends CalendarSummaryArgs {
+  categories?: CategoryRecord[]
+}
+
+interface CategoryCounterEntry {
+  key: string
+  label: string
+  color: string
+  count: number
+  completed: number
+  plannedMinutes: number
+}
+
+const parseDate = (dateStr: string): Date => new Date(`${dateStr}T00:00:00`)
+
+const formatDate = (date: Date): string => {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
 
-const startOfWeekMonday = (date) => {
+const startOfWeekMonday = (date: Date): Date => {
   const next = new Date(date)
   const day = next.getDay()
   const offset = day === 0 ? -6 : 1 - day
@@ -21,15 +56,17 @@ const startOfWeekMonday = (date) => {
   return next
 }
 
-const getSnapshotDayData = (dateStr, currentDate, currentDayData) =>
+const getSnapshotDayData = (
+  dateStr: string,
+  currentDate: string,
+  currentDayData: CalendarDayData | null | undefined,
+): CalendarDayData | null | undefined =>
   dateStr === currentDate ? currentDayData : loadDay(dateStr)
 
-const createCategoryMap = (categories = []) =>
-  new Map(
-    categories.map((category) => [category.id, category]),
-  )
+const createCategoryMap = (categories: CategoryRecord[] = []): Map<string, CategoryRecord> =>
+  new Map(categories.map((category) => [category.id, category]))
 
-const summarizePlannerDayTimeBoxes = (dayData) => {
+const summarizePlannerDayTimeBoxes = (dayData: CalendarDayData | null | undefined) => {
   const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
   const total = timeBoxes.length
   const completed = timeBoxes.filter((box) => box.status === 'COMPLETED').length
@@ -41,7 +78,7 @@ const summarizePlannerDayTimeBoxes = (dayData) => {
   }
 }
 
-const getHeatLevel = (total, completed) => {
+const getHeatLevel = (total: number, completed: number): number => {
   if (total <= 0) {
     return 0
   }
@@ -66,23 +103,23 @@ const getHeatLevel = (total, completed) => {
 }
 
 const summarizeCalendarDay = (
-  dateStr,
-  currentDate,
-  currentDayData,
-  currentMonthIndex = null,
-  categoryMap = new Map(),
+  dateStr: string,
+  currentDate: string,
+  currentDayData: CalendarDayData | null | undefined,
+  currentMonthIndex: number | null = null,
+  categoryMap: Map<string, CategoryRecord> = new Map(),
 ) => {
   const date = parseDate(dateStr)
   const dayData = getSnapshotDayData(dateStr, currentDate, currentDayData)
   const timeBoxes = Array.isArray(dayData?.timeBoxes) ? [...dayData.timeBoxes] : []
-  const sortedBoxes = timeBoxes.sort((a, b) => a.startSlot - b.startSlot)
+  const sortedBoxes = timeBoxes.sort((left, right) => left.startSlot - right.startSlot)
   const total = sortedBoxes.length
   const completed = sortedBoxes.filter((box) => box.status === 'COMPLETED').length
   const plannedMinutes = sortedBoxes.reduce(
     (acc, box) => acc + slotDurationMinutes(box.startSlot, box.endSlot),
     0,
   )
-  const categoryCounter = new Map()
+  const categoryCounter = new Map<string, CategoryCounterEntry>()
 
   sortedBoxes.forEach((box) => {
     const meta = box.categoryId ? categoryMap.get(box.categoryId) : null
@@ -179,7 +216,7 @@ const summarizeCalendarDay = (
   }
 }
 
-export const buildWeekCalendarSnapshot = ({ currentDate, currentDayData }) => {
+export const buildWeekCalendarSnapshot = ({ currentDate, currentDayData }: CalendarSummaryArgs) => {
   const startDate = startOfWeekMonday(parseDate(currentDate))
   const endDate = new Date(startDate)
   endDate.setDate(startDate.getDate() + 6)
@@ -196,7 +233,11 @@ export const buildWeekCalendarSnapshot = ({ currentDate, currentDayData }) => {
   }
 }
 
-export const buildMonthCalendarSnapshot = ({ currentDate, currentDayData, categories = [] }) => {
+export const buildMonthCalendarSnapshot = ({
+  currentDate,
+  currentDayData,
+  categories = [],
+}: MonthCalendarArgs) => {
   const targetDate = parseDate(currentDate)
   const currentMonthIndex = targetDate.getMonth()
   const firstDay = new Date(targetDate.getFullYear(), currentMonthIndex, 1)
@@ -218,7 +259,7 @@ export const buildMonthCalendarSnapshot = ({ currentDate, currentDayData, catego
     )
   })
   const currentMonthCells = cells.filter((cell) => cell.inCurrentMonth)
-  const legendCounter = new Map()
+  const legendCounter = new Map<string, { key: string; label: string; color: string; count: number }>()
 
   currentMonthCells.forEach((cell) => {
     cell.categoryMix.forEach((category) => {
@@ -250,7 +291,8 @@ export const buildMonthCalendarSnapshot = ({ currentDate, currentDayData, catego
   const averageCompletionRate =
     completionBase.length > 0
       ? Math.round(
-          completionBase.reduce((acc, cell) => acc + cell.completionRate, 0) / completionBase.length,
+          completionBase.reduce((acc, cell) => acc + cell.completionRate, 0) /
+            completionBase.length,
         )
       : 0
   const busiestDay =
@@ -281,7 +323,7 @@ export const buildMonthCalendarSnapshot = ({ currentDate, currentDayData, catego
   }
 }
 
-export const buildPlannerWeekStrip = ({ currentDate, currentDayData }) => {
+export const buildPlannerWeekStrip = ({ currentDate, currentDayData }: CalendarSummaryArgs) => {
   const startDate = startOfWeekMonday(parseDate(currentDate))
   startDate.setDate(startDate.getDate() - 7)
 
@@ -303,15 +345,15 @@ export const buildPlannerWeekStrip = ({ currentDate, currentDayData }) => {
   })
 }
 
-export const buildWeeklyReport = ({ currentDate, currentDayData }) => {
+export const buildWeeklyReport = ({ currentDate, currentDayData }: CalendarSummaryArgs) => {
   const startDate = startOfWeekMonday(parseDate(currentDate))
   let total = 0
   let completed = 0
   let skipped = 0
   let completedPlannedMinutes = 0
   let completedActualMinutes = 0
-  const skipReasonCounter = new Map()
-  const previousSkipReasonCounter = new Map()
+  const skipReasonCounter = new Map<string, number>()
+  const previousSkipReasonCounter = new Map<string, number>()
 
   const byDay = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(startDate)
@@ -342,7 +384,9 @@ export const buildWeeklyReport = ({ currentDate, currentDayData }) => {
       }
 
       const reason =
-        typeof box.skipReason === 'string' && box.skipReason.trim().length > 0 ? box.skipReason.trim() : '기타'
+        typeof box.skipReason === 'string' && box.skipReason.trim().length > 0
+          ? box.skipReason.trim()
+          : '기타'
       skipReasonCounter.set(reason, (skipReasonCounter.get(reason) || 0) + 1)
     })
 
@@ -373,7 +417,9 @@ export const buildWeeklyReport = ({ currentDate, currentDayData }) => {
       }
 
       const reason =
-        typeof box.skipReason === 'string' && box.skipReason.trim().length > 0 ? box.skipReason.trim() : '기타'
+        typeof box.skipReason === 'string' && box.skipReason.trim().length > 0
+          ? box.skipReason.trim()
+          : '기타'
       previousSkipReasonCounter.set(reason, (previousSkipReasonCounter.get(reason) || 0) + 1)
     })
   })
@@ -419,7 +465,10 @@ export const buildWeeklyReport = ({ currentDate, currentDayData }) => {
   }
 }
 
-export const buildWeeklyPlanningPreview = ({ currentDate, currentDayData }) => {
+export const buildWeeklyPlanningPreview = ({
+  currentDate,
+  currentDayData,
+}: CalendarSummaryArgs) => {
   const startDate = startOfWeekMonday(parseDate(currentDate))
 
   return Array.from({ length: 5 }, (_, offset) => {

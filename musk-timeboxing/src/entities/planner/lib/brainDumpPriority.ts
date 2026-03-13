@@ -9,7 +9,11 @@ export const BRAIN_DUMP_PRIORITY_LABELS = {
   4: '최우선',
 }
 
-export const normalizeBrainDumpPriority = (value) => {
+interface PrioritizedItem {
+  priority?: unknown
+}
+
+export const normalizeBrainDumpPriority = (value: unknown): number => {
   const next = Number(value)
 
   if (!Number.isInteger(next)) {
@@ -19,12 +23,12 @@ export const normalizeBrainDumpPriority = (value) => {
   return Math.max(MIN_BRAIN_DUMP_PRIORITY, Math.min(MAX_BRAIN_DUMP_PRIORITY, next))
 }
 
-export const cycleBrainDumpPriority = (value) => {
+export const cycleBrainDumpPriority = (value: unknown): number => {
   const normalized = normalizeBrainDumpPriority(value)
   return normalized >= MAX_BRAIN_DUMP_PRIORITY ? MIN_BRAIN_DUMP_PRIORITY : normalized + 1
 }
 
-export const sortBrainDumpItems = (items = []) =>
+export const sortBrainDumpItems = <T extends PrioritizedItem>(items: T[] = []): T[] =>
   [...items]
     .map((item, index) => ({ item, index }))
     .sort((left, right) => {
