@@ -29,6 +29,18 @@ const createCategoryMap = (categories = []) =>
     categories.map((category) => [category.id, category]),
   )
 
+const summarizePlannerDayTimeBoxes = (dayData) => {
+  const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
+  const total = timeBoxes.length
+  const completed = timeBoxes.filter((box) => box.status === 'COMPLETED').length
+
+  return {
+    total,
+    completed,
+    timeBoxes,
+  }
+}
+
 const getHeatLevel = (total, completed) => {
   if (total <= 0) {
     return 0
@@ -267,4 +279,169 @@ export const buildMonthCalendarSnapshot = ({ currentDate, currentDayData, catego
           }
         : null,
   }
+}
+
+export const buildPlannerWeekStrip = ({ currentDate, currentDayData }) => {
+  const startDate = startOfWeekMonday(parseDate(currentDate))
+  startDate.setDate(startDate.getDate() - 7)
+
+  return Array.from({ length: 21 }, (_, index) => {
+    const date = new Date(startDate)
+    date.setDate(startDate.getDate() + index)
+    const dateStr = formatDate(date)
+    const dayData = getSnapshotDayData(dateStr, currentDate, currentDayData)
+    const summary = summarizePlannerDayTimeBoxes(dayData)
+
+    return {
+      dateStr,
+      dayLabel: WEEKDAY_LABELS[date.getDay()],
+      dayNumber: date.getDate(),
+      total: summary.total,
+      completed: summary.completed,
+      isCurrent: dateStr === currentDate,
+    }
+  })
+}
+
+export const buildWeeklyReport = ({ currentDate, currentDayData }) => {
+  const startDate = startOfWeekMonday(parseDate(currentDate))
+  let total = 0
+  let completed = 0
+  let skipped = 0
+  let completedPlannedMinutes = 0
+  let completedActualMinutes = 0
+  const skipReasonCounter = new Map()
+  const previousSkipReasonCounter = new Map()
+
+  const byDay = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(startDate)
+    date.setDate(startDate.getDate() + index)
+    const dateStr = formatDate(date)
+    const dayData = getSnapshotDayData(dateStr, currentDate, currentDayData)
+    const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
+    const dayTotal = timeBoxes.length
+    const dayCompleted = timeBoxes.filter((box) => box.status === 'COMPLETED').length
+    const daySkipped = timeBoxes.filter((box) => box.status === 'SKIPPED').length
+
+    total += dayTotal
+    completed += dayCompleted
+    skipped += daySkipped
+
+    timeBoxes.forEach((box) => {
+      if (
+        box.status === 'COMPLETED' &&
+        Number.isFinite(box.actualMinutes) &&
+        Number(box.actualMinutes) > 0
+      ) {
+        completedPlannedMinutes += slotDurationMinutes(box.startSlot, box.endSlot)
+        completedActualMinutes += Number(box.actualMinutes)
+      }
+
+      if (box.status !== 'SKIPPED') {
+        return
+      }
+
+      const reason =
+        typeof box.skipReason === 'string' && box.skipReason.trim().length > 0 ? box.skipReason.trim() : '기타'
+      skipReasonCounter.set(reason, (skipReasonCounter.get(reason) || 0) + 1)
+    })
+
+    return {
+      dateStr,
+      dayLabel: WEEKDAY_LABELS[date.getDay()],
+      total: dayTotal,
+      completed: dayCompleted,
+    }
+  })
+
+  const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
+  const diff = completedActualMinutes - completedPlannedMinutes
+  const topSkipReasons = [...skipReasonCounter.entries()]
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 3)
+    .map(([reason, count]) => ({ reason, count }))
+
+  Array.from({ length: 7 }).forEach((_, index) => {
+    const date = new Date(startDate)
+    date.setDate(startDate.getDate() - 7 + index)
+    const dayData = loadDay(formatDate(date))
+    const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
+
+    timeBoxes.forEach((box) => {
+      if (box.status !== 'SKIPPED') {
+        return
+      }
+
+      const reason =
+        typeof box.skipReason === 'string' && box.skipReason.trim().length > 0 ? box.skipReason.trim() : '기타'
+      previousSkipReasonCounter.set(reason, (previousSkipReasonCounter.get(reason) || 0) + 1)
+    })
+  })
+
+  const skipReasonTrend = [...new Set([...skipReasonCounter.keys(), ...previousSkipReasonCounter.keys()])]
+    .map((reason) => {
+      const current = skipReasonCounter.get(reason) || 0
+      const previous = previousSkipReasonCounter.get(reason) || 0
+      return {
+        reason,
+        current,
+        previous,
+        delta: current - previous,
+      }
+    })
+    .filter((item) => item.current > 0 || item.previous > 0)
+    .sort((left, right) => {
+      const byDelta = Math.abs(right.delta) - Math.abs(left.delta)
+      if (byDelta !== 0) {
+        return byDelta
+      }
+
+      const byCurrent = right.current - left.current
+      if (byCurrent !== 0) {
+        return byCurrent
+      }
+
+      return left.reason.localeCompare(right.reason, 'ko')
+    })
+    .slice(0, 3)
+
+  return {
+    total,
+    completed,
+    skipped,
+    completionRate,
+    completedPlannedMinutes,
+    completedActualMinutes,
+    diff,
+    byDay,
+    topSkipReasons,
+    skipReasonTrend,
+  }
+}
+
+export const buildWeeklyPlanningPreview = ({ currentDate, currentDayData }) => {
+  const startDate = startOfWeekMonday(parseDate(currentDate))
+
+  return Array.from({ length: 5 }, (_, offset) => {
+    const date = new Date(startDate)
+    date.setDate(startDate.getDate() + offset)
+    const dateStr = formatDate(date)
+    const dayData = getSnapshotDayData(dateStr, currentDate, currentDayData)
+    const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
+    const sorted = [...timeBoxes].sort((left, right) => left.startSlot - right.startSlot)
+    const previewItems = sorted.slice(0, 3).map((box) => ({
+      id: box.id,
+      content: box.content,
+      startSlot: box.startSlot,
+      status: box.status,
+    }))
+
+    return {
+      dateStr,
+      dayLabel: WEEKDAY_LABELS[date.getDay()],
+      dayNumber: date.getDate(),
+      total: sorted.length,
+      previewItems,
+    }
+  })
 }

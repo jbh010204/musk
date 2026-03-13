@@ -19,10 +19,14 @@ import QuickAddModal from './features/timeline/ui/QuickAddModal'
 import { useCategoryMeta, useDailyData, useTemplateMeta, useToast } from './app/hooks'
 import {
   applyTimeBoxReschedulePlan,
+  buildPlannerWeekStrip,
   buildMonthCalendarSnapshot,
   buildWeekCalendarSnapshot,
   buildTimeBoxReschedulePlan,
+  buildWeeklyPlanningPreview,
+  buildWeeklyReport,
   deriveBigThreeProgress,
+  findAvailableStartSlot,
   getCategoryViewModels,
   getPlannerPersistenceStatus,
   hasOverlap,
@@ -47,7 +51,6 @@ import {
 const DEFAULT_BOX_SLOTS = 1
 const BASE_SLOT_HEIGHT = 32
 const DETAIL_SLOT_HEIGHT = 64
-const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
 const THEME_KEY = 'musk-planner-theme'
 const TIMELINE_FOCUS_MODE_KEY = 'musk-planner-timeline-focus-mode'
 const THEME_DARK = 'dark'
@@ -56,7 +59,6 @@ const INSIGHTS_LOADING_MS = 220
 const UNDO_TOAST_MS = 5000
 const BOOTSTRAP_NOTICE_KEY = 'musk-planner-bootstrap-notice-shown'
 
-const parseDate = (dateStr) => new Date(`${dateStr}T00:00:00`)
 const formatDate = (date) => {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -74,24 +76,6 @@ const formatShortDateLabel = (dateStr) =>
     day: 'numeric',
     weekday: 'short',
   }).format(new Date(`${dateStr}T00:00:00`))
-
-const startOfWeekMonday = (dateStr) => {
-  const date = parseDate(dateStr)
-  const day = date.getDay()
-  const offset = day === 0 ? -6 : 1 - day
-  date.setDate(date.getDate() + offset)
-  return date
-}
-
-const summarizeDay = (dayData) => {
-  const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
-  const total = timeBoxes.length
-  const completed = timeBoxes.filter((box) => box.status === 'COMPLETED').length
-  return {
-    total,
-    completed,
-  }
-}
 
 const SKIP_SUGGESTION_BY_REASON = {
   '외부 일정/방해': '자동 제안: 외부 일정 변동이 있었어요. 버퍼 30분 블록을 먼저 배치해보세요.',
@@ -168,169 +152,7 @@ const getSkipBasedSuggestion = (dayData) => {
   }
 }
 
-const buildWeeklyReport = ({ currentDate, currentDayData }) => {
-  const startDate = startOfWeekMonday(currentDate)
-  let total = 0
-  let completed = 0
-  let skipped = 0
-  let completedPlannedMinutes = 0
-  let completedActualMinutes = 0
-  const skipReasonCounter = new Map()
-  const previousSkipReasonCounter = new Map()
-
-  const byDay = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(startDate)
-    date.setDate(startDate.getDate() + index)
-    const dateStr = formatDate(date)
-    const dayData = dateStr === currentDate ? currentDayData : loadPlannerDayModel(dateStr)
-    const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
-    const dayTotal = timeBoxes.length
-    const dayCompleted = timeBoxes.filter((box) => box.status === 'COMPLETED').length
-    const daySkipped = timeBoxes.filter((box) => box.status === 'SKIPPED').length
-
-    total += dayTotal
-    completed += dayCompleted
-    skipped += daySkipped
-
-    timeBoxes.forEach((box) => {
-      if (
-        box.status === 'COMPLETED' &&
-        Number.isFinite(box.actualMinutes) &&
-        Number(box.actualMinutes) > 0
-      ) {
-        completedPlannedMinutes += slotDurationMinutes(box.startSlot, box.endSlot)
-        completedActualMinutes += Number(box.actualMinutes)
-      }
-
-      if (box.status !== 'SKIPPED') {
-        return
-      }
-
-      const reason =
-        typeof box.skipReason === 'string' && box.skipReason.trim().length > 0 ? box.skipReason.trim() : '기타'
-      skipReasonCounter.set(reason, (skipReasonCounter.get(reason) || 0) + 1)
-    })
-
-    return {
-      dateStr,
-      dayLabel: DAY_LABELS[date.getDay()],
-      total: dayTotal,
-      completed: dayCompleted,
-    }
-  })
-
-  const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
-  const diff = completedActualMinutes - completedPlannedMinutes
-  const topSkipReasons = [...skipReasonCounter.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([reason, count]) => ({ reason, count }))
-  Array.from({ length: 7 }).forEach((_, index) => {
-    const date = new Date(startDate)
-    date.setDate(startDate.getDate() - 7 + index)
-    const dayData = loadPlannerDayModel(formatDate(date))
-    const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
-
-    timeBoxes.forEach((box) => {
-      if (box.status !== 'SKIPPED') {
-        return
-      }
-
-      const reason =
-        typeof box.skipReason === 'string' && box.skipReason.trim().length > 0
-          ? box.skipReason.trim()
-          : '기타'
-      previousSkipReasonCounter.set(reason, (previousSkipReasonCounter.get(reason) || 0) + 1)
-    })
-  })
-
-  const skipReasonTrend = [...new Set([...skipReasonCounter.keys(), ...previousSkipReasonCounter.keys()])]
-    .map((reason) => {
-      const current = skipReasonCounter.get(reason) || 0
-      const previous = previousSkipReasonCounter.get(reason) || 0
-      return {
-        reason,
-        current,
-        previous,
-        delta: current - previous,
-      }
-    })
-    .filter((item) => item.current > 0 || item.previous > 0)
-    .sort((a, b) => {
-      const byDelta = Math.abs(b.delta) - Math.abs(a.delta)
-      if (byDelta !== 0) {
-        return byDelta
-      }
-
-      const byCurrent = b.current - a.current
-      if (byCurrent !== 0) {
-        return byCurrent
-      }
-
-      return a.reason.localeCompare(b.reason, 'ko')
-    })
-    .slice(0, 3)
-
-  return {
-    total,
-    completed,
-    skipped,
-    completionRate,
-    completedPlannedMinutes,
-    completedActualMinutes,
-    diff,
-    byDay,
-    topSkipReasons,
-    skipReasonTrend,
-  }
-}
-
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
-
-const findAvailableStartSlot = (timeBoxes, preferredStartSlot, durationSlots) => {
-  const safeDuration = Math.max(1, Math.min(TOTAL_SLOTS, Number(durationSlots) || 1))
-  const maxStart = TOTAL_SLOTS - safeDuration
-  const safePreferred = clamp(Number(preferredStartSlot) || 0, 0, maxStart)
-
-  const findFrom = (start) => {
-    for (let slot = start; slot <= maxStart; slot += 1) {
-      if (!hasOverlap(timeBoxes, { startSlot: slot, endSlot: slot + safeDuration })) {
-        return slot
-      }
-    }
-
-    return null
-  }
-
-  return findFrom(safePreferred) ?? findFrom(0)
-}
-
-const buildWeeklyPlanningPreview = ({ currentDate, currentDayData }) => {
-  const startDate = startOfWeekMonday(currentDate)
-
-  return Array.from({ length: 5 }, (_, offset) => {
-    const date = new Date(startDate)
-    date.setDate(startDate.getDate() + offset)
-    const dateStr = formatDate(date)
-    const dayData = dateStr === currentDate ? currentDayData : loadPlannerDayModel(dateStr)
-    const timeBoxes = Array.isArray(dayData?.timeBoxes) ? dayData.timeBoxes : []
-    const sorted = [...timeBoxes].sort((a, b) => a.startSlot - b.startSlot)
-    const previewItems = sorted.slice(0, 3).map((box) => ({
-      id: box.id,
-      content: box.content,
-      startSlot: box.startSlot,
-      status: box.status,
-    }))
-
-    return {
-      dateStr,
-      dayLabel: DAY_LABELS[date.getDay()],
-      dayNumber: date.getDate(),
-      total: sorted.length,
-      previewItems,
-    }
-  })
-}
 
 const resolveMovedRangeFromDelta = (activeData, deltaY, slotHeight) => {
   const activeStart = Number(activeData?.startSlot) || 0
@@ -685,27 +507,10 @@ function App() {
     setDailySuggestion(null)
   }
 
-  const weekStrip = (() => {
-    const startDate = startOfWeekMonday(currentDate)
-    startDate.setDate(startDate.getDate() - 7)
-
-    return Array.from({ length: 21 }, (_, index) => {
-      const date = new Date(startDate)
-      date.setDate(startDate.getDate() + index)
-      const dateStr = formatDate(date)
-      const dayData = dateStr === currentDate ? data : loadPlannerDayModel(dateStr)
-      const summary = summarizeDay(dayData)
-
-      return {
-        dateStr,
-        dayLabel: DAY_LABELS[date.getDay()],
-        dayNumber: date.getDate(),
-        total: summary.total,
-        completed: summary.completed,
-        isCurrent: dateStr === currentDate,
-      }
-    })
-  })()
+  const weekStrip = buildPlannerWeekStrip({
+    currentDate,
+    currentDayData: data,
+  })
   void crossDateRevision
   const weeklyReport = buildWeeklyReport({
     currentDate,
