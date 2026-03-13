@@ -152,3 +152,20 @@ export const createStackCanvasBigThreeSelectionPatch = (taskCards, slot) => {
     selectedBigThreeId: slotId,
   }
 }
+
+export const applyStackCanvasStatePatch = (
+  currentStackCanvasState,
+  nextStackCanvasState,
+  lastSyncedAt = Date.now(),
+) => {
+  const resolvedPatch =
+    typeof nextStackCanvasState === 'function'
+      ? nextStackCanvasState(currentStackCanvasState)
+      : nextStackCanvasState
+
+  return normalizeStackCanvasState({
+    ...currentStackCanvasState,
+    ...resolvedPatch,
+    lastSyncedAt,
+  })
+}

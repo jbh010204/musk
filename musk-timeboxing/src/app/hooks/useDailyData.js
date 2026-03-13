@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
+  applyStackCanvasStatePatch,
   DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
   addManualBigThreeItem,
   addManyTaskCardsToBigThree,
@@ -8,17 +9,18 @@ import {
   addTimeBoxRecord,
   applyTaskCardBoardLayout as applyTaskCardBoardLayoutCommand,
   autofillBigThreeFromTaskCards,
+  carryOverPlannerDay,
   clearTaskCardCategory,
   clearTimeBoxCategoryRecord,
   completeTimeBoxByTimerRecord,
-  createCarryOverTimeBoxRecord,
+  createLastFocusSnapshot,
   cycleTaskCardPriority,
-  findAvailableStartSlot,
+  formatPlannerDate,
   getMostRecentStoredDate,
+  isPlannerDateString,
   loadLastActiveDate,
   loadLastFocus,
   loadPlannerDayModel,
-  normalizeStackCanvasState,
   removeTaskCardRecord,
   removeBigThreeItemRecord,
   removeTimeBoxRecord,
@@ -28,6 +30,7 @@ import {
   saveLastFocus,
   savePlannerDayModel,
   startTimeBoxTimerRecord,
+  shiftPlannerDate,
   syncTaskCardLinksWithTimeBoxes,
   TOTAL_SLOTS,
   updateTimeBoxRecord,
@@ -35,25 +38,12 @@ import {
   pauseTimeBoxTimerRecord,
 } from '../../entities/planner'
 
-const formatDate = (date) => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-const shiftDate = (dateStr, offset) => {
-  const date = new Date(`${dateStr}T00:00:00`)
-  date.setDate(date.getDate() + offset)
-  return formatDate(date)
-}
-
 const createId = () => crypto.randomUUID()
 
 const syncTaskCardLinks = (taskCards, timeBoxes) => syncTaskCardLinksWithTimeBoxes(taskCards, timeBoxes)
 
 export const useDailyData = () => {
-  const today = formatDate(new Date())
+  const today = formatPlannerDate(new Date())
   const initialDate = loadLastActiveDate() ?? getMostRecentStoredDate() ?? today
   const [currentDate, setCurrentDate] = useState(initialDate)
   const [data, setData] = useState(() => loadPlannerDayModel(initialDate))
@@ -68,91 +58,44 @@ export const useDailyData = () => {
   }, [currentDate])
 
   const rememberFocus = (slot) => {
-    if (!Number.isInteger(slot)) {
+    const focus = createLastFocusSnapshot(currentDate, slot)
+    if (!focus) {
       return
-    }
-
-    const focus = {
-      date: currentDate,
-      slot,
-      ts: Date.now(),
     }
 
     setLastFocus(focus)
     saveLastFocus(focus)
   }
 
-  const carryOverUnfinished = (fromDate, toDate) => {
-    const source = fromDate === currentDate ? data : loadPlannerDayModel(fromDate)
-    const target = loadPlannerDayModel(toDate)
-    const nextBoxes = [...target.timeBoxes]
-    const pendingBoxes = source.timeBoxes.filter((box) => box.status !== 'COMPLETED')
-    let moved = 0
-    let skipped = 0
-
-    pendingBoxes.forEach((box) => {
-      const alreadyMoved = nextBoxes.some(
-        (targetBox) =>
-          targetBox.carryOverFromDate === fromDate && targetBox.carryOverFromBoxId === box.id,
-      )
-
-      if (alreadyMoved) {
-        skipped += 1
-        return
-      }
-
-      const duration = Math.max(1, Math.min(TOTAL_SLOTS, box.endSlot - box.startSlot))
-      const startSlot = findAvailableStartSlot(nextBoxes, box.startSlot, duration)
-
-      if (startSlot == null) {
-        skipped += 1
-        return
-      }
-
-      const nextBox = createCarryOverTimeBoxRecord(box, {
-        fromDate,
-        startSlot,
-        createId,
-      })
-      if (!nextBox) {
-        skipped += 1
-        return
-      }
-
-      nextBoxes.push(nextBox)
-      moved += 1
-    })
-
-    if (moved > 0) {
-      savePlannerDayModel(toDate, {
-        ...target,
-        timeBoxes: nextBoxes,
-      })
-    }
-
-    return {
-      moved,
-      skipped,
-    }
-  }
-
   const goNextDay = (options = {}) => {
-    const nextDate = shiftDate(currentDate, 1)
+    const nextDate = shiftPlannerDate(currentDate, 1)
     const shouldCarry = options.autoCarry !== false
-    const result = shouldCarry ? carryOverUnfinished(currentDate, nextDate) : { moved: 0, skipped: 0 }
+    const targetDay = loadPlannerDayModel(nextDate)
+    const result = shouldCarry
+      ? carryOverPlannerDay({
+          fromDate: currentDate,
+          toDate: nextDate,
+          sourceDay: data,
+          targetDay,
+          createId,
+        })
+      : { moved: 0, skipped: 0, nextTargetDay: targetDay }
+    if (shouldCarry && result.moved > 0) {
+      savePlannerDayModel(nextDate, result.nextTargetDay)
+    }
     setCurrentDate(nextDate)
-    setData(loadPlannerDayModel(nextDate))
+    setData(result.nextTargetDay)
     return result
   }
 
   const goPrevDay = () => {
-    const prevDate = shiftDate(currentDate, -1)
+    const prevDate = shiftPlannerDate(currentDate, -1)
     setCurrentDate(prevDate)
     setData(loadPlannerDayModel(prevDate))
   }
 
   const goToDate = (dateStr) => {
-    if (typeof dateStr !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    if (!isPlannerDateString(dateStr)) {
       return
     }
 
@@ -513,16 +456,9 @@ export const useDailyData = () => {
 
   const updateStackCanvasState = (nextStackCanvasState) => {
     setData((prev) => {
-      const resolved =
-        typeof nextStackCanvasState === 'function' ? nextStackCanvasState(prev.stackCanvasState) : nextStackCanvasState
-
       return {
         ...prev,
-        stackCanvasState: normalizeStackCanvasState({
-          ...prev.stackCanvasState,
-          ...resolved,
-          lastSyncedAt: Date.now(),
-        }),
+        stackCanvasState: applyStackCanvasStatePatch(prev.stackCanvasState, nextStackCanvasState),
       }
     })
   }
