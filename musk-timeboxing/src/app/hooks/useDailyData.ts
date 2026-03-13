@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   DEFAULT_BOARD_CARD_ESTIMATED_SLOTS,
   addManualBigThreeItem,
@@ -97,6 +97,7 @@ export const useDailyData = () => {
   const [currentDate, setCurrentDate] = useState<string>(initialDate)
   const [data, setData] = useState<DailyDataState>(() => loadPlannerDayModel(initialDate))
   const [lastFocus, setLastFocus] = useState<LastFocusState>(() => loadLastFocus())
+  const pendingFocusSlotRef = useRef<number | null>(null)
 
   useEffect(() => {
     savePlannerDayModel(currentDate, data)
@@ -120,6 +121,16 @@ export const useDailyData = () => {
     setLastFocus(focus)
     saveLastFocus(focus)
   }
+
+  useEffect(() => {
+    if (!Number.isInteger(pendingFocusSlotRef.current)) {
+      return
+    }
+
+    const slot = Number(pendingFocusSlotRef.current)
+    pendingFocusSlotRef.current = null
+    rememberFocus(slot)
+  }, [data])
 
   const commitTaskCards = (
     updater: TaskCardsUpdater,
@@ -386,14 +397,10 @@ export const useDailyData = () => {
       }
 
       insertedId = nextInsertedId
+      pendingFocusSlotRef.current = Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(startSlot) || 0))
 
       return nextTimeBoxes
     })
-
-    if (insertedId) {
-      const resolvedStart = Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(startSlot) || 0))
-      rememberFocus(resolvedStart)
-    }
 
     return insertedId
   }
@@ -440,14 +447,10 @@ export const useDailyData = () => {
       }
 
       restored = didRestore
+      pendingFocusSlotRef.current = Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(timeBox?.startSlot) || 0))
 
       return nextTimeBoxes
     })
-
-    if (restored) {
-      const resolvedStart = Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(timeBox?.startSlot) || 0))
-      rememberFocus(resolvedStart)
-    }
 
     return restored
   }
