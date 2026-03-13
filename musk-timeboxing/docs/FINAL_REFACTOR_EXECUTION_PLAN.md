@@ -43,6 +43,7 @@
 - core DnD payload helper extraction
 - day navigation / carry-over helper extraction
 - weekly strip / report / planning preview extraction
+- planner day mutation helper extraction
 
 아직 큰 덩어리로 남아 있는 곳:
 
@@ -144,6 +145,7 @@
 - day navigation date helper를 model로 이동
 - carry-over 계산을 model helper로 이동
 - stack canvas patch 적용을 lib helper로 이동
+- planner day record mutation helper를 model로 이동
 
 ## Step 4. selection / workspace command 정리 [Done]
 
