@@ -21,7 +21,7 @@ export const deriveTaskCardStatus = (
 
   const linkedStatuses = linkedIds
     .map((id) => timeBoxes.find((timeBox) => timeBox.id === id)?.status)
-    .filter((status): status is string => typeof status === 'string')
+    .filter((status): status is TimeBox['status'] => typeof status === 'string')
 
   if (linkedStatuses.length === 0) {
     return 'SCHEDULED'

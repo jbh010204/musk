@@ -1,10 +1,49 @@
 import { hasOverlap, TOTAL_SLOTS } from '../lib/timeSlot'
 import { findAvailableStartSlot } from '../lib/timeBoxPlacement'
+import type { TimeBox, TimeBoxReschedulePlan, TimeBoxStatus } from './types'
 
-/** @returns {string} */
-const defaultCreateId = () => crypto.randomUUID()
+interface TimeBoxInput {
+  id?: unknown
+  content?: unknown
+  taskId?: unknown
+  startSlot?: unknown
+  endSlot?: unknown
+  status?: unknown
+  actualMinutes?: unknown
+  category?: unknown
+  categoryId?: unknown
+  skipReason?: unknown
+  carryOverFromDate?: unknown
+  carryOverFromBoxId?: unknown
+  timerStartedAt?: unknown
+  elapsedSeconds?: unknown
+}
 
-const normalizeText = (value) => {
+interface CarryOverTimeBoxOptions {
+  fromDate?: string
+  startSlot?: number
+  createId?: () => string
+}
+
+interface AddTimeBoxResult {
+  insertedId: string | null
+  nextTimeBoxes: TimeBox[]
+}
+
+interface RestoreTimeBoxResult {
+  restored: boolean
+  nextTimeBoxes: TimeBox[]
+}
+
+interface ApplyTimeBoxReschedulePlanResult {
+  appliedCount: number
+  nextTimeBoxes: TimeBox[]
+  dedupedPlanned: TimeBox[]
+}
+
+const defaultCreateId = (): string => crypto.randomUUID()
+
+const normalizeText = (value: unknown): string => {
   if (typeof value !== 'string') {
     return ''
   }
@@ -12,32 +51,38 @@ const normalizeText = (value) => {
   return value.trim()
 }
 
-const normalizeNullableText = (value) => {
+const normalizeNullableText = (value: unknown): string | null => {
   const trimmed = normalizeText(value)
   return trimmed.length > 0 ? trimmed : null
 }
 
-const clampSlot = (value) => Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(value) || 0))
+const clampSlot = (value: unknown): number => Math.max(0, Math.min(TOTAL_SLOTS - 1, Number(value) || 0))
 
-const normalizeStatus = (value) =>
+const normalizeStatus = (value: unknown): TimeBoxStatus =>
   value === 'PLANNED' || value === 'COMPLETED' || value === 'SKIPPED' ? value : 'PLANNED'
 
-const normalizeActualMinutes = (value) => (Number.isFinite(value) ? Number(value) : null)
+const normalizeActualMinutes = (value: unknown): number | null =>
+  Number.isFinite(value) ? Number(value) : null
 
-const normalizeElapsedSeconds = (value) => (Number.isFinite(value) ? Math.max(0, Number(value)) : 0)
+const normalizeElapsedSeconds = (value: unknown): number =>
+  Number.isFinite(value) ? Math.max(0, Number(value)) : 0
 
-const normalizeTimerStartedAt = (value) => (Number.isFinite(value) ? Number(value) : null)
+const normalizeTimerStartedAt = (value: unknown): number | null =>
+  Number.isFinite(value) ? Number(value) : null
 
-const normalizeTaskId = (value) => {
+const normalizeTaskId = (value: unknown): string | null => {
   if (typeof value === 'string') {
     const trimmed = value.trim()
     return trimmed.length > 0 ? trimmed : null
   }
 
-  return value ?? null
+  return null
 }
 
-export const normalizeTimeBoxRecord = (timeBox, createId = defaultCreateId) => {
+export const normalizeTimeBoxRecord = (
+  timeBox: TimeBoxInput | TimeBox | null | undefined,
+  createId: () => string = defaultCreateId,
+): TimeBox | null => {
   const content = normalizeText(timeBox?.content)
   if (!content) {
     return null
@@ -64,13 +109,16 @@ export const normalizeTimeBoxRecord = (timeBox, createId = defaultCreateId) => {
   }
 }
 
-export const createTimeBoxRecord = (input = {}, createId = defaultCreateId) =>
+export const createTimeBoxRecord = (
+  input: TimeBoxInput = {},
+  createId: () => string = defaultCreateId,
+): TimeBox | null =>
   normalizeTimeBoxRecord(input, createId)
 
 export const createCarryOverTimeBoxRecord = (
-  sourceTimeBox,
-  { fromDate, startSlot, createId = defaultCreateId } = {},
-) => {
+  sourceTimeBox: TimeBoxInput | TimeBox | null | undefined,
+  { fromDate, startSlot = 0, createId = defaultCreateId }: CarryOverTimeBoxOptions = {},
+): TimeBox | null => {
   const normalizedSource = normalizeTimeBoxRecord(sourceTimeBox, createId)
   if (!normalizedSource) {
     return null
@@ -96,7 +144,11 @@ export const createCarryOverTimeBoxRecord = (
   )
 }
 
-export const addTimeBoxRecord = (timeBoxes = [], input = {}, createId = defaultCreateId) => {
+export const addTimeBoxRecord = (
+  timeBoxes: TimeBox[] = [],
+  input: TimeBoxInput = {},
+  createId: () => string = defaultCreateId,
+): AddTimeBoxResult => {
   const normalized = createTimeBoxRecord(input, createId)
   if (!normalized) {
     return {
@@ -127,7 +179,11 @@ export const addTimeBoxRecord = (timeBoxes = [], input = {}, createId = defaultC
   }
 }
 
-export const updateTimeBoxRecord = (timeBoxes = [], timeBoxId, changes = {}) =>
+export const updateTimeBoxRecord = (
+  timeBoxes: TimeBox[] = [],
+  timeBoxId: string,
+  changes: TimeBoxInput = {},
+): TimeBox[] =>
   timeBoxes.map((timeBox) => {
     if (timeBox.id !== timeBoxId) {
       return timeBox
@@ -168,15 +224,22 @@ export const updateTimeBoxRecord = (timeBoxes = [], timeBoxId, changes = {}) =>
     )
   })
 
-export const removeTimeBoxRecord = (timeBoxes = [], timeBoxId) =>
+export const removeTimeBoxRecord = (timeBoxes: TimeBox[] = [], timeBoxId: string): TimeBox[] =>
   timeBoxes.filter((timeBox) => timeBox.id !== timeBoxId)
 
-export const clearTimeBoxCategoryRecord = (timeBoxes = [], categoryId) =>
+export const clearTimeBoxCategoryRecord = (
+  timeBoxes: TimeBox[] = [],
+  categoryId: string | null,
+): TimeBox[] =>
   timeBoxes.map((timeBox) =>
     timeBox.categoryId === categoryId ? { ...timeBox, categoryId: null } : timeBox,
   )
 
-export const restoreTimeBoxRecord = (timeBoxes = [], timeBox, hasOverlapFn = hasOverlap) => {
+export const restoreTimeBoxRecord = (
+  timeBoxes: TimeBox[] = [],
+  timeBox: TimeBoxInput | TimeBox | null | undefined,
+  hasOverlapFn = hasOverlap,
+): RestoreTimeBoxResult => {
   const normalized = normalizeTimeBoxRecord(timeBox)
   if (!normalized) {
     return { restored: false, nextTimeBoxes: timeBoxes }
@@ -201,7 +264,11 @@ export const restoreTimeBoxRecord = (timeBoxes = [], timeBox, hasOverlapFn = has
   }
 }
 
-export const startTimeBoxTimerRecord = (timeBoxes = [], timeBoxId, now = Date.now()) =>
+export const startTimeBoxTimerRecord = (
+  timeBoxes: TimeBox[] = [],
+  timeBoxId: string,
+  now = Date.now(),
+): TimeBox[] =>
   timeBoxes.map((timeBox) => {
     if (timeBox.id === timeBoxId) {
       if (timeBox.timerStartedAt) {
@@ -228,7 +295,11 @@ export const startTimeBoxTimerRecord = (timeBoxes = [], timeBoxId, now = Date.no
     }
   })
 
-export const pauseTimeBoxTimerRecord = (timeBoxes = [], timeBoxId, now = Date.now()) =>
+export const pauseTimeBoxTimerRecord = (
+  timeBoxes: TimeBox[] = [],
+  timeBoxId: string,
+  now = Date.now(),
+): TimeBox[] =>
   timeBoxes.map((timeBox) => {
     if (timeBox.id !== timeBoxId || !timeBox.timerStartedAt) {
       return timeBox
@@ -243,7 +314,11 @@ export const pauseTimeBoxTimerRecord = (timeBoxes = [], timeBoxId, now = Date.no
     }
   })
 
-export const completeTimeBoxByTimerRecord = (timeBoxes = [], timeBoxId, now = Date.now()) =>
+export const completeTimeBoxByTimerRecord = (
+  timeBoxes: TimeBox[] = [],
+  timeBoxId: string,
+  now = Date.now(),
+): TimeBox[] =>
   timeBoxes.map((timeBox) => {
     if (timeBox.id !== timeBoxId) {
       return timeBox
@@ -280,7 +355,13 @@ export const buildTimeBoxReschedulePlan = ({
   timeBoxes = [],
   targetTimeBoxes = [],
   createId = defaultCreateId,
-} = {}) => {
+}: {
+  currentDate?: string
+  targetDate?: string
+  timeBoxes?: TimeBox[]
+  targetTimeBoxes?: TimeBox[]
+  createId?: () => string
+} = {}): TimeBoxReschedulePlan => {
   const planBaseBoxes = [...targetTimeBoxes]
   const pending = [...timeBoxes]
     .filter((timeBox) => timeBox.status !== 'COMPLETED')
@@ -333,7 +414,10 @@ export const buildTimeBoxReschedulePlan = ({
   }
 }
 
-export const applyTimeBoxReschedulePlan = (targetTimeBoxes = [], plan = {}) => {
+export const applyTimeBoxReschedulePlan = (
+  targetTimeBoxes: TimeBox[] = [],
+  plan: Partial<TimeBoxReschedulePlan> | null | undefined = {},
+): ApplyTimeBoxReschedulePlanResult => {
   const planned = Array.isArray(plan?.planned) ? plan.planned.filter(Boolean) : []
   if (planned.length === 0) {
     return {

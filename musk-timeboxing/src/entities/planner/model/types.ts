@@ -1,6 +1,7 @@
 export type TaskCardPriority = 0 | 1 | 2 | 3 | 4
 export type TaskCardOrigin = 'board' | 'list'
 export type BigThreeStatus = 'EMPTY' | 'DONE' | 'PENDING'
+export type TimeBoxStatus = 'PLANNED' | 'COMPLETED' | 'SKIPPED'
 
 export interface TaskCard {
   id: string
@@ -44,14 +45,18 @@ export interface BigThreeItem {
 export interface TimeBox {
   id: string
   content: string
-  status?: string | null
-  taskId?: string | null
+  status: TimeBoxStatus
+  taskId: string | null
   startSlot: number
   endSlot: number
-  actualMinutes?: number | null
-  skipReason?: string | null
-  carryOverFromDate?: string | null
-  carryOverFromBoxId?: string | null
+  actualMinutes: number | null
+  category: string | null
+  categoryId: string | null
+  skipReason: string | null
+  carryOverFromDate: string | null
+  carryOverFromBoxId: string | null
+  timerStartedAt: number | null
+  elapsedSeconds: number
 }
 
 export interface StackCanvasStateRecord {
@@ -77,4 +82,11 @@ export interface BigThreeProgress {
   completedCount: number
   filledCount: number
   isPerfect: boolean
+}
+
+export interface TimeBoxReschedulePlan {
+  fromDate: string | null
+  targetDate: string | null
+  planned: TimeBox[]
+  skipped: TimeBox[]
 }
