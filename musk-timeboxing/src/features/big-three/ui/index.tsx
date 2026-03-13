@@ -1,6 +1,13 @@
+import type { BigThreeItem } from '../../../entities/planner'
 import BigThreeSlot from './BigThreeSlot'
 
-function BigThree({ bigThree, addBigThreeItem, removeBigThreeItem }) {
+interface BigThreeProps {
+  bigThree: BigThreeItem[]
+  addBigThreeItem: (content: string) => boolean
+  removeBigThreeItem: (id: string) => void
+}
+
+function BigThree({ bigThree, addBigThreeItem, removeBigThreeItem }: BigThreeProps) {
   return (
     <section className="space-y-5 p-5">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">

@@ -1,8 +1,16 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { useState } from 'react'
+import { useState, type KeyboardEvent } from 'react'
+import type { BigThreeItem } from '../../../entities/planner'
 import { createBigThreeDragPayload, createBigThreeSlotDropPayload } from '../../planner-dnd/lib/payloads'
 
-function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
+interface BigThreeSlotProps {
+  slot: BigThreeItem | null
+  slotIndex: number
+  onAdd: (content: string) => boolean
+  onRemove: (id: string) => void
+}
+
+function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }: BigThreeSlotProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [isComposing, setIsComposing] = useState(false)
@@ -34,6 +42,27 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
 
     const success = onAdd(trimmed)
     if (success) {
+      setIsEditing(false)
+      setDraft('')
+    }
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    const nativeComposing = event.nativeEvent?.isComposing || event.keyCode === 229
+
+    if (isComposing || nativeComposing) {
+      return
+    }
+
+    if (event.key === 'Enter') {
+      if (event.repeat) {
+        return
+      }
+
+      event.preventDefault()
+      handleSubmit()
+    }
+    if (event.key === 'Escape') {
       setIsEditing(false)
       setDraft('')
     }
@@ -74,26 +103,7 @@ function BigThreeSlot({ slot, slotIndex, onAdd, onRemove }) {
           onChange={(event) => setDraft(event.target.value)}
           onCompositionStart={() => setIsComposing(true)}
           onCompositionEnd={() => setIsComposing(false)}
-          onKeyDown={(event) => {
-            const nativeComposing = event.nativeEvent?.isComposing || event.keyCode === 229
-
-            if (isComposing || nativeComposing) {
-              return
-            }
-
-            if (event.key === 'Enter') {
-              if (event.repeat) {
-                return
-              }
-
-              event.preventDefault()
-              handleSubmit()
-            }
-            if (event.key === 'Escape') {
-              setIsEditing(false)
-              setDraft('')
-            }
-          }}
+          onKeyDown={handleKeyDown}
           onBlur={() => {
             setIsEditing(false)
             setDraft('')

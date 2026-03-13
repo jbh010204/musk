@@ -57,6 +57,7 @@
 - `useDailyData` TypeScript 경계 추가
 - `shared/ui/*` TypeScript 전환 완료
 - `features/header/*` TypeScript 전환 완료
+- `features/big-three/*` TypeScript 전환 완료
 - timeline DnD orchestration hook(`usePlannerTimelineDnd.ts`)
 - timebox action orchestration hook(`usePlannerTimeBoxActions.ts`)
 - day flow orchestration hook(`usePlannerDayFlow.ts`)
@@ -256,6 +257,7 @@
 - `app/hooks/useDailyData`를 `.ts`로 전환
 - `shared/ui/Badge`, `Button`, `Card`, `IconButton`, `cn`, `index`를 TS로 전환
 - `features/header/index`, `features/header/ui/Header`를 TS로 전환
+- `features/big-three/index`, `features/big-three/ui/index`, `features/big-three/ui/BigThreeSlot`을 TS로 전환
 - `features/planner-dnd/lib/payloads`를 `.ts`로 전환
 - `features/planner-dnd/usePlannerTimelineDnd`를 `.ts`로 추가
 - `app/hooks/usePlannerTimeBoxActions`를 `.ts`로 추가
