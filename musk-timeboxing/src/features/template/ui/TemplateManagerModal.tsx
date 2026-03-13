@@ -6,9 +6,52 @@ const DURATION_OPTIONS = [
   { value: 2, label: '60분' },
   { value: 3, label: '90분' },
   { value: 4, label: '120분' },
-]
+] as const
 
-function TemplateRow({ template, categories, onUpdate, onDelete }) {
+interface CategoryOption {
+  id: string
+  name: string
+  pathLabel?: string | null
+  isLeaf?: boolean
+}
+
+interface TemplateRecord {
+  id: string
+  name: string
+  content: string
+  durationSlots: number | string
+  categoryId?: string | null
+}
+
+interface TemplateMutationInput {
+  name: string
+  content: string
+  durationSlots: string
+  categoryId: string
+}
+
+interface TemplateMutationResult {
+  ok: boolean
+  error?: string
+}
+
+interface TemplateRowProps {
+  template: TemplateRecord
+  categories: CategoryOption[]
+  onUpdate: (id: string, payload: TemplateMutationInput) => void
+  onDelete: (id: string) => void
+}
+
+interface TemplateManagerModalProps {
+  templates: TemplateRecord[]
+  categories: CategoryOption[]
+  onClose: () => void
+  onAddTemplate: (payload: TemplateMutationInput) => TemplateMutationResult
+  onUpdateTemplate: (id: string, payload: TemplateMutationInput) => void
+  onDeleteTemplate: (id: string) => void
+}
+
+function TemplateRow({ template, categories, onUpdate, onDelete }: TemplateRowProps) {
   const assignableCategories = useMemo(
     () => categories.filter((category) => category?.isLeaf !== false),
     [categories],
@@ -100,7 +143,7 @@ function TemplateManagerModal({
   onAddTemplate,
   onUpdateTemplate,
   onDeleteTemplate,
-}) {
+}: TemplateManagerModalProps) {
   const assignableCategories = useMemo(
     () => categories.filter((category) => category?.isLeaf !== false),
     [categories],
