@@ -14,6 +14,8 @@ import {
   useCategoryMeta,
   useDailyData,
   usePlannerDayFlow,
+  usePlannerMetaActions,
+  usePlannerTaskActions,
   usePlannerTimeBoxActions,
   useTemplateMeta,
   useToast,
@@ -175,6 +177,22 @@ function App() {
     reloadTemplates,
   })
   const {
+    handleSendToBigThree,
+    handleRemoveTaskCard,
+    handleFillBigThreeFromTaskCards,
+    handleSendCardsToBigThree,
+  } = usePlannerTaskActions({
+    taskCards: data.taskCards,
+    bigThree: data.bigThree,
+    undoToastMs: UNDO_TOAST_MS,
+    showToast,
+    removeTaskCard,
+    restoreTaskCard,
+    sendToBigThree,
+    sendManyToBigThree,
+    fillBigThreeFromTaskCards,
+  })
+  const {
     handleUpdateTimeBox,
     handleTimerComplete,
     handleRemoveTimeBox,
@@ -192,6 +210,26 @@ function App() {
     removeTimeBox,
     restoreTimeBox,
     bumpCrossDateRevision,
+  })
+  const {
+    handleAddCategory,
+    handleUpdateCategory,
+    handleDeleteCategory,
+    handleAddTemplate,
+    handleUpdateTemplate,
+    handleDeleteTemplate,
+  } = usePlannerMetaActions({
+    lockedParentIds,
+    showToast,
+    addCategory,
+    updateCategory,
+    removeCategory,
+    clearTimeBoxCategory,
+    clearTaskCardCategoryState,
+    clearTemplateCategory,
+    addTemplate,
+    updateTemplate,
+    removeTemplate,
   })
 
   useEffect(() => {
@@ -272,131 +310,6 @@ function App() {
     () => deriveBigThreeProgress(data.bigThree, data.timeBoxes),
     [data.bigThree, data.timeBoxes],
   )
-
-  const handleSendToBigThree = (taskCardId) => {
-    const success = sendToBigThree(taskCardId)
-
-    if (!success) {
-      showToast('빅 3이 이미 가득 찼습니다')
-    }
-  }
-
-  const handleRemoveTaskCard = (id) => {
-    const removedIndex = data.taskCards.findIndex((item) => item.id === id)
-    const removedItem = removedIndex >= 0 ? data.taskCards[removedIndex] : null
-
-    if (!removedItem) {
-      return
-    }
-
-    removeTaskCard(id)
-    showToast('브레인 덤프를 삭제했습니다', UNDO_TOAST_MS, {
-      actionLabel: '되돌리기',
-      onAction: () => {
-        restoreTaskCard(removedItem, removedIndex)
-      },
-    })
-  }
-
-  const handleFillBigThreeFromTaskCards = () => {
-    const insertedCount = fillBigThreeFromTaskCards()
-
-    if (insertedCount > 0) {
-      showToast(`우선순위 상위 ${insertedCount}개를 빅3로 채웠습니다`)
-      return
-    }
-
-    if (data.bigThree.length >= 3) {
-      showToast('빅 3이 이미 가득 찼습니다')
-      return
-    }
-
-    showToast('채울 브레인 덤프 항목이 없습니다')
-  }
-
-  const handleSendCardsToBigThree = (taskCardIds = []) => {
-    const insertedCount = sendManyToBigThree(taskCardIds)
-
-    if (insertedCount > 0) {
-      showToast(`선택 카드 ${insertedCount}개를 빅3에 추가했습니다`)
-      return insertedCount
-    }
-
-    if (data.bigThree.length >= 3) {
-      showToast('빅 3이 이미 가득 찼습니다')
-      return 0
-    }
-
-    showToast('빅3에 추가할 카드가 없습니다')
-    return 0
-  }
-
-  const handleAddCategory = (name, color, parentId = null) => {
-    const result = addCategory(name, color, parentId, {
-      lockedParentIds: [...lockedParentIds],
-    })
-    if (!result.ok) {
-      showToast(result.error)
-    } else {
-      showToast('카테고리를 추가했습니다')
-    }
-
-    return result
-  }
-
-  const handleUpdateCategory = (id, name, color, parentId = null) => {
-    const result = updateCategory(id, name, color, parentId, {
-      lockedParentIds: [...lockedParentIds],
-    })
-    if (!result.ok) {
-      showToast(result.error)
-    } else {
-      showToast('카테고리를 저장했습니다')
-    }
-
-    return result
-  }
-
-  const handleDeleteCategory = (id) => {
-    const result = removeCategory(id)
-    if (!result.ok) {
-      showToast(result.error)
-      return result
-    }
-
-    clearTimeBoxCategory(id)
-    clearTaskCardCategoryState(id)
-    clearTemplateCategory(id)
-    showToast('카테고리를 삭제했습니다')
-    return result
-  }
-
-  const handleAddTemplate = (payload) => {
-    const result = addTemplate(payload)
-    if (!result.ok) {
-      showToast(result.error)
-      return result
-    }
-
-    showToast('템플릿을 추가했습니다')
-    return result
-  }
-
-  const handleUpdateTemplate = (id, payload) => {
-    const result = updateTemplate(id, payload)
-    if (!result.ok) {
-      showToast(result.error)
-      return result
-    }
-
-    showToast('템플릿을 저장했습니다')
-    return result
-  }
-
-  const handleDeleteTemplate = (id) => {
-    removeTemplate(id)
-    showToast('템플릿을 삭제했습니다')
-  }
 
   const openQuickAdd = (dateStr, options = {}) => {
     setQuickAddContext({

@@ -17,7 +17,7 @@
 
 1. persisted schema와 internal model의 경계가 `entities/planner/lib/storage/*`에 고정된다.
 2. `entities/planner/model/*`은 순수 command / selector / normalizer만 가진다.
-3. `useDailyData.js`는 state owner + command adapter 역할만 수행한다.
+3. `useDailyData.ts`는 state owner + command adapter 역할만 수행한다.
 4. `App.jsx`는 orchestration만 담당한다.
 5. category tree, stack canvas state, timebox scheduling이 같은 도메인 규칙을 공유한다.
 6. TypeScript는 구조 안정화 이후 model부터 점진 전환한다.
@@ -55,12 +55,17 @@
 - storage schema/migration TypeScript 전환 완료
 - storage/index TypeScript 전환 완료
 - `useDailyData` TypeScript 경계 추가
+- timeline DnD orchestration hook(`usePlannerTimelineDnd.ts`)
+- timebox action orchestration hook(`usePlannerTimeBoxActions.ts`)
+- day flow orchestration hook(`usePlannerDayFlow.ts`)
+- task / Big3 action orchestration hook(`usePlannerTaskActions.ts`)
+- category / template action orchestration hook(`usePlannerMetaActions.ts`)
 
 아직 큰 덩어리로 남아 있는 곳:
 
 - `src/App.jsx`
-- weekly/report level derived planner state 정리
-- `useDailyData` 내부 command adapter 추가 축소
+- `App.jsx`의 toast / modal / cross-feature wiring 정리
+- feature / UI 레벨 TypeScript 확장
 
 ## 작업 원칙
 
@@ -195,6 +200,8 @@
 - timeline DnD state/sensor/handler orchestration을 `usePlannerTimelineDnd` hook으로 이동
 - timebox undo/duplicate/quick-add orchestration을 `usePlannerTimeBoxActions` hook으로 이동
 - date navigation / daily suggestion / reschedule orchestration을 `usePlannerDayFlow` hook으로 이동
+- task remove / Big3 send / autofill orchestration을 `usePlannerTaskActions` hook으로 이동
+- category / template CRUD orchestration을 `usePlannerMetaActions` hook으로 이동
 
 허용:
 
@@ -205,9 +212,9 @@
 
 이동 대상:
 
-- timebox 계획 보정 로직
-- Big3 / task / timebox 파생 계산
-- selection 관련 헬퍼
+- toast lifecycle helper
+- modal open/close wiring 보조 helper
+- cross-feature section composition 보조 selector
 
 ## Step 6. DnD payload 통합 [Mostly Done]
 
@@ -250,9 +257,9 @@
 
 다음 우선순위:
 
-1. `src/App.jsx`에서 remaining planner derivation 축소
-2. `useDailyData` 내부 command adapter 추가 축소
-3. `shared/ui/*`, `features/*` 점진 TS 전환
+1. `src/App.jsx`의 toast / modal / section composition 정리
+2. `shared/ui/*`, `features/*` 점진 TS 전환
+3. feature-level selector / view model 타입 고정
 
 순서:
 
@@ -298,7 +305,11 @@
 
 - DnD payload 통합
 
-### PR 7+
+### PR 7
+
+- hook orchestration extraction
+
+### PR 8+
 
 - TypeScript 점진 전환
 
@@ -306,9 +317,9 @@
 
 다음 턴에서 바로 시작할 범위:
 
-1. `useDailyData.js`에서 남은 command adapter 중복을 추가 축소
-2. `timeBoxes.js` 또는 `taskCards.js` 중 하나를 다음 TS 대상로 선택
-3. storage adapter 타입 초안이 필요한 부분을 문서화
+1. `src/App.jsx`의 toast / modal / section composition helper 추가 추출
+2. `features/*`에서 planner 관련 주요 UI부터 `.ts` / `.tsx` 전환 시작
+3. feature selector / payload 타입을 model 타입과 맞물리게 정리
 4. 관련 `lint` / `build` / `typecheck` / targeted E2E 확인
 
 ## 검증 기준
