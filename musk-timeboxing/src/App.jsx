@@ -49,6 +49,11 @@ import {
   isTimelineSlotDropPayload,
   PLANNER_DND_TYPES,
 } from './features/planner-dnd/lib/payloads'
+import {
+  resolveMovedRangeFromDelta,
+  resolveTimelineSlotFromFinalPosition,
+  resolveTimelineSlotFromPointerPosition,
+} from './features/planner-dnd/lib/timelineDrop'
 
 const DEFAULT_BOX_SLOTS = 1
 const BASE_SLOT_HEIGHT = 32
@@ -130,135 +135,6 @@ const showPlacementFailureToast = (reason, showToast, messages = {}) => {
   }
 
   showToast(messages.noSpace || '배치할 빈 시간이 없습니다')
-}
-
-const resolveMovedRangeFromDelta = (activeData, deltaY, slotHeight) => {
-  const activeStart = Number(activeData?.startSlot) || 0
-  const activeEnd = Number(activeData?.endSlot) || activeStart + 1
-  const duration = Math.max(1, activeEnd - activeStart)
-  const normalizedSlotHeight = Math.max(1, Number(slotHeight) || BASE_SLOT_HEIGHT)
-  const slotDelta = Math.round((Number(deltaY) || 0) / normalizedSlotHeight)
-
-  let startSlot = activeStart + slotDelta
-  startSlot = clamp(startSlot, 0, TOTAL_SLOTS - duration)
-  const endSlot = startSlot + duration
-
-  return {
-    startSlot,
-    endSlot,
-    duration,
-    slotDelta,
-  }
-}
-
-const getVisibleTimelineGridAtPoint = (clientX, clientY) => {
-  if (typeof document === 'undefined') {
-    return null
-  }
-
-  const grids = [...document.querySelectorAll('[data-timeline-grid="true"]')]
-  return (
-    grids.find((grid) => {
-      const rect = grid.getBoundingClientRect()
-      if (rect.width < 40 || rect.height < BASE_SLOT_HEIGHT) {
-        return false
-      }
-
-      return (
-        clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
-      )
-    }) || null
-  )
-}
-
-const resolveSlotFromGridPoint = (grid, clientY) => {
-  const gridRect = grid.getBoundingClientRect()
-  const firstSlot = grid.querySelector('[data-timeline-slot-index="0"]')
-  const rowHeight = Math.max(
-    1,
-    Number(firstSlot?.getBoundingClientRect?.().height) || BASE_SLOT_HEIGHT,
-  )
-  const slotOffset = Math.floor((clientY - gridRect.top) / rowHeight)
-  return clamp(slotOffset, 0, TOTAL_SLOTS - 1)
-}
-
-const resolveSlotFromPointerPosition = (pointer) => {
-  if (typeof document === 'undefined') {
-    return null
-  }
-
-  const clientX = Number(pointer?.clientX)
-  const clientY = Number(pointer?.clientY)
-
-  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) {
-    return null
-  }
-
-  const element = document.elementFromPoint(clientX, clientY)
-  const slotElement = element?.closest?.('[data-timeline-slot-index]')
-
-  if (slotElement) {
-    const slotIndex = Number(slotElement.getAttribute('data-timeline-slot-index'))
-    return Number.isInteger(slotIndex) ? slotIndex : null
-  }
-
-  const grid = getVisibleTimelineGridAtPoint(clientX, clientY)
-  if (!grid) {
-    return null
-  }
-
-  const gridRect = grid.getBoundingClientRect()
-  if (
-    clientX < gridRect.left ||
-    clientX > gridRect.right ||
-    clientY < gridRect.top ||
-    clientY > gridRect.bottom
-  ) {
-    return null
-  }
-
-  return resolveSlotFromGridPoint(grid, clientY)
-}
-
-const resolveSlotFromFinalPosition = (active, delta) => {
-  if (typeof document === 'undefined') {
-    return null
-  }
-
-  const translatedRect = active?.rect?.current?.translated
-  const initialRect = active?.rect?.current?.initial
-
-  let centerX = null
-  let centerY = null
-
-  if (translatedRect) {
-    centerX = translatedRect.left + translatedRect.width / 2
-    centerY = translatedRect.top + translatedRect.height / 2
-  } else if (initialRect) {
-    centerX = initialRect.left + initialRect.width / 2 + Number(delta?.x || 0)
-    centerY = initialRect.top + initialRect.height / 2 + Number(delta?.y || 0)
-  }
-
-  if (!Number.isFinite(centerX) || !Number.isFinite(centerY)) {
-    return null
-  }
-
-  const grid = getVisibleTimelineGridAtPoint(centerX, centerY)
-  if (!grid) {
-    return null
-  }
-
-  const gridRect = grid.getBoundingClientRect()
-  if (
-    centerX < gridRect.left ||
-    centerX > gridRect.right ||
-    centerY < gridRect.top ||
-    centerY > gridRect.bottom
-  ) {
-    return null
-  }
-
-  return resolveSlotFromGridPoint(grid, centerY)
 }
 
 function App() {
@@ -355,6 +231,13 @@ function App() {
   const timelineSlotHeight = timelineScale === '15' ? DETAIL_SLOT_HEIGHT : BASE_SLOT_HEIGHT
   const showDesktopPlanningRail = timelineViewMode === 'CANVAS' || timelineViewMode === 'COMPOSER'
   const showMobilePlanningTabs = timelineViewMode === 'CANVAS' || timelineViewMode === 'COMPOSER'
+  const timelineDropOptions = useMemo(
+    () => ({
+      totalSlots: TOTAL_SLOTS,
+      baseSlotHeight: BASE_SLOT_HEIGHT,
+    }),
+    [],
+  )
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -431,7 +314,7 @@ function App() {
       return
     }
 
-    const slot = resolveSlotFromPointerPosition(pointer)
+    const slot = resolveTimelineSlotFromPointerPosition(pointer, timelineDropOptions)
     updateDropPreviewSlot(slot)
   }
 
@@ -703,7 +586,7 @@ function App() {
         return
       }
 
-      const movedRange = resolveMovedRangeFromDelta(activeData, delta?.y, timelineSlotHeight)
+      const movedRange = resolveMovedRangeFromDelta(activeData, delta?.y, timelineSlotHeight, TOTAL_SLOTS)
       const hasConflict = hasOverlap(data.timeBoxes, movedRange, activeData.id)
       setMovingTimeBoxPreview({
         id: activeData.id,
@@ -733,10 +616,10 @@ function App() {
     if (Number.isFinite(clientX) && Number.isFinite(clientY)) {
       const pointer = { clientX, clientY }
       lastPointerRef.current = pointer
-      pointerSlot = resolveSlotFromPointerPosition(pointer)
+      pointerSlot = resolveTimelineSlotFromPointerPosition(pointer, timelineDropOptions)
     }
 
-    const rectSlot = resolveSlotFromFinalPosition(active, delta)
+    const rectSlot = resolveTimelineSlotFromFinalPosition(active, delta, timelineDropOptions)
     updateDropPreviewSlot(pointerSlot ?? rectSlot)
   }
 
@@ -758,7 +641,7 @@ function App() {
     }
 
     if (isTimeBoxDragPayload(activeData)) {
-      const movedRange = resolveMovedRangeFromDelta(activeData, delta?.y, timelineSlotHeight)
+      const movedRange = resolveMovedRangeFromDelta(activeData, delta?.y, timelineSlotHeight, TOTAL_SLOTS)
       const activeStart = Number(activeData.startSlot) || 0
       const activeEnd = Number(activeData.endSlot) || activeStart + 1
 
@@ -809,8 +692,8 @@ function App() {
       const startSlot =
         overSlot ??
         dropPreviewSlotRef.current ??
-        resolveSlotFromPointerPosition(lastPointerRef.current) ??
-        resolveSlotFromFinalPosition(active, delta) ??
+        resolveTimelineSlotFromPointerPosition(lastPointerRef.current, timelineDropOptions) ??
+        resolveTimelineSlotFromFinalPosition(active, delta, timelineDropOptions) ??
         null
 
       if (!Number.isInteger(startSlot)) {

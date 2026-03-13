@@ -191,6 +191,7 @@
 - skip reason selector를 model로 이동
 - managed category view model 계산을 model로 이동
 - repeated timebox placement planning을 model helper로 이동
+- timeline slot hit-test / drag range 계산을 `planner-dnd` helper로 이동
 
 허용:
 
