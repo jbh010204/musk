@@ -2,12 +2,43 @@ const STORAGE_API_BASE = import.meta.env.VITE_STORAGE_API_BASE || '/api/planner'
 const SERVER_STORAGE_ENABLED = import.meta.env.VITE_SERVER_STORAGE === 'true'
 const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_STORAGE_REQUEST_TIMEOUT_MS || 2500)
 
-let serverAvailability = SERVER_STORAGE_ENABLED ? 'unknown' : 'disabled'
-let writeQueue = Promise.resolve()
-let bootstrapPromise = null
-const availabilityListeners = new Set()
+type ServerAvailability = 'unknown' | 'disabled' | 'online' | 'offline'
+type SyncMode = 'merge' | 'replace'
 
-const setServerAvailability = (nextAvailability) => {
+interface RequestOptions {
+  force?: boolean
+}
+
+interface BootstrapCallbacks {
+  hasLocalData?: () => boolean
+  readLocalSnapshot?: () => unknown
+  applyServerSnapshot?: (snapshot: unknown) => void
+}
+
+interface BootstrapResponse {
+  ok?: boolean
+  data?: unknown
+  stats?: {
+    hasData?: boolean
+    dayCount?: number
+  }
+}
+
+type BootstrapResult =
+  | { mode: 'disabled'; hydrated: false; serverAvailable: false }
+  | { mode: 'local-only'; hydrated: false; serverAvailable: false }
+  | { mode: 'server-migrated-local'; hydrated: true; serverAvailable: true; migratedDays: number }
+  | { mode: 'server-hydrated'; hydrated: true; serverAvailable: true; dayCount: number }
+  | { mode: 'server-empty'; hydrated: false; serverAvailable: true }
+
+type AvailabilityListener = (availability: ServerAvailability) => void
+
+let serverAvailability: ServerAvailability = SERVER_STORAGE_ENABLED ? 'unknown' : 'disabled'
+let writeQueue: Promise<unknown | null> = Promise.resolve()
+let bootstrapPromise: Promise<BootstrapResult> | null = null
+const availabilityListeners = new Set<AvailabilityListener>()
+
+const setServerAvailability = (nextAvailability: ServerAvailability): void => {
   if (serverAvailability === nextAvailability) {
     return
   }
@@ -22,7 +53,11 @@ const setServerAvailability = (nextAvailability) => {
   })
 }
 
-const requestJson = async (path, options = {}, requestOptions = {}) => {
+const requestJson = async <T = unknown>(
+  path: string,
+  options: RequestInit = {},
+  requestOptions: RequestOptions = {},
+): Promise<T | null> => {
   if (!SERVER_STORAGE_ENABLED) {
     return null
   }
@@ -41,12 +76,12 @@ const requestJson = async (path, options = {}, requestOptions = {}) => {
       : null
 
   try {
+    const headers = new Headers(options.headers)
+    headers.set('Content-Type', 'application/json')
+
     const response = await window.fetch(`${STORAGE_API_BASE}${path}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(options.headers || {}),
-      },
+      headers,
       signal: controller?.signal,
     })
 
@@ -55,7 +90,7 @@ const requestJson = async (path, options = {}, requestOptions = {}) => {
     }
 
     setServerAvailability('online')
-    return await response.json()
+    return (await response.json()) as T
   } catch {
     if (!force) {
       setServerAvailability('offline')
@@ -69,7 +104,12 @@ const requestJson = async (path, options = {}, requestOptions = {}) => {
   }
 }
 
-const enqueueWrite = (path, payload, method = 'PUT', options = {}) => {
+const enqueueWrite = <T = unknown>(
+  path: string,
+  payload: unknown,
+  method = 'PUT',
+  options: RequestOptions = {},
+): Promise<T | null> => {
   if (!SERVER_STORAGE_ENABLED) {
     return Promise.resolve(null)
   }
@@ -81,7 +121,7 @@ const enqueueWrite = (path, payload, method = 'PUT', options = {}) => {
 
   writeQueue = writeQueue
     .then(() =>
-      requestJson(
+      requestJson<T>(
         path,
         {
           method,
@@ -92,14 +132,16 @@ const enqueueWrite = (path, payload, method = 'PUT', options = {}) => {
     )
     .catch(() => null)
 
-  return writeQueue
+  return writeQueue as Promise<T | null>
 }
 
-export const isServerPersistenceEnabled = () => SERVER_STORAGE_ENABLED
+export const isServerPersistenceEnabled = (): boolean => SERVER_STORAGE_ENABLED
 
-export const getServerAvailability = () => serverAvailability
+export const getServerAvailability = (): ServerAvailability => serverAvailability
 
-export const subscribeServerAvailability = (listener) => {
+export const subscribeServerAvailability = (
+  listener: AvailabilityListener | null | undefined,
+): (() => void) => {
   if (typeof listener !== 'function') {
     return () => {}
   }
@@ -110,7 +152,9 @@ export const subscribeServerAvailability = (listener) => {
   }
 }
 
-export const bootstrapServerStorage = (callbacks = {}) => {
+export const bootstrapServerStorage = (
+  callbacks: BootstrapCallbacks = {},
+): Promise<BootstrapResult> => {
   if (!SERVER_STORAGE_ENABLED || typeof window === 'undefined') {
     return Promise.resolve({ mode: 'disabled', hydrated: false, serverAvailable: false })
   }
@@ -119,14 +163,17 @@ export const bootstrapServerStorage = (callbacks = {}) => {
     return bootstrapPromise
   }
 
-  const hasLocalData = typeof callbacks.hasLocalData === 'function' ? callbacks.hasLocalData : () => false
+  const hasLocalData =
+    typeof callbacks.hasLocalData === 'function' ? callbacks.hasLocalData : () => false
   const readLocalSnapshot =
     typeof callbacks.readLocalSnapshot === 'function' ? callbacks.readLocalSnapshot : () => ({})
   const applyServerSnapshot =
-    typeof callbacks.applyServerSnapshot === 'function' ? callbacks.applyServerSnapshot : () => {}
+    typeof callbacks.applyServerSnapshot === 'function'
+      ? callbacks.applyServerSnapshot
+      : () => {}
 
   bootstrapPromise = (async () => {
-    const response = await requestJson('/bootstrap', { method: 'GET' })
+    const response = await requestJson<BootstrapResponse>('/bootstrap', { method: 'GET' })
 
     if (!response?.ok || !response?.data) {
       return {
@@ -140,8 +187,8 @@ export const bootstrapServerStorage = (callbacks = {}) => {
     const serverHasData = Boolean(stats.hasData)
 
     if (!serverHasData && hasLocalData()) {
-      const payload = readLocalSnapshot()
-      const migrated = await requestJson(
+      const payload = readLocalSnapshot() as { days?: Record<string, unknown> } | null
+      const migrated = await requestJson<{ ok?: boolean }>(
         '/import',
         {
           method: 'POST',
@@ -183,14 +230,17 @@ export const bootstrapServerStorage = (callbacks = {}) => {
   return bootstrapPromise
 }
 
-export const syncSnapshotToServer = (payload, options = {}) => {
+export const syncSnapshotToServer = (
+  payload: unknown,
+  options: { mode?: SyncMode } = {},
+): Promise<{ ok: boolean; mode: SyncMode | 'disabled'; stats: unknown | null }> => {
   if (!SERVER_STORAGE_ENABLED || typeof window === 'undefined') {
-    return Promise.resolve({ ok: false, mode: 'disabled' })
+    return Promise.resolve({ ok: false, mode: 'disabled', stats: null })
   }
 
-  const mode = options.mode === 'replace' ? 'replace' : 'merge'
+  const mode: SyncMode = options.mode === 'replace' ? 'replace' : 'merge'
 
-  return enqueueWrite(
+  return enqueueWrite<{ ok?: boolean; stats?: unknown }>(
     '/import',
     {
       mode,
@@ -205,13 +255,17 @@ export const syncSnapshotToServer = (payload, options = {}) => {
   }))
 }
 
-export const saveDayToServer = (dateStr, day) => enqueueWrite(`/day/${encodeURIComponent(dateStr)}`, { day })
+export const saveDayToServer = (dateStr: string, day: unknown): Promise<unknown | null> =>
+  enqueueWrite(`/day/${encodeURIComponent(dateStr)}`, { day })
 
-export const saveMetaToServer = (meta) => enqueueWrite('/meta', { meta })
+export const saveMetaToServer = (meta: unknown): Promise<unknown | null> =>
+  enqueueWrite('/meta', { meta })
 
-export const saveLastActiveDateToServer = (dateStr) =>
+export const saveLastActiveDateToServer = (dateStr: string | null | undefined): Promise<unknown | null> =>
   enqueueWrite('/last-active-date', { dateStr: dateStr ?? null })
 
-export const saveLastFocusToServer = (focus) => enqueueWrite('/last-focus', { focus: focus ?? null })
+export const saveLastFocusToServer = (focus: unknown): Promise<unknown | null> =>
+  enqueueWrite('/last-focus', { focus: focus ?? null })
 
-export const clearPlannerDataOnServer = () => enqueueWrite('/data', null, 'DELETE')
+export const clearPlannerDataOnServer = (): Promise<unknown | null> =>
+  enqueueWrite('/data', null, 'DELETE')
