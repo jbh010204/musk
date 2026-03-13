@@ -26,8 +26,8 @@
 
 완료 또는 대부분 진행:
 
-- `storage/schema.js`
-- `storage/migrations.js`
+- `storage/schema.ts`
+- `storage/migrations.ts`
 - `storage/adapters.ts`
 - `model/taskCards.ts`
 - `model/timeBoxes.ts`
@@ -50,14 +50,14 @@
 - TypeScript `typecheck` 런웨이 추가 (`tsconfig.json`, `npm run typecheck`)
 - planner model layer TypeScript 전환 완료
 - storage adapter TypeScript 전환 완료
+- storage schema/migration TypeScript 전환 완료
 
 아직 큰 덩어리로 남아 있는 곳:
 
 - `src/app/hooks/useDailyData.js`
 - `src/App.jsx`
 - weekly/report level derived planner state 정리
-- `entities/planner/lib/storage/migrations.js`
-- `entities/planner/lib/storage/schema.js`
+- `entities/planner/lib/storage/index.js`
 - `app/hooks/useDailyData.js` 타입 경계 초안
 
 ## 작업 원칙
@@ -228,13 +228,14 @@
 - `model/categoryTree`를 `.ts`로 전환
 - `model/timeBoxes`를 `.ts`로 전환
 - `storage/adapters`를 `.ts`로 전환
+- `storage/schema`, `storage/migrations`를 `.ts`로 전환
 - JS model helper의 `createId` 추론을 `string`으로 고정해 TS import 경계를 안정화
 
 다음 우선순위:
 
-1. `entities/planner/lib/storage/migrations.js`
-2. `entities/planner/lib/storage/schema.js`
-3. `app/hooks/useDailyData.js`의 타입 경계 초안
+1. `entities/planner/lib/storage/index.js`
+2. `app/hooks/useDailyData.js`의 타입 경계 초안
+3. `src/entities/planner/model/index.js` export 경계 정리
 
 순서:
 
