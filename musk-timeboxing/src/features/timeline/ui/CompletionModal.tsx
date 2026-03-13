@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { getCategoryColor, slotDurationMinutes } from '../../../entities/planner'
+import type { CategoryViewModel, TimeBox } from '../../../entities/planner/model/types'
 
 const SKIP_REASON_OPTIONS = [
   '우선순위 변경',
@@ -8,16 +9,42 @@ const SKIP_REASON_OPTIONS = [
   '컨디션 저하',
   '자료/준비 부족',
   '기타',
-]
+] as const
 
-function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete, onDuplicate = () => {} }) {
+interface TimeBoxUpdatePayload {
+  content?: string
+  categoryId?: string | null
+  category?: string | null
+  status?: TimeBox['status']
+  actualMinutes?: number | null
+  skipReason?: string | null
+  timerStartedAt?: number | null
+}
+
+interface CompletionModalProps {
+  timeBox: TimeBox
+  categories: CategoryViewModel[]
+  onClose: () => void
+  onUpdate: (id: string, patch: TimeBoxUpdatePayload) => void
+  onDelete: (id: string) => void
+  onDuplicate?: (id: string) => void
+}
+
+function CompletionModal({
+  timeBox,
+  categories,
+  onClose,
+  onUpdate,
+  onDelete,
+  onDuplicate = () => {},
+}: CompletionModalProps) {
   const assignableCategories = useMemo(
     () => categories.filter((category) => category?.isLeaf !== false),
     [categories],
   )
   const [content, setContent] = useState(timeBox.content)
   const [categoryId, setCategoryId] = useState(timeBox.categoryId ?? '')
-  const [status, setStatus] = useState(
+  const [status, setStatus] = useState<'COMPLETED' | 'SKIPPED' | null>(
     timeBox.status === 'COMPLETED' || timeBox.status === 'SKIPPED' ? timeBox.status : null,
   )
   const [actualMinutes, setActualMinutes] = useState(
@@ -113,10 +140,7 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete, onD
 
   return (
     <div className="ui-modal-shell" onClick={onClose}>
-      <div
-        className="ui-modal-card max-w-md"
-        onClick={(event) => event.stopPropagation()}
-      >
+      <div className="ui-modal-card max-w-md" onClick={(event) => event.stopPropagation()}>
         <h3 className="text-lg font-semibold">완료 처리</h3>
         <div className="mt-3">
           <label className="mb-1 block text-sm text-gray-300" htmlFor="timebox-content">
@@ -229,32 +253,16 @@ function CompletionModal({ timeBox, categories, onClose, onUpdate, onDelete, onD
         ) : null}
 
         <div className="mt-6 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={handleDuplicate}
-            className="ui-btn-secondary"
-          >
+          <button type="button" onClick={handleDuplicate} className="ui-btn-secondary">
             복제
           </button>
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="ui-btn-danger"
-          >
+          <button type="button" onClick={handleDelete} className="ui-btn-danger">
             삭제
           </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="ui-btn-secondary"
-          >
+          <button type="button" onClick={onClose} className="ui-btn-secondary">
             취소
           </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            className="ui-btn-primary"
-          >
+          <button type="button" onClick={handleSave} className="ui-btn-primary">
             저장
           </button>
         </div>

@@ -1,13 +1,41 @@
 import { useMemo, useState } from 'react'
 import { Button, Card } from '../../../shared/ui'
 import { slotToTime } from '../../../entities/planner'
+import type { CategoryViewModel } from '../../../entities/planner/model/types'
 
 const DURATION_OPTIONS = [
   { value: 1, label: '30분' },
   { value: 2, label: '60분' },
   { value: 3, label: '90분' },
   { value: 4, label: '120분' },
-]
+] as const
+
+interface TemplateOption {
+  id: string
+  name: string
+  content: string
+  durationSlots: number
+  categoryId: string | null
+}
+
+interface QuickAddPayload {
+  dateStr: string
+  content: string
+  durationSlots: number
+  categoryId: string
+  startSlot: number | null
+  templateId: string | null
+}
+
+interface QuickAddModalProps {
+  dateStr: string
+  dateLabel: string
+  categories: CategoryViewModel[]
+  templates: TemplateOption[]
+  initialTemplateId?: string
+  onClose: () => void
+  onSubmit: (payload: QuickAddPayload) => boolean | void
+}
 
 function QuickAddModal({
   dateStr,
@@ -17,7 +45,7 @@ function QuickAddModal({
   initialTemplateId = '',
   onClose,
   onSubmit,
-}) {
+}: QuickAddModalProps) {
   const assignableCategories = useMemo(
     () => categories.filter((category) => category?.isLeaf !== false),
     [categories],

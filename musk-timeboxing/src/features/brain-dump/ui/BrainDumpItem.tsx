@@ -128,7 +128,7 @@ function BrainDumpItem({ item, onRemove, onCyclePriority, onSendToBigThree }: Br
           </button>
         </div>
 
-        <div className="pointer-events-none flex translate-x-1 items-center gap-1 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-x-0 group-focus-within:opacity-100">
+        <div className="invisible flex translate-x-1 items-center gap-1 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-x-0 group-focus-within:opacity-100">
           <Button
             onClick={() => onSendToBigThree(item.id)}
             disabled={isRemoving}

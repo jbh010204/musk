@@ -1,7 +1,14 @@
 import { slotToTime } from '../../../entities/planner'
+import type { TimeBoxReschedulePlan } from '../../../entities/planner/model/types'
 import { Button, Card } from '../../../shared/ui'
 
-function RescheduleAssistantModal({ plan, onClose, onApply }) {
+interface RescheduleAssistantModalProps {
+  plan: TimeBoxReschedulePlan | null | undefined
+  onClose: () => void
+  onApply: (plan: TimeBoxReschedulePlan | null | undefined) => void
+}
+
+function RescheduleAssistantModal({ plan, onClose, onApply }: RescheduleAssistantModalProps) {
   const planned = Array.isArray(plan?.planned) ? plan.planned : []
   const skipped = Array.isArray(plan?.skipped) ? plan.skipped : []
 
@@ -10,9 +17,7 @@ function RescheduleAssistantModal({ plan, onClose, onApply }) {
       <div className="ui-modal-card max-w-2xl" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">자동 재배치 어시스턴트</h3>
-          <Button onClick={onClose}>
-            닫기
-          </Button>
+          <Button onClick={onClose}>닫기</Button>
         </div>
 
         <p className="mt-2 text-sm text-gray-300">
@@ -56,11 +61,7 @@ function RescheduleAssistantModal({ plan, onClose, onApply }) {
           <Button variant="secondary" onClick={onClose}>
             취소
           </Button>
-          <Button
-            variant="primary"
-            onClick={() => onApply(plan)}
-            disabled={planned.length === 0}
-          >
+          <Button variant="primary" onClick={() => onApply(plan)} disabled={planned.length === 0}>
             다음 날에 배치 적용
           </Button>
         </div>
