@@ -31,10 +31,13 @@
 - `storage/adapters.js`
 - `model/taskCards.js`
 - `model/timeBoxes.js`
+- `model/dayState.ts`
+- `model/plannerDay.ts`
+- `model/selectors.ts`
+- `model/types.ts`
 - persisted `brainDump -> taskCards` internal adapter 경계
 - internal task card naming(`title`, `estimateSlots`, `origin`) 도입
 - `model/categoryTree.js`
-- `model/selectors.js`
 - `model/bigThree.js`
 - internal `sourceId -> taskId` adapter boundary
 - `boardCanvas -> stackCanvasState` 전환
@@ -44,13 +47,14 @@
 - day navigation / carry-over helper extraction
 - weekly strip / report / planning preview extraction
 - planner day mutation helper extraction
+- TypeScript `typecheck` 런웨이 추가 (`tsconfig.json`, `npm run typecheck`)
 
 아직 큰 덩어리로 남아 있는 곳:
 
 - `src/app/hooks/useDailyData.js`
 - `src/App.jsx`
-- DnD payload 통합
 - weekly/report level derived planner state 정리
+- storage/model 다음 TS 전환 대상 선정
 
 ## 작업 원칙
 
@@ -129,7 +133,7 @@
 - task card sync는 hook 안이 아니라 timebox command 결과에서 함께 보장됨
 - `sourceId`는 storage boundary 외부에서 더 이상 직접 읽지 않음
 
-## Step 3. DailyData를 reducer adapter처럼 축소
+## Step 3. DailyData를 reducer adapter처럼 축소 [In Progress]
 
 목표:
 
@@ -165,7 +169,7 @@
 - selection patch 계산이 `stackCanvasState` helper로 이동
 - `PlanningCanvas`, `PlannerWorkspace`, `TimelineRailSurface`가 같은 selection 규칙을 공유
 
-## Step 5. App orchestration 축소
+## Step 5. App orchestration 축소 [In Progress]
 
 목표:
 
@@ -190,7 +194,7 @@
 - Big3 / task / timebox 파생 계산
 - selection 관련 헬퍼
 
-## Step 6. DnD payload 통합
+## Step 6. DnD payload 통합 [Mostly Done]
 
 목표:
 
@@ -208,6 +212,22 @@
 - `src/features/planner-dnd/hooks/usePlannerDnD.js`
 
 ## Step 7. TypeScript 점진 전환
+
+현재까지:
+
+- `typescript` dev dependency 추가
+- `tsconfig.json` 추가
+- `npm run typecheck` 추가
+- `model/types.ts` 도입
+- `model/selectors`, `model/dayState`, `model/plannerDay`를 `.ts`로 전환
+- JS model helper의 `createId` 추론을 `string`으로 고정해 TS import 경계를 안정화
+
+다음 우선순위:
+
+1. `entities/planner/model/timeBoxes.js`
+2. `entities/planner/model/taskCards.js`
+3. `entities/planner/model/bigThree.js`
+4. `entities/planner/lib/storage/*`
 
 순서:
 
@@ -259,12 +279,12 @@
 
 ## 현재 바로 시작할 작업
 
-이번 턴에서 바로 시작할 범위:
+다음 턴에서 바로 시작할 범위:
 
-1. `useDailyData.js`를 reducer adapter 수준으로 축소
-2. `App.jsx`의 파생 계산과 timebox planning helper를 분리
-3. DnD payload 계약을 공통 모듈로 이동
-4. 관련 lint / build / workspace E2E 확인
+1. `useDailyData.js`에서 남은 command adapter 중복을 추가 축소
+2. `timeBoxes.js` 또는 `taskCards.js` 중 하나를 다음 TS 대상로 선택
+3. storage adapter 타입 초안이 필요한 부분을 문서화
+4. 관련 `lint` / `build` / `typecheck` / targeted E2E 확인
 
 ## 검증 기준
 
@@ -272,6 +292,7 @@
 
 - `npm run lint`
 - `npm run build`
+- `npm run typecheck`
 - Big3 관련 E2E
 
 해당 변경이 timebox / workspace에 걸치면 추가로:
