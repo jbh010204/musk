@@ -1,7 +1,13 @@
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import Button from './Button'
 import { cn } from './cn'
 
-function IconButton({ className = '', children, ...props }) {
+interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  className?: string
+  children?: ReactNode
+}
+
+function IconButton({ className = '', children, ...props }: IconButtonProps) {
   return (
     <Button
       variant="ghost"
