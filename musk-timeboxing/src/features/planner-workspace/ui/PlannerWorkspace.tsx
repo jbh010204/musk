@@ -188,7 +188,7 @@ function PlannerWorkspace({
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                  Timeline
+                  TIMELINE
                 </p>
                 {selectedBigThreeItem ? (
                   <span className="rounded-full bg-indigo-500/10 px-2.5 py-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300">

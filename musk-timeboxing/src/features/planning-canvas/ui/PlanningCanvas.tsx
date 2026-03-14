@@ -159,8 +159,10 @@ function PlanningCanvas({
     () => sanitizeStackCanvasCardSelection(cardMap, rawSelectedCardId, rawSelectedCardIds),
     [cardMap, rawSelectedCardId, rawSelectedCardIds],
   )
-  const focusedLaneId =
-    typeof stackCanvasState?.focusedLaneId === 'string' ? stackCanvasState.focusedLaneId : UNCATEGORIZED_BOARD_LANE
+  const hasPersistedFocusedLaneId = typeof stackCanvasState?.focusedLaneId === 'string'
+  const focusedLaneId: string = hasPersistedFocusedLaneId
+    ? (stackCanvasState.focusedLaneId as string)
+    : UNCATEGORIZED_BOARD_LANE
   const inboxFilter: InboxFilterValue =
     stackCanvasState?.inboxFilter === 'TODO' ||
     stackCanvasState?.inboxFilter === 'SCHEDULED' ||
@@ -218,8 +220,12 @@ function PlanningCanvas({
       return preferredLane
     }
 
+    if (hasPersistedFocusedLaneId && focusedLaneId === UNCATEGORIZED_BOARD_LANE) {
+      return null
+    }
+
     return visualLanes.find((lane) => lane.id !== UNCATEGORIZED_BOARD_LANE) || null
-  }, [focusedLaneId, visualLanes])
+  }, [focusedLaneId, hasPersistedFocusedLaneId, visualLanes])
   const orderedDockLaneIds = useMemo(() => dockLanes.map((lane) => lane.id), [dockLanes])
 
   useEffect(() => {
@@ -541,16 +547,16 @@ function PlanningCanvas({
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-          Stack Canvas
+          Workspace Stack
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
             전체 {taskCards.length}
           </span>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
             미분류 {uncategorizedCount}
           </span>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
             예정 {scheduledCards}
           </span>
           {completedCards > 0 ? (
@@ -601,14 +607,14 @@ function PlanningCanvas({
         <div
           className={`${
             embedded
-              ? 'rounded-[1.65rem] border border-slate-200/75 bg-white/78 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:border-slate-800/75 dark:bg-slate-950/38'
+              ? 'rounded-[1.65rem] border border-slate-200/75 bg-white/78 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:border-slate-800/75 dark:bg-slate-950/38'
               : 'rounded-[1.85rem] border border-slate-200/70 bg-white/74 p-4 shadow-[0_12px_32px_rgba(15,23,42,0.05)] backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/35'
           }`}
         >
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                Category Dock
+                Categories
               </p>
             </div>
             <button
@@ -621,7 +627,7 @@ function PlanningCanvas({
           </div>
 
           <div className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max items-stretch gap-2 rounded-[1.45rem] border border-slate-200/70 bg-slate-100/72 p-2 dark:border-slate-800/70 dark:bg-slate-900/55">
+            <div className="flex min-w-max items-stretch gap-2 rounded-[1.35rem] border border-slate-200/70 bg-slate-100/72 p-1.5 dark:border-slate-800/70 dark:bg-slate-900/55">
               {dockLanes.map((lane) => (
                 <CategoryNodeCompat
                   key={lane.id}
@@ -644,7 +650,7 @@ function PlanningCanvas({
           </div>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(20rem,22rem)_minmax(0,1fr)]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(17rem,18.5rem)_minmax(0,1fr)]">
           {uncategorizedLane ? (
             <CategoryStackLaneCompat
               lane={inboxLane}
@@ -654,30 +660,27 @@ function PlanningCanvas({
               isNodeActive={focusedLaneId === UNCATEGORIZED_BOARD_LANE}
               emptyMessage="새 카드가 여기 들어옵니다."
               headerActions={
-                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="text"
                     value={inboxSearch}
                     onChange={(event) => setInboxSearch(event.target.value)}
-                    className="ui-input h-9 min-w-0 w-full px-3 py-1 text-xs"
+                    className="ui-input h-9 min-w-[12rem] flex-1 px-3 py-1 text-xs"
                     placeholder="Inbox 검색"
                     data-testid="planning-canvas-inbox-search"
                   />
-                  <div className="flex items-center justify-end gap-2">
-                    <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">정렬</span>
-                    <select
-                      data-testid="planning-canvas-inbox-filter"
-                      className="ui-input h-9 w-[6.75rem] shrink-0 rounded-full px-3 py-1 text-xs"
-                      value={inboxFilter}
-                      onChange={(event) => onUpdateStackCanvasState({ inboxFilter: event.target.value })}
-                    >
-                      {INBOX_FILTER_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <select
+                    data-testid="planning-canvas-inbox-filter"
+                    className="ui-input h-9 w-[7.5rem] shrink-0 rounded-full px-3 py-1 text-xs"
+                    value={inboxFilter}
+                    onChange={(event) => onUpdateStackCanvasState({ inboxFilter: event.target.value })}
+                  >
+                    {INBOX_FILTER_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               }
               leadingContent={

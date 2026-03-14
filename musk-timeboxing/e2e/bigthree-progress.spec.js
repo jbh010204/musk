@@ -2,9 +2,11 @@ import { expect, test } from '@playwright/test'
 
 test('header shows big3 completion progress', async ({ page }) => {
   await page.goto('/')
-  await page.evaluate(() => window.localStorage.clear())
+  await page.evaluate(() => {
+    window.localStorage.clear()
+    window.localStorage.setItem('musk-planner-last-view-mode', 'CANVAS')
+  })
   await page.reload()
-  await page.locator('[data-testid="timeline-view-canvas"]:visible').first().click()
 
   const header = page.locator('header').first()
   await expect(header).toContainText('0/3')

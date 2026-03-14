@@ -2,9 +2,11 @@ import { expect, test } from '@playwright/test'
 
 test('brain dump delete supports undo action', async ({ page }) => {
   await page.goto('/')
-  await page.evaluate(() => window.localStorage.clear())
+  await page.evaluate(() => {
+    window.localStorage.clear()
+    window.localStorage.setItem('musk-planner-last-view-mode', 'CANVAS')
+  })
   await page.reload()
-  await page.locator('[data-testid="timeline-view-canvas"]:visible').first().click()
 
   const input = page.getByPlaceholder('할 일을 입력하고 엔터...')
   await input.fill('UNDO-브레인덤프')

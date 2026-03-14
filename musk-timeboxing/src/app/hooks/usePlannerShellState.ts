@@ -200,7 +200,7 @@ export const usePlannerShellState = ({
   }
 
   const timelineSlotHeight = timelineScale === '15' ? detailSlotHeight : baseSlotHeight
-  const showDesktopPlanningRail = timelineViewMode === 'CANVAS' || timelineViewMode === 'COMPOSER'
+  const showDesktopPlanningRail = timelineViewMode === 'CANVAS'
   const showMobilePlanningTabs = showDesktopPlanningRail
 
   return {

@@ -43,7 +43,7 @@ import type {
 import type { LastFocusSnapshot, PlannerMetaModel } from '../../model/types'
 
 type PlannerDayModel = ReturnType<typeof toPlannerDayModel>
-type PlannerViewMode = 'WORKSPACE' | 'CANVAS' | 'COMPOSER' | 'DAY' | 'WEEK' | 'MONTH'
+type PlannerViewMode = 'WORKSPACE' | 'CANVAS' | 'DAY' | 'WEEK' | 'MONTH'
 type AutoSyncMode = 'merge' | 'replace'
 type AutoSyncStatus = 'idle' | 'pending' | 'syncing' | 'synced' | 'error'
 type ServerAvailability = 'unknown' | 'disabled' | 'online' | 'offline'
@@ -118,7 +118,6 @@ const AUTO_SYNC_INTERVAL_KEY = PLANNER_AUTO_SYNC_INTERVAL_KEY
 const VALID_VIEW_MODES = new Set<PlannerViewMode>([
   'WORKSPACE',
   'CANVAS',
-  'COMPOSER',
   'DAY',
   'WEEK',
   'MONTH',
@@ -130,10 +129,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isViewMode = (value: unknown): value is PlannerViewMode =>
   value === 'WORKSPACE' ||
   value === 'CANVAS' ||
-  value === 'COMPOSER' ||
   value === 'DAY' ||
   value === 'WEEK' ||
   value === 'MONTH'
+
+const normalizeViewMode = (value: unknown): PlannerViewMode | null => {
+  if (value === 'COMPOSER') {
+    return 'DAY'
+  }
+
+  return isViewMode(value) ? value : null
+}
 
 const isLastFocusSnapshot = (value: unknown): value is LastFocusSnapshot =>
   isRecord(value) &&
@@ -328,8 +334,9 @@ const applySnapshotToLocal = (snapshot: unknown): void => {
     saveLastFocusLocal(snapshot.lastFocus)
   }
 
-  if (isViewMode(snapshot.lastViewMode)) {
-    saveLastViewModeLocal(snapshot.lastViewMode)
+  const normalizedLastViewMode = normalizeViewMode(snapshot.lastViewMode)
+  if (normalizedLastViewMode) {
+    saveLastViewModeLocal(normalizedLastViewMode)
   }
 }
 
@@ -566,7 +573,7 @@ export const loadLastViewMode = (): PlannerViewMode | null => {
   }
 
   const value = window.localStorage.getItem(LAST_VIEW_MODE_KEY)
-  return isViewMode(value) ? value : null
+  return normalizeViewMode(value)
 }
 
 export const saveLastViewMode = (viewMode: PlannerViewMode): void => {
@@ -629,7 +636,7 @@ export const importPlannerData = (
   const meta = isRecord(payload.meta) ? payload.meta : null
   const lastActiveDate = normalizeMaybeDate(payload.lastActiveDate)
   const lastFocus = isLastFocusSnapshot(payload.lastFocus) ? payload.lastFocus : null
-  const lastViewMode = isViewMode(payload.lastViewMode) ? payload.lastViewMode : null
+  const lastViewMode = normalizeViewMode(payload.lastViewMode)
 
   if (!days && !meta && !lastActiveDate && !lastFocus && !lastViewMode) {
     return { ok: false, error: 'days 또는 meta 데이터가 필요합니다' }

@@ -2,12 +2,12 @@ import { expect, test } from '@playwright/test'
 
 const seedPlannerStorage = async (page, callback) => page.evaluate(callback)
 
-test('schedule composer creates timeboxes from board cards and keeps links in sync after delete', async ({
+test('legacy composer view is removed and old composer entries fall back to day timeline', async ({
   page,
 }) => {
   await page.goto('/')
 
-  const setup = await seedPlannerStorage(page, () => {
+  await seedPlannerStorage(page, () => {
     window.localStorage.clear()
 
     const formatDate = (date) => {
@@ -19,6 +19,7 @@ test('schedule composer creates timeboxes from board cards and keeps links in sy
 
     const today = formatDate(new Date())
     window.localStorage.setItem('musk-planner-last-date', today)
+    window.localStorage.setItem('musk-planner-last-view-mode', 'COMPOSER')
     window.localStorage.setItem(
       'musk-planner-meta',
       JSON.stringify({
@@ -42,7 +43,7 @@ test('schedule composer creates timeboxes from board cards and keeps links in sy
             stackOrder: 0,
             estimatedSlots: 2,
             linkedTimeBoxIds: [],
-            note: '큐에서 시간표로 배치한 뒤 링크가 유지되어야 합니다.',
+            note: '옛 편성기 복원값이 남아 있어도 일간 뷰로 열려야 합니다.',
             createdFrom: 'board',
           },
         ],
@@ -50,55 +51,18 @@ test('schedule composer creates timeboxes from board cards and keeps links in sy
         timeBoxes: [],
       }),
     )
-
-    return { today }
   })
 
   await page.reload()
 
-  await page.locator('[data-testid="timeline-view-composer"]:visible').first().click()
-  await expect(page.locator('[data-testid="schedule-composer-view"]:visible').first()).toBeVisible()
+  await expect(page.locator('[data-testid="timeline-view-composer"]')).toHaveCount(0)
+  await expect(page.locator('[data-testid="timeline-day-view"]').first()).toBeVisible()
 
-  const queueCard = page.locator('[data-testid="composer-queue-card-board-composer-card"]:visible').first()
-  await expect(queueCard).toContainText('미배치')
+  const persistedViewMode = await page.evaluate(() => window.localStorage.getItem('musk-planner-last-view-mode'))
+  expect(persistedViewMode).toBe('DAY')
 
-  await queueCard.click()
-  await page.locator('[data-testid="composer-slot-8"]:visible').first().click()
-
-  await expect(queueCard).toContainText('예정 1')
-  await expect(page.locator('[data-testid^="composer-block-"]').first()).toContainText('편성기 배치 테스트')
-
-  const storedAfterCreate = await page.evaluate((today) => {
-    const raw = window.localStorage.getItem(`musk-planner-${today}`)
-    return raw ? JSON.parse(raw) : null
-  }, setup.today)
-
-  expect(storedAfterCreate.timeBoxes).toHaveLength(1)
-  expect(storedAfterCreate.timeBoxes[0].sourceId).toBe('board-composer-card')
-  expect(storedAfterCreate.timeBoxes[0].categoryId).toBe('cat-club')
-  expect(storedAfterCreate.brainDump[0].linkedTimeBoxIds).toHaveLength(1)
-
-  await page.locator('[data-testid="timeline-view-canvas"]:visible').first().click()
-  await expect(page.locator('[data-testid="planning-board-card-board-composer-card"]:visible').first()).toContainText(
-    '예정 1',
-  )
-
-  page.on('dialog', async (dialog) => {
-    await dialog.accept()
-  })
-
-  await page.locator('[data-testid="timeline-view-day"]:visible').first().click()
-  await page.locator('[data-testid="timebox-card"]').first().click()
-  await page.locator('.ui-modal-card').last().getByRole('button', { name: '삭제', exact: true }).click()
-
-  await page.locator('[data-testid="timeline-view-composer"]:visible').first().click()
-  await expect(queueCard).toContainText('미배치')
-
-  const storedAfterDelete = await page.evaluate((today) => {
-    const raw = window.localStorage.getItem(`musk-planner-${today}`)
-    return raw ? JSON.parse(raw) : null
-  }, setup.today)
-
-  expect(storedAfterDelete.timeBoxes).toHaveLength(0)
-  expect(storedAfterDelete.brainDump[0].linkedTimeBoxIds).toEqual([])
+  await page.evaluate(() => window.localStorage.setItem('musk-planner-last-view-mode', 'CANVAS'))
+  await page.reload()
+  await page.getByRole('button', { name: '우측 타임라인 보기', exact: true }).click()
+  await expect(page.locator('[data-testid="timeline-day-view"]').first()).toBeVisible()
 })

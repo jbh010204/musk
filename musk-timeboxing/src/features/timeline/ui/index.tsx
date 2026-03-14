@@ -22,7 +22,6 @@ import type {
 } from '../../../entities/planner/model/types'
 import PlanningCanvas from '../../planning-canvas'
 import PlannerWorkspace from '../../planner-workspace'
-import ScheduleComposer from '../../schedule-composer'
 import DailyRecapCard from './DailyRecapCard'
 import MonthDayDetailSheet from './MonthDayDetailSheet'
 import MonthlyCalendarView from './MonthlyCalendarView'
@@ -33,7 +32,7 @@ import WeeklyReportCard from './WeeklyReportCard'
 
 const DEFAULT_SLOT_HEIGHT = 32
 const DEFAULT_BOX_SLOTS = 1
-type TimelineViewMode = 'WORKSPACE' | 'CANVAS' | 'COMPOSER' | 'DAY' | 'WEEK' | 'MONTH'
+type TimelineViewMode = 'WORKSPACE' | 'CANVAS' | 'DAY' | 'WEEK' | 'MONTH'
 type TimelineScale = '30' | '15'
 type TimelineStatusFilter = 'ALL' | TimeBoxStatus
 
@@ -259,8 +258,6 @@ interface TimelineProps {
 
 const VIEW_MODE_OPTIONS: Array<{ value: TimelineViewMode; label: string }> = [
   { value: 'WORKSPACE', label: 'Workspace' },
-  { value: 'CANVAS', label: '캔버스' },
-  { value: 'COMPOSER', label: '편성기' },
   { value: 'DAY', label: '일간' },
   { value: 'WEEK', label: '주간' },
   { value: 'MONTH', label: '월간' },
@@ -274,7 +271,7 @@ const STATUS_FILTER_OPTIONS: Array<{ value: TimelineStatusFilter; label: string 
 
 const resolveInitialViewMode = (data: PlannerDay): TimelineViewMode => {
   const persistedViewMode = loadLastViewMode()
-  if (VIEW_MODE_OPTIONS.some((option) => option.value === persistedViewMode)) {
+  if (persistedViewMode === 'CANVAS' || VIEW_MODE_OPTIONS.some((option) => option.value === persistedViewMode)) {
     return persistedViewMode
   }
 
@@ -390,14 +387,11 @@ function Timeline({
   const isDayView = viewMode === 'DAY'
   const isWorkspaceView = viewMode === 'WORKSPACE'
   const isCanvasView = viewMode === 'CANVAS'
-  const isComposerView = viewMode === 'COMPOSER'
   const sectionTitle = isWorkspaceView
     ? 'Workspace'
     : isCanvasView
       ? '🪄 플래닝 캔버스'
-      : isComposerView
-        ? '🗓 편성기'
-        : '⏱ 타임라인'
+      : 'TIMELINE'
   const previousWeekDate = weekCalendar.days[0]?.dateStr
     ? shiftDateString(weekCalendar.days[0].dateStr, -7)
     : null
@@ -684,29 +678,9 @@ function Timeline({
     <section ref={sectionRef} className="h-full p-6 pb-24 md:pb-16">
       <div className="mb-6 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {sectionTitle}
-            </h2>
-            <div className="ui-panel-subtle inline-flex items-center p-1 text-[11px]">
-              {VIEW_MODE_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  data-testid={`timeline-view-${option.value.toLowerCase()}`}
-                  aria-pressed={viewMode === option.value}
-                  onClick={() => setViewMode(option.value)}
-                  className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                    viewMode === option.value
-                      ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
-                      : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {sectionTitle}
+          </h2>
 
           {isDayView ? (
             <button
@@ -717,6 +691,25 @@ function Timeline({
               빠른 추가
             </button>
           ) : null}
+        </div>
+
+        <div className="ui-panel-subtle flex w-full flex-wrap items-center gap-1 p-1 text-[11px]">
+          {VIEW_MODE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              data-testid={`timeline-view-${option.value.toLowerCase()}`}
+              aria-pressed={viewMode === option.value}
+              onClick={() => setViewMode(option.value)}
+              className={`rounded-lg px-2 py-1 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                viewMode === option.value
+                  ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
+                  : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
 
         {isDayView ? (
@@ -804,7 +797,7 @@ function Timeline({
             →
           </button>
         </div>
-      ) : !isDayView && !isWorkspaceView && !isCanvasView && !isComposerView ? (
+      ) : !isDayView && !isWorkspaceView && !isCanvasView ? (
         <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
           {monthCalendar.monthLabel} 전체 일정을 캘린더 그리드로 확인합니다.
         </div>
@@ -812,13 +805,7 @@ function Timeline({
 
       {isCanvasView ? (
         <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
-          캔버스는 카드 생성과 카테고리 스택 정리에 집중합니다. 시간표 배치는 편성기 또는 워크스페이스 우측 rail에서 처리합니다.
-        </div>
-      ) : null}
-
-      {isComposerView ? (
-        <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
-          편성기는 보드 카드를 시간표로 넘기는 단계입니다. 현재는 뷰 계약만 먼저 고정하고, 다음 작업에서 카드 드롭과 벌크 배치를 연결합니다.
+          캔버스는 카드 생성과 카테고리 스택 정리에 집중합니다. 시간표 배치는 일간 타임라인 또는 워크스페이스 우측 rail에서 처리합니다.
         </div>
       ) : null}
 
@@ -1043,18 +1030,7 @@ function Timeline({
           onUpdateCard={updateTaskCard}
           onApplyLayout={applyTaskCardBoardLayout}
           onOpenCategoryManager={onOpenCategoryManager}
-          onOpenComposer={() => setViewMode('COMPOSER')}
-        />
-      ) : null}
-
-      {isComposerView ? (
-        <ScheduleComposer
-          items={taskCards}
-          categories={categories}
-          timeBoxes={sortedBoxes}
-          onScheduleCard={handleScheduleBoardCard}
-          onJumpToDay={() => setViewMode('DAY')}
-          onJumpToBoard={() => setViewMode('CANVAS')}
+          onOpenComposer={() => setViewMode('DAY')}
         />
       ) : null}
 

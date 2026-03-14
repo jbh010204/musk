@@ -2,9 +2,11 @@ import { expect, test } from '@playwright/test'
 
 test('header shows local persistence badge when server storage is disabled', async ({ page }) => {
   await page.goto('/')
-  await page.evaluate(() => window.localStorage.clear())
+  await page.evaluate(() => {
+    window.localStorage.clear()
+    window.localStorage.setItem('musk-planner-last-view-mode', 'CANVAS')
+  })
   await page.reload()
-  await page.locator('[data-testid="timeline-view-canvas"]:visible').first().click()
 
   await expect(page.getByText('로컬 저장').first()).toBeVisible()
 

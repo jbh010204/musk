@@ -98,7 +98,7 @@ function CategoryStackLane({
       >
         <div className="mb-3 space-y-3">
           <div className="flex flex-wrap items-start justify-between gap-2">
-            <div className="flex min-w-0 items-start gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <span
                 className={`mt-0.5 shrink-0 rounded-full ${compactSurface ? 'h-8 w-1.5' : 'h-10 w-2'} ${
                   isNodeActive ? 'opacity-100' : 'opacity-70'
@@ -106,10 +106,13 @@ function CategoryStackLane({
                 style={{ backgroundColor: lane.color }}
               />
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Stack
+                <p
+                  className={`font-semibold text-slate-900 dark:text-slate-100 ${
+                    compactSurface ? 'text-base leading-6' : 'text-sm'
+                  }`}
+                >
+                  {lane.label}
                 </p>
-                <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{lane.label}</p>
               </div>
             </div>
 
@@ -117,7 +120,7 @@ function CategoryStackLane({
               className={`shrink-0 rounded-xl px-2 py-0.5 text-[11px] ${
                 isNodeActive
                   ? 'bg-white/88 text-slate-700 dark:bg-slate-900/88 dark:text-slate-100'
-                  : 'bg-slate-200/70 text-slate-500 dark:bg-slate-800/70 dark:text-slate-300'
+                  : 'bg-slate-200/80 text-slate-600 dark:bg-slate-800/70 dark:text-slate-300'
               }`}
             >
               {lane.items.length}개
@@ -131,11 +134,11 @@ function CategoryStackLane({
           <div className="space-y-3">
             {leadingContent}
             {collapsed ? (
-              <div className="rounded-2xl px-3 py-6 text-center text-sm text-slate-400 dark:text-slate-500">
+              <div className="rounded-2xl px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
                 {collapsedMessage}
               </div>
             ) : lane.items.length === 0 ? (
-              <div className="rounded-2xl px-3 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+              <div className="rounded-2xl px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
                 {emptyMessage}
               </div>
             ) : (

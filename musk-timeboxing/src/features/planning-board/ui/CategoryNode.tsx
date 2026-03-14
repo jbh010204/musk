@@ -55,7 +55,7 @@ function CategoryNode({
       aria-pressed={isActive}
       className={`group relative overflow-hidden border text-left transition-all dark:bg-slate-900/80 ${
         compact
-          ? 'min-h-[5.25rem] min-w-[8.75rem] max-w-[8.75rem] rounded-[1.6rem] px-3 py-3'
+          ? 'min-h-[4.5rem] min-w-[7.75rem] max-w-[7.75rem] rounded-[1.45rem] px-3 py-2.5'
           : 'mx-auto min-h-[6.25rem] w-full max-w-[14rem] rounded-[1.75rem] px-4 py-4'
       } ${presentation.className} ${isEmpty ? 'opacity-90' : ''} ${isArmed || isActive ? 'cursor-pointer' : ''}`}
       style={{

@@ -1,5 +1,5 @@
 export const WORKSPACE_LAYOUT = {
-  timelineRailWidth: '34rem',
+  timelineRailWidth: 'clamp(38rem, 40vw, 46rem)',
   composerMinWidth: '36rem',
   composerLabelWidthPx: 72,
   composerSlotHeightPx: 34,

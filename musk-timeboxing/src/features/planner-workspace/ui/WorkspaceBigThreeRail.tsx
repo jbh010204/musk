@@ -52,16 +52,19 @@ function WorkspaceBigThreeRail({
   return (
     <section
       data-testid="workspace-bigthree-rail"
-      className="border-b border-slate-200/80 bg-white/80 px-5 py-4 backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/70"
+      className="border-b border-slate-200/80 bg-white/80 px-5 py-3 backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/70"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-700 dark:text-slate-100">
-            Focus
+          <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-700 dark:text-slate-100">
+            FOCUS
           </p>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
             {bigThree.length}/3
           </span>
+          <p className="hidden text-[11px] text-slate-500 dark:text-slate-400 md:block">
+            오늘 핵심 3가지를 먼저 고정합니다
+          </p>
         </div>
 
         <Button
@@ -77,7 +80,7 @@ function WorkspaceBigThreeRail({
         </Button>
       </div>
 
-      <div className="mt-3 grid gap-3 md:grid-cols-3">
+      <div className="mt-2 grid gap-2 md:grid-cols-3">
         {[0, 1, 2].map((slotIndex) => {
           const slot = bigThree[slotIndex] ?? null
           const sourceCard = slot?.taskId ? sourceCardMap.get(slot.taskId) || null : null
@@ -90,9 +93,9 @@ function WorkspaceBigThreeRail({
               return (
                 <div
                   key={slotIndex}
-                  className="rounded-2xl border border-dashed border-slate-300/90 bg-slate-50/90 p-3 dark:border-white/20 dark:bg-slate-900/40"
+                  className="rounded-2xl border border-dashed border-slate-300/90 bg-slate-50/90 p-2.5 dark:border-white/20 dark:bg-slate-900/40"
                 >
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                     슬롯 {slotIndex + 1}
                   </p>
                   <input
@@ -126,7 +129,7 @@ function WorkspaceBigThreeRail({
                       setEditingSlotIndex(null)
                       setDraft('')
                     }}
-                    className="ui-input text-sm"
+                    className="ui-input h-10 text-sm"
                     placeholder="핵심 할 일을 입력"
                   />
                 </div>
@@ -142,12 +145,12 @@ function WorkspaceBigThreeRail({
                   setEditingSlotIndex(slotIndex)
                   setDraft('')
                 }}
-                className="flex min-h-[88px] w-full flex-col rounded-2xl border border-dashed border-slate-300/90 bg-slate-50/90 p-3 text-left transition-all hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-white/20 dark:bg-slate-900/40 dark:hover:bg-slate-900"
+                className="flex min-h-[64px] w-full flex-col rounded-2xl border border-dashed border-slate-300/90 bg-slate-50/90 p-2.5 text-left transition-all hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-white/20 dark:bg-slate-900/40 dark:hover:bg-slate-900"
               >
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                   슬롯 {slotIndex + 1}
                 </span>
-                <span className="mt-2 text-sm text-slate-400 dark:text-slate-500">핵심 추가</span>
+                <span className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">핵심 추가</span>
               </button>
             )
           }
@@ -156,7 +159,7 @@ function WorkspaceBigThreeRail({
             <div
               key={slot.id}
               data-testid={`workspace-bigthree-slot-${slotIndex}`}
-              className={`min-h-[88px] rounded-2xl border p-3 transition-all ${
+              className={`min-h-[64px] rounded-2xl border p-2.5 transition-all ${
                 isSelected
                   ? 'border-indigo-400 bg-indigo-500/10 shadow-sm'
                   : 'border-slate-200/80 bg-white/80 dark:border-slate-800 dark:bg-slate-900/60'
@@ -168,13 +171,13 @@ function WorkspaceBigThreeRail({
                   onClick={() => onSelectBigThree(slot)}
                   className="min-w-0 flex-1 text-left"
                 >
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                     슬롯 {slotIndex + 1}
                   </p>
-                  <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">
+                  <p className="mt-1.5 line-clamp-2 text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">
                     {slot.content}
                   </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400">
                     {sourceCard ? (
                       <>
                         <span className="rounded-full bg-indigo-500/15 px-2 py-0.5 font-medium text-indigo-700 dark:text-indigo-300">

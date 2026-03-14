@@ -103,7 +103,7 @@ export function PlannerShellLayout({
                     : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-slate-800'
                 }`}
               >
-                타임라인
+                TIMELINE
               </button>
             </div>
           </nav>
