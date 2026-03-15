@@ -66,7 +66,7 @@ function CategoryStackLane({
   return (
     <section
       data-testid={`planning-board-lane-${lane.id}`}
-      className={`rounded-3xl p-4 ${
+      className={`rounded-3xl ${compactSurface ? 'p-3.5' : 'p-4'} ${
         compactSurface
           ? 'bg-slate-50/90 dark:bg-slate-900/40'
           : 'bg-white/45 shadow-sm backdrop-blur-sm dark:bg-slate-950/35'
@@ -88,7 +88,9 @@ function CategoryStackLane({
 
       <div
         ref={setNodeRef}
-        className={`${showNode ? 'mt-5' : ''} min-h-[220px] rounded-2xl border border-dashed p-3 transition-all ${
+        className={`${showNode ? 'mt-5' : ''} ${compactSurface ? 'min-h-[180px]' : 'min-h-[220px]'} rounded-2xl border border-dashed ${
+          compactSurface ? 'p-2.5' : 'p-3'
+        } transition-all ${
           isOver
             ? 'border-indigo-400 bg-indigo-500/5'
             : compactSurface
@@ -96,7 +98,7 @@ function CategoryStackLane({
               : 'border-slate-300/70 bg-slate-50/70 dark:border-slate-700/70 dark:bg-slate-900/45'
         }`}
       >
-        <div className="mb-3 space-y-3">
+        <div className={`mb-3 ${compactSurface ? 'space-y-2.5' : 'space-y-3'}`}>
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="flex min-w-0 items-center gap-3">
               <span
@@ -131,14 +133,22 @@ function CategoryStackLane({
         </div>
 
         <SortableContext items={lane.items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-3">
+          <div className={compactSurface ? 'space-y-2.5' : 'space-y-3'}>
             {leadingContent}
             {collapsed ? (
-              <div className="rounded-2xl px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+              <div
+                className={`rounded-2xl px-3 text-center text-sm text-slate-500 dark:text-slate-400 ${
+                  compactSurface ? 'py-[1.125rem]' : 'py-6'
+                }`}
+              >
                 {collapsedMessage}
               </div>
             ) : lane.items.length === 0 ? (
-              <div className="rounded-2xl px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+              <div
+                className={`rounded-2xl px-3 text-center text-sm text-slate-500 dark:text-slate-400 ${
+                  compactSurface ? 'py-6' : 'py-8'
+                }`}
+              >
                 {emptyMessage}
               </div>
             ) : (
@@ -152,6 +162,7 @@ function CategoryStackLane({
                   onToggleSelect={onToggleCardSelect}
                   isSelected={selectedCardId === item.id}
                   isMultiSelected={selectedCardIds.includes(item.id)}
+                  compact={compactSurface}
                   scheduleDraggable={scheduleDraggable}
                   onScheduleDragStart={onScheduleDragStart}
                   onScheduleDragEnd={onScheduleDragEnd}
