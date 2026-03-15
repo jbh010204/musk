@@ -10,6 +10,7 @@
 4. 아래 고정 제약 확인
 5. UI 작업이면 `.agents/FRONTEND_UX_GUARDIAN.md` 먼저 확인
 6. 구조 작업/경로 수정 전 `docs/FSD_PHASE2_MAP.md` 확인
+6-1. 리팩터/아키텍처/TS 마이그레이션 작업이면 `AI_REFACTOR_GUIDE.md` 먼저 확인
 7. 태스크 실행은 `docs/TASK_EXECUTION_BOARD.md`의 Current Task부터 시작
 
 ## 2) Fixed Product Constraints
