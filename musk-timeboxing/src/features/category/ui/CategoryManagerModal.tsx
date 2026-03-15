@@ -22,6 +22,10 @@ interface CategoryViewModelLike {
   childCount: number
   depth: number
   canAcceptChildren?: boolean
+  taskCount?: number
+  timeBoxCount?: number
+  templateCount?: number
+  linkedCount?: number
 }
 
 interface CategoryMutationResult {
@@ -87,7 +91,24 @@ function CategoryRow({ category, categories, onUpdate, onDelete }: CategoryRowPr
   }
 
   const handleDelete = () => {
-    if (!window.confirm(`카테고리 '${category.name}'을(를) 삭제할까요?`)) {
+    const taskCount = Number(category.taskCount) || 0
+    const timeBoxCount = Number(category.timeBoxCount) || 0
+    const templateCount = Number(category.templateCount) || 0
+    const linkedCount = Number(category.linkedCount) || taskCount + timeBoxCount + templateCount
+    const impactLines =
+      linkedCount > 0
+        ? [
+            `카드 ${taskCount}개`,
+            `일정 ${timeBoxCount}개`,
+            `템플릿 ${templateCount}개`,
+          ].join(', ')
+        : '연결된 항목 없음'
+
+    if (
+      !window.confirm(
+        `카테고리 '${category.name}'을(를) 삭제할까요?\n${impactLines}\n삭제하면 연결된 항목은 미분류로 바뀝니다.`,
+      )
+    ) {
       return
     }
 
@@ -148,6 +169,10 @@ function CategoryRow({ category, categories, onUpdate, onDelete }: CategoryRowPr
         <div className="text-xs text-slate-500 dark:text-slate-400 md:text-right">
           <div>{category.pathLabel || category.name}</div>
           <div>{category.childCount > 0 ? `하위 ${category.childCount}개` : 'leaf 카테고리'}</div>
+          <div>
+            연결 {Number(category.taskCount) || 0}/{Number(category.timeBoxCount) || 0}/
+            {Number(category.templateCount) || 0}
+          </div>
         </div>
       </div>
 
