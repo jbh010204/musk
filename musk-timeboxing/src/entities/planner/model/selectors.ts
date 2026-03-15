@@ -1,4 +1,9 @@
-import type { BigThreeItem, BigThreeProgress, TaskCard, TimeBox } from './types'
+import type { BigThreeItem, BigThreeProgress, PlannerRunSession, TaskCard, TimeBox } from './types'
+
+export const EMPTY_PLANNER_RUN_SESSION: PlannerRunSession = {
+  mode: 'IDLE',
+  activeTimeBoxId: null,
+}
 
 export const deriveLinkedCount = (taskCard: TaskCard | null | undefined): number =>
   Array.isArray(taskCard?.linkedTimeBoxIds) ? taskCard.linkedTimeBoxIds.length : 0
@@ -97,4 +102,47 @@ export const deriveBigThreeProgress = (
     filledCount,
     isPerfect: completedCount === 3,
   }
+}
+
+const hasRunningTimer = (timeBox: TimeBox): boolean =>
+  Number.isFinite(timeBox?.timerStartedAt) && Number(timeBox.timerStartedAt) > 0
+
+const isPausedCandidate = (timeBox: TimeBox): boolean =>
+  timeBox?.status === 'PLANNED' &&
+  !hasRunningTimer(timeBox) &&
+  Number(timeBox?.elapsedSeconds || 0) > 0
+
+export const derivePlannerRunSession = (
+  timeBoxes: TimeBox[] = [],
+): PlannerRunSession => {
+  const runningBoxes = timeBoxes
+    .filter(hasRunningTimer)
+    .sort((left, right) => Number(right.timerStartedAt || 0) - Number(left.timerStartedAt || 0))
+
+  if (runningBoxes.length > 0) {
+    return {
+      mode: 'RUNNING',
+      activeTimeBoxId: runningBoxes[0].id,
+    }
+  }
+
+  const pausedBoxes = timeBoxes
+    .filter(isPausedCandidate)
+    .sort((left, right) => {
+      const elapsedDelta = Number(right.elapsedSeconds || 0) - Number(left.elapsedSeconds || 0)
+      if (elapsedDelta !== 0) {
+        return elapsedDelta
+      }
+
+      return Number(left.startSlot || 0) - Number(right.startSlot || 0)
+    })
+
+  if (pausedBoxes.length > 0) {
+    return {
+      mode: 'PAUSED',
+      activeTimeBoxId: pausedBoxes[0].id,
+    }
+  }
+
+  return EMPTY_PLANNER_RUN_SESSION
 }

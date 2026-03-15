@@ -2,6 +2,7 @@ export type TaskCardPriority = 0 | 1 | 2 | 3 | 4
 export type TaskCardOrigin = 'board' | 'list'
 export type BigThreeStatus = 'EMPTY' | 'DONE' | 'PENDING'
 export type TimeBoxStatus = 'PLANNED' | 'COMPLETED' | 'SKIPPED'
+export type RunMode = 'IDLE' | 'RUNNING' | 'PAUSED'
 
 export interface TaskCard {
   id: string
@@ -124,4 +125,9 @@ export interface TimeBoxReschedulePlan {
   targetDate: string | null
   planned: TimeBox[]
   skipped: TimeBox[]
+}
+
+export interface PlannerRunSession {
+  mode: RunMode
+  activeTimeBoxId: string | null
 }

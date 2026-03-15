@@ -424,6 +424,16 @@ export const useDailyData = () => {
     commitTimeBoxes((timeBoxes) => pauseTimeBoxTimerRecord(timeBoxes, id, now))
   }
 
+  const pauseTimeBoxTimerAndPersist = (id: string): void => {
+    const now = Date.now()
+    setData((prev) => {
+      const nextTimeBoxes = pauseTimeBoxTimerRecord(prev.timeBoxes, id, now)
+      const nextPlannerDay = replaceTimeBoxesState(prev, nextTimeBoxes)
+      savePlannerDayModel(currentDate, nextPlannerDay)
+      return nextPlannerDay
+    })
+  }
+
   const completeTimeBoxByTimer = (id: string): void => {
     const now = Date.now()
     commitTimeBoxes((timeBoxes) => completeTimeBoxByTimerRecord(timeBoxes, id, now))
@@ -487,6 +497,7 @@ export const useDailyData = () => {
     updateTimeBox,
     startTimeBoxTimer,
     pauseTimeBoxTimer,
+    pauseTimeBoxTimerAndPersist,
     completeTimeBoxByTimer,
     removeTimeBox,
     restoreTimeBox,

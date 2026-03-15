@@ -1,5 +1,5 @@
 import { DndContext, DragOverlay } from '@dnd-kit/core'
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import BigThree from './features/big-three'
 import BrainDump from './features/brain-dump'
 import CategoryManagerModal from './features/category'
@@ -29,6 +29,8 @@ import {
   buildWeeklyPlanningPreview,
   buildWeeklyReport,
   deriveBigThreeProgress,
+  derivePlannerRunSession,
+  shiftPlannerDate,
 } from './entities/planner'
 import { usePlannerTimelineDnd } from './features/planner-dnd/usePlannerTimelineDnd'
 import { PlannerModalLayer } from './app/ui/PlannerModalLayer'
@@ -71,6 +73,7 @@ function App() {
     updateTimeBox,
     startTimeBoxTimer,
     pauseTimeBoxTimer,
+    pauseTimeBoxTimerAndPersist,
     completeTimeBoxByTimer,
     removeTimeBox,
     restoreTimeBox,
@@ -95,6 +98,23 @@ function App() {
         templates,
       }),
     [data.taskCards, data.timeBoxes, rawCategories, templates],
+  )
+  const categoriesWithUsage = useMemo(
+    () =>
+      categories.map((category) => {
+        const taskCount = data.taskCards.filter((taskCard) => taskCard.categoryId === category.id).length
+        const timeBoxCount = data.timeBoxes.filter((timeBox) => timeBox.categoryId === category.id).length
+        const templateCount = templates.filter((template) => template.categoryId === category.id).length
+
+        return {
+          ...category,
+          taskCount,
+          timeBoxCount,
+          templateCount,
+          linkedCount: taskCount + timeBoxCount + templateCount,
+        }
+      }),
+    [categories, data.taskCards, data.timeBoxes, templates],
   )
   const lockedParentIds = useMemo(
     () => categories.filter((category) => !category.canAcceptChildren).map((category) => category.id),
@@ -163,9 +183,9 @@ function App() {
     setDailySuggestion,
     crossDateRevision,
     bumpCrossDateRevision,
-    goNextDay,
-    goPrevDay,
-    goToDate,
+    goNextDay: goNextDayFlow,
+    goPrevDay: goPrevDayFlow,
+    goToDate: goToDateFlow,
     applySkipSuggestionAction,
     buildReschedulePlan,
     applyReschedulePlan,
@@ -264,6 +284,92 @@ function App() {
     () => deriveBigThreeProgress(data.bigThree, data.timeBoxes),
     [data.bigThree, data.timeBoxes],
   )
+  const runSession = useMemo(
+    () => derivePlannerRunSession(data.timeBoxes),
+    [data.timeBoxes],
+  )
+  const activeRunTimeBox = useMemo(
+    () => data.timeBoxes.find((timeBox) => timeBox.id === runSession.activeTimeBoxId) || null,
+    [data.timeBoxes, runSession.activeTimeBoxId],
+  )
+  const activeRunAccent = useMemo(() => {
+    if (!activeRunTimeBox?.categoryId) {
+      return null
+    }
+
+    return categories.find((category) => category.id === activeRunTimeBox.categoryId)?.color || null
+  }, [activeRunTimeBox?.categoryId, categories])
+  const confirmDayNavigation = useCallback(
+    (targetDate: string): boolean => {
+      if (targetDate === currentDate || runSession.mode === 'IDLE') {
+        return true
+      }
+
+      const activeLabel = activeRunTimeBox?.content || '현재 일정'
+
+      if (runSession.mode === 'RUNNING') {
+        const confirmed = window.confirm(
+          `'${activeLabel}' 타이머가 실행 중입니다. 날짜를 이동하면 타이머를 일시정지하고 이동합니다. 계속할까요?`,
+        )
+
+        if (!confirmed) {
+          return false
+        }
+
+        if (activeRunTimeBox?.id) {
+          pauseTimeBoxTimerAndPersist(activeRunTimeBox.id)
+          showToast(`'${activeLabel}' 타이머를 일시정지하고 날짜를 이동했습니다`, 2600)
+        }
+
+        return true
+      }
+
+      return window.confirm(
+        `'${activeLabel}' 실행 컨텍스트가 일시정지된 상태입니다. 날짜를 이동할까요?`,
+      )
+    },
+    [
+      activeRunTimeBox?.content,
+      activeRunTimeBox?.id,
+      currentDate,
+      pauseTimeBoxTimerAndPersist,
+      runSession.mode,
+      showToast,
+    ],
+  )
+  const goToDate = useCallback(
+    (targetDate: string) => {
+      if (!confirmDayNavigation(targetDate)) {
+        return
+      }
+
+      goToDateFlow(targetDate)
+    },
+    [confirmDayNavigation, goToDateFlow],
+  )
+  const goPrevDay = useCallback(() => {
+    const targetDateStr = shiftPlannerDate(currentDate, -1)
+
+    if (!confirmDayNavigation(targetDateStr)) {
+      return
+    }
+
+    goPrevDayFlow()
+  }, [confirmDayNavigation, currentDate, goPrevDayFlow])
+  const goNextDay = useCallback(() => {
+    const targetDateStr = shiftPlannerDate(currentDate, 1)
+
+    if (!confirmDayNavigation(targetDateStr)) {
+      return
+    }
+
+    if (runSession.mode === 'IDLE') {
+      goNextDayFlow()
+      return
+    }
+
+    goToDateFlow(targetDateStr)
+  }, [confirmDayNavigation, currentDate, goNextDayFlow, goToDateFlow, runSession.mode])
 
   const dumpSection = (
     <BrainDump
@@ -339,6 +445,8 @@ function App() {
       showDropGuide={
         activeDragPreview?.type === 'BRAIN_DUMP' || activeDragPreview?.type === 'BIG_THREE'
       }
+      runSession={runSession}
+      activeRunTimeBoxId={runSession.activeTimeBoxId}
     />
   )
 
@@ -367,6 +475,8 @@ function App() {
             persistenceStatus={persistenceStatus}
             onOpenReschedule={openRescheduleModal}
             onToggleTheme={toggleTheme}
+            runMode={runSession.mode}
+            activeRunLabel={activeRunTimeBox?.content || null}
           />
         }
         toastContainer={<ToastContainer />}
@@ -383,7 +493,7 @@ function App() {
             onCloseDataModal={closeDataModal}
             isCategoryManagerOpen={isCategoryManagerOpen}
             categoryManager={{
-              categories,
+              categories: categoriesWithUsage,
               onAddCategory: handleAddCategory,
               onUpdateCategory: handleUpdateCategory,
               onDeleteCategory: handleDeleteCategory,
@@ -425,6 +535,8 @@ function App() {
         onOpenCategoryManager={openCategoryManager}
         onOpenDataModal={openDataModal}
         onOpenTemplateManager={openTemplateManager}
+        runMode={runSession.mode}
+        activeRunAccent={activeRunAccent}
       />
       <DragOverlay>
         {activeDragPreview ? (

@@ -12,8 +12,10 @@ import {
 import type {
   BigThreeItem,
   CategoryViewModel,
+  PlannerRunSession,
   PlannerDay,
   PlannerTemplate,
+  RunMode,
   StackCanvasStateRecord,
   TaskCard,
   TimeBox,
@@ -254,6 +256,8 @@ interface TimelineProps {
   onOpenCategoryManager?: () => void
   onOpenQuickAdd?: (dateStr: string, payload?: { dateLabel?: string }) => void
   onApplyTemplate?: (templateId: string, dateStr: string) => void
+  runSession?: PlannerRunSession
+  activeRunTimeBoxId?: string | null
 }
 
 const VIEW_MODE_OPTIONS: Array<{ value: TimelineViewMode; label: string }> = [
@@ -378,6 +382,8 @@ function Timeline({
   onOpenCategoryManager = () => {},
   onOpenQuickAdd = () => {},
   onApplyTemplate = () => {},
+  runSession = { mode: 'IDLE' as RunMode, activeTimeBoxId: null },
+  activeRunTimeBoxId = null,
 }: TimelineProps) {
   const sectionRef = useRef<HTMLElement | null>(null)
   const [viewMode, setViewMode] = useState<TimelineViewMode>(() => resolveInitialViewMode(data))
@@ -837,6 +843,8 @@ function Timeline({
           onTimerPause={onTimerPause}
           onTimerComplete={onTimerComplete}
           onJumpToDay={() => setViewMode('DAY')}
+          runSession={runSession}
+          activeRunTimeBoxId={activeRunTimeBoxId}
         />
       ) : null}
 
@@ -1052,6 +1060,8 @@ function Timeline({
             showDropGuide={showDropGuide}
             dropPreviewSlot={dropPreviewSlot}
             movingTimeBoxPreview={movingTimeBoxPreview}
+            runMode={runSession.mode}
+            activeRunTimeBoxId={activeRunTimeBoxId}
             emptyState={
               sortedBoxes.length > 0 && filteredBoxes.length === 0 ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">

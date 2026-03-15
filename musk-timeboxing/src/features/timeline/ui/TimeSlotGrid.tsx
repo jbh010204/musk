@@ -36,6 +36,8 @@ function TimeSlotRow({
 
   const label = slotToTime(slotIndex)
   const showLabel = label.endsWith(':00')
+  const guideActive = showDropGuide || nativeDragActive
+  const isActiveDropTarget = isOver || nativeOverSlot === slotIndex
 
   return (
     <div className="flex border-b border-gray-700" style={{ height: rowHeight }}>
@@ -53,10 +55,10 @@ function TimeSlotRow({
         data-testid={slotTestIdPrefix ? `${slotTestIdPrefix}-${slotIndex}` : undefined}
         onClick={() => onSlotClick(slotIndex)}
         className={`relative block flex-1 text-left transition-colors ${
-          showDropGuide
+          guideActive
             ? 'bg-indigo-500/5 hover:bg-indigo-500/10'
             : 'bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800'
-        } ${isOver || nativeOverSlot === slotIndex ? 'bg-indigo-500/20 ring-1 ring-inset ring-indigo-400' : ''}`}
+        } ${isActiveDropTarget ? 'bg-indigo-500/14 ring-1 ring-inset ring-indigo-400/90' : ''}`}
         aria-label={`${label} 슬롯`}
         onDragOver={(event) => {
           if (!nativeDragActive) {
@@ -89,6 +91,15 @@ function TimeSlotRow({
           onNativeSlotDrop?.(slotIndex, cardId)
         }}
       >
+        {guideActive ? (
+          <span
+            className={`pointer-events-none absolute inset-x-2 inset-y-1 rounded-lg border border-dashed transition-all ${
+              isActiveDropTarget
+                ? 'border-indigo-400/85 bg-indigo-500/[0.08]'
+                : 'border-indigo-300/45 bg-indigo-500/[0.015]'
+            }`}
+          />
+        ) : null}
         {showQuarterDividers ? (
           <span
             className="pointer-events-none absolute inset-x-0 border-t border-gray-700/80"

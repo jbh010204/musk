@@ -76,6 +76,133 @@ body {
   @apply bg-slate-50 text-slate-900 antialiased dark:bg-gray-900 dark:text-gray-100;
 }
 
+@keyframes planner-ambient-float {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(2%, 2%, 0) scale(1.03);
+  }
+
+  100% {
+    transform: translate3d(-1%, 1%, 0) scale(1.01);
+  }
+}
+
+@keyframes planner-frame-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.planner-run-shell {
+  isolation: isolate;
+}
+
+.planner-run-frame {
+  position: absolute;
+  inset: 6px;
+  z-index: 24;
+  pointer-events: none;
+  border: 2px solid transparent;
+  border-radius: 28px;
+  opacity: 0.92;
+  will-change: opacity;
+}
+
+.planner-run-ambient {
+  position: absolute;
+  inset: -2%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.24;
+  filter: blur(52px);
+  will-change: transform, opacity;
+}
+
+.planner-run-ambient-primary {
+  transform-origin: 8% 8%;
+}
+
+.planner-run-ambient-secondary {
+  transform-origin: 92% 92%;
+  opacity: 0.16;
+}
+
+.planner-run-frame-running,
+.planner-run-ambient-running {
+  animation: planner-frame-breathe 5.2s ease-in-out infinite;
+}
+
+.planner-run-ambient-running {
+  animation:
+    planner-ambient-float 18s ease-in-out infinite,
+    planner-frame-breathe 5.2s ease-in-out infinite;
+}
+
+.planner-run-frame-paused,
+.planner-run-ambient-paused {
+  animation: none;
+  opacity: 0.72;
+}
+
+.theme-light .planner-run-frame {
+  opacity: 1;
+}
+
+.theme-light .planner-run-ambient {
+  opacity: 0.18;
+}
+
+.theme-light .planner-run-ambient-secondary {
+  opacity: 0.12;
+}
+
+.theme-dark .planner-run-frame {
+  opacity: 0.88;
+}
+
+.theme-dark .planner-run-ambient {
+  opacity: 0.28;
+}
+
+.planner-active-timebox {
+  transform: translateZ(0);
+  transition:
+    box-shadow 220ms ease,
+    transform 220ms ease,
+    opacity 220ms ease,
+    filter 220ms ease;
+}
+
+.planner-active-timebox-running {
+  transform: translateZ(0) scale(1.012);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 0 3px rgba(34, 211, 238, 0.18),
+    0 16px 30px rgba(34, 211, 238, 0.22);
+}
+
+.planner-active-timebox-paused {
+  transform: translateZ(0) scale(1.01);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 0 3px rgba(129, 140, 248, 0.12),
+    0 14px 28px rgba(99, 102, 241, 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planner-run-ambient-running {
+    animation: none;
+  }
+}
+
 @layer components {
   .ui-panel {
     @apply rounded-2xl shadow-sm;

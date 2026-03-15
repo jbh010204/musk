@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import { Badge, Button, Card } from '../../../shared/ui'
+import type { RunMode } from '../../../entities/planner/model/types'
 
 const DRAG_THRESHOLD_PX = 6
 const MOMENTUM_FRICTION = 0.94
@@ -59,6 +60,8 @@ interface HeaderProps {
   persistenceStatus?: PlannerPersistenceStatusLike | null
   onOpenReschedule?: () => void
   onToggleTheme?: () => void
+  runMode?: RunMode
+  activeRunLabel?: string | null
 }
 
 const DEFAULT_BIG_THREE_PROGRESS: BigThreeProgress = {
@@ -121,6 +124,8 @@ function Header({
   persistenceStatus = null,
   onOpenReschedule = () => {},
   onToggleTheme = () => {},
+  runMode = 'IDLE',
+  activeRunLabel = null,
 }: HeaderProps) {
   const stripRef = useRef<HTMLDivElement | null>(null)
   const currentDayRef = useRef<HTMLButtonElement | null>(null)
@@ -397,6 +402,19 @@ function Header({
           >
             {persistenceBadge.label}
           </Badge>
+          {runMode !== 'IDLE' ? (
+            <div
+              data-testid="planner-run-badge"
+              className="inline-flex max-w-[18rem] items-center gap-2 rounded-full border border-white/60 bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-100"
+            >
+              <span className="font-semibold tracking-[0.16em] text-indigo-600 dark:text-cyan-300">
+                {runMode === 'RUNNING' ? 'RUNNING' : 'PAUSED'}
+              </span>
+              {activeRunLabel ? (
+                <span className="truncate text-slate-500 dark:text-slate-300">{activeRunLabel}</span>
+              ) : null}
+            </div>
+          ) : null}
           <div className="ui-panel-subtle inline-flex items-center gap-1 p-1">
             <Button
               variant="ghost"

@@ -8,7 +8,7 @@ import {
   slotDurationMinutes,
   TOTAL_SLOTS,
 } from '../../../entities/planner'
-import type { CategoryRecord, CategoryViewModel, TimeBox } from '../../../entities/planner/model/types'
+import type { CategoryRecord, CategoryViewModel, RunMode, TimeBox } from '../../../entities/planner/model/types'
 import { createTimeBoxDragPayload } from '../../planner-dnd/lib/payloads'
 import { resolveTimeBoxLayout } from './timeBoxLayout'
 
@@ -29,6 +29,9 @@ interface TimeBoxCardProps {
   onTimerPause?: (id: string) => void
   onTimerComplete?: (id: string) => void
   testId?: string
+  runMode?: RunMode
+  isActiveRunTarget?: boolean
+  isMutedByRunMode?: boolean
 }
 
 function TimeBoxCard({
@@ -44,6 +47,9 @@ function TimeBoxCard({
   onTimerPause,
   onTimerComplete,
   testId = 'timebox-card',
+  runMode = 'IDLE',
+  isActiveRunTarget = false,
+  isMutedByRunMode = false,
 }: TimeBoxCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `time-box-${timeBox.id}`,
@@ -73,6 +79,9 @@ function TimeBoxCard({
   const timerMinutes = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')
   const timerSeconds = String(elapsedSeconds % 60).padStart(2, '0')
   const timerLabel = `${timerMinutes}:${timerSeconds}`
+  const isRunModeActive = runMode !== 'IDLE'
+  const isActiveRunning = isActiveRunTarget && runMode === 'RUNNING'
+  const isActivePaused = isActiveRunTarget && runMode === 'PAUSED'
 
   const actualDiff = useMemo(() => {
     if (timeBox.status !== 'COMPLETED' || timeBox.actualMinutes == null) {
@@ -209,11 +218,14 @@ function TimeBoxCard({
       role="button"
       tabIndex={0}
       data-timebox-dragging={isDragging ? 'true' : 'false'}
+      data-run-mode={isActiveRunTarget ? runMode : 'IDLE'}
       data-timebox-title={timeBox.content}
       data-testid={testId}
       className={`timebox-card group/timebox absolute left-0 right-0 text-left text-xs text-white pointer-events-auto transition-[transform,top,height,opacity] duration-100 ease-out will-change-transform ${
         isDragging ? 'z-40 opacity-80 ring-2 ring-cyan-300/70' : ''
-      }`}
+      } ${
+        isRunModeActive && isMutedByRunMode ? 'opacity-[0.52] saturate-[0.92] brightness-[0.98]' : ''
+      } ${isActiveRunTarget ? 'z-20' : ''}`}
       style={{
         top: timeBox.startSlot * slotHeight,
         height: boxHeight,
@@ -265,7 +277,13 @@ function TimeBoxCard({
       {...attributes}
     >
       <div
-        className="absolute inset-x-0 overflow-hidden rounded shadow"
+        className={`absolute inset-x-0 overflow-hidden rounded shadow transition-[box-shadow,filter,transform,opacity] duration-300 ${
+          isActiveRunning
+            ? 'planner-active-timebox planner-active-timebox-running ring-2 ring-cyan-300/80'
+            : isActivePaused
+              ? 'planner-active-timebox planner-active-timebox-paused ring-2 ring-indigo-300/70'
+              : ''
+        }`}
         style={{
           top: layout.surfaceInsetY,
           bottom: layout.surfaceInsetY,
@@ -331,7 +349,16 @@ function TimeBoxCard({
             className={`${layout.contentContainerClass} ${layout.contentInsetClass}`}
           >
             {layout.showTag
-              ? timeBox.status === 'SKIPPED' && timeBox.skipReason
+              ? isActiveRunTarget && runMode !== 'IDLE'
+                ? (
+                    <span
+                      data-testid="timebox-tag"
+                      className={`${layout.tagClass} border-white/20 bg-white/12 text-white`}
+                    >
+                      {runMode === 'RUNNING' ? 'RUNNING' : 'PAUSED'}
+                    </span>
+                  )
+                : timeBox.status === 'SKIPPED' && timeBox.skipReason
                 ? (
                     <span
                       data-testid="timebox-tag"
@@ -374,17 +401,26 @@ function TimeBoxCard({
             data-testid="timebox-content"
             className={`${layout.contentContainerClass} ${layout.contentInsetClass}`}
           >
-            {layout.showTag && categoryLabel ? (
-              <div
-                data-testid="timebox-tag"
-                className={layout.tagClass}
-                style={{
-                  backgroundColor: visual.categoryBadgeBackground,
-                  borderColor: visual.categoryBadgeBorder,
-                }}
-              >
-                <span className="truncate">#{categoryLabel}</span>
-              </div>
+            {layout.showTag ? (
+              isActiveRunTarget && runMode !== 'IDLE' ? (
+                <div
+                  data-testid="timebox-tag"
+                  className={`${layout.tagClass} border-white/20 bg-white/12 text-white`}
+                >
+                  <span className="truncate">{runMode === 'RUNNING' ? 'RUNNING' : 'PAUSED'}</span>
+                </div>
+              ) : categoryLabel ? (
+                <div
+                  data-testid="timebox-tag"
+                  className={layout.tagClass}
+                  style={{
+                    backgroundColor: visual.categoryBadgeBackground,
+                    borderColor: visual.categoryBadgeBorder,
+                  }}
+                >
+                  <span className="truncate">#{categoryLabel}</span>
+                </div>
+              ) : null
             ) : null}
             <div
               data-testid="timebox-title"

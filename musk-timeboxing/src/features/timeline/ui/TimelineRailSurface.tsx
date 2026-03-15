@@ -3,6 +3,7 @@ import { resolveStackCanvasSelectedCardIds, slotToTime } from '../../../entities
 import type {
   BigThreeItem,
   CategoryViewModel,
+  RunMode,
   TimeBox,
   TimeBoxUpdatePatch,
 } from '../../../entities/planner/model/types'
@@ -62,6 +63,8 @@ interface TimelineRailSurfaceProps {
   blockTestIdPrefix?: string | null
   emptyState?: ReactNode
   children?: ReactNode
+  runMode?: RunMode
+  activeRunTimeBoxId?: string | null
 }
 
 function TimelineRailSurface({
@@ -95,6 +98,8 @@ function TimelineRailSurface({
   blockTestIdPrefix = null,
   emptyState = null,
   children = null,
+  runMode = 'IDLE',
+  activeRunTimeBoxId = null,
 }: TimelineRailSurfaceProps) {
   const [pendingInput, setPendingInput] = useState<PendingManualInput | null>(null)
   const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null)
@@ -318,6 +323,9 @@ function TimelineRailSurface({
                 onTimerPause={onTimerPause}
                 onTimerComplete={onTimerComplete}
                 categoryMeta={box.categoryId ? categoryMap.get(box.categoryId) : null}
+                runMode={runMode}
+                isActiveRunTarget={activeRunTimeBoxId === box.id}
+                isMutedByRunMode={runMode !== 'IDLE' && activeRunTimeBoxId !== box.id}
                 onTimeBoxClick={(timeBox) => setSelectedBoxId(timeBox.id)}
               />
             ))}

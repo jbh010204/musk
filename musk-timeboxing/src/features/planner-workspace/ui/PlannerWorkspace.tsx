@@ -5,7 +5,13 @@ import {
   createStackCanvasCardSelectionPatch,
   resolveStackCanvasSelectedCardIds,
 } from '../../../entities/planner'
-import type { BigThreeItem, CategoryViewModel, PlannerDay, TaskCard } from '../../../entities/planner/model/types'
+import type {
+  BigThreeItem,
+  CategoryViewModel,
+  PlannerDay,
+  PlannerRunSession,
+  TaskCard,
+} from '../../../entities/planner/model/types'
 import { Card } from '../../../shared/ui'
 import PlanningCanvas from '../../planning-canvas'
 import TimelineRailSurface from '../../timeline/ui/TimelineRailSurface'
@@ -45,6 +51,8 @@ interface PlannerWorkspaceProps {
   onTimerPause: (id: string) => void
   onTimerComplete: (id: string) => void
   onJumpToDay: () => void
+  runSession?: PlannerRunSession
+  activeRunTimeBoxId?: string | null
 }
 
 function PlannerWorkspace({
@@ -74,6 +82,8 @@ function PlannerWorkspace({
   onTimerPause,
   onTimerComplete,
   onJumpToDay,
+  runSession = { mode: 'IDLE', activeTimeBoxId: null },
+  activeRunTimeBoxId = null,
 }: PlannerWorkspaceProps) {
   const [nativeDraggingCardId, setNativeDraggingCardId] = useState<string | null>(null)
   const selectedCardId =
@@ -236,6 +246,8 @@ function PlannerWorkspace({
               onTimerStart={onTimerStart}
               onTimerPause={onTimerPause}
               onTimerComplete={onTimerComplete}
+              runMode={runSession.mode}
+              activeRunTimeBoxId={activeRunTimeBoxId}
               nativeDraggingCardId={nativeDraggingCardId}
               onNativeDragEnd={() => setNativeDraggingCardId(null)}
               emptyState={
