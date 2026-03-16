@@ -120,6 +120,8 @@
   - `T92` task editor deadline 연결
   - `T93` 주간/월간 상단 deadline strip 추가
   - `T94` deadline E2E / 문서 / 패치노트 동기화
+  - `T95` planning card deadline badge 추가
+  - `T96` deadline 완료 토글 추가
 
 ## 3. Prioritized Task List
 

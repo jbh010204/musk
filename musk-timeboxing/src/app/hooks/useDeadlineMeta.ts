@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import {
   clearDeadlineTaskLink,
   completeDeadlineRecord,
-  getActiveDeadlineForTask,
+  getLinkedDeadlineForTask,
   loadPlannerMetaModel,
   removeDeadlineForTask,
   removeDeadlineRecord,
   savePlannerMetaModel,
+  toggleDeadlineCompletionRecord,
   upsertDeadlineForTask,
 } from '../../entities/planner'
 import type { DeadlinePriority, DeadlineRecord } from '../../entities/planner/model/types'
@@ -47,12 +48,16 @@ export const useDeadlineMeta = () => {
     setDeadlines((prev) => completeDeadlineRecord(prev, deadlineId, completedAt))
   }
 
+  const toggleDeadlineCompletion = (deadlineId: string): void => {
+    setDeadlines((prev) => toggleDeadlineCompletionRecord(prev, deadlineId))
+  }
+
   const detachDeadlineFromTask = (taskId: string | null, taskDate: string | null): void => {
     setDeadlines((prev) => clearDeadlineTaskLink(prev, taskId, taskDate))
   }
 
   const getTaskDeadline = (taskId: string | null, taskDate: string | null): DeadlineRecord | null =>
-    getActiveDeadlineForTask(deadlines, taskId, taskDate)
+    getLinkedDeadlineForTask(deadlines, taskId, taskDate)
 
   const reloadDeadlines = (): void => {
     setDeadlines(loadPlannerMetaModel().deadlines || [])
@@ -64,6 +69,7 @@ export const useDeadlineMeta = () => {
     removeDeadline,
     removeDeadlineForLinkedTask,
     completeDeadline,
+    toggleDeadlineCompletion,
     detachDeadlineFromTask,
     getTaskDeadline,
     reloadDeadlines,

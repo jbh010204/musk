@@ -227,6 +227,7 @@ interface TimelineProps {
   monthCalendar?: MonthCalendarSnapshot
   isInsightsLoading?: boolean
   onJumpToDate?: (dateStr: string) => void
+  onToggleDeadlineCompletion?: (deadlineId: string) => void
   onViewModeChange?: (viewMode: TimelineViewMode) => void
   initialFocusSlot?: number | null
   suggestionMessage?: string | null
@@ -381,6 +382,7 @@ function Timeline({
   },
   isInsightsLoading = false,
   onJumpToDate = () => {},
+  onToggleDeadlineCompletion = () => {},
   onViewModeChange = () => {},
   initialFocusSlot = null,
   suggestionMessage = null,
@@ -1037,6 +1039,7 @@ function Timeline({
           deadlines={weekCalendar.deadlines}
           days={weekCalendar.days}
           onOpenDate={handleOpenCalendarDate}
+          onToggleDeadlineComplete={onToggleDeadlineCompletion}
           onQuickAdd={(dateStr, dateLabel) => onOpenQuickAdd(dateStr, { dateLabel })}
         />
       ) : null}
@@ -1053,6 +1056,7 @@ function Timeline({
             busiestDay={monthCalendar.busiestDay}
             selectedDateStr={selectedMonthDate}
             onSelectDate={handleSelectMonthDate}
+            onToggleDeadlineComplete={onToggleDeadlineCompletion}
             onQuickAdd={(dateStr, dateLabel) => onOpenQuickAdd(dateStr, { dateLabel })}
           />
           <MonthDayDetailSheet
@@ -1079,6 +1083,7 @@ function Timeline({
           onApplyLayout={applyTaskCardBoardLayout}
           onOpenCategoryManager={onOpenCategoryManager}
           onOpenComposer={() => setViewMode('DAY')}
+          onToggleDeadlineCompletion={onToggleDeadlineCompletion}
         />
       ) : null}
 

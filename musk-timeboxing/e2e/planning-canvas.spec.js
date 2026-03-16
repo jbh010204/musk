@@ -160,6 +160,27 @@ test('planning canvas editor stores a linked deadline in planner meta', async ({
     },
     { today: setup.today, due: setup.due },
   )
+
+  await expect(
+    page.locator('[data-testid="planning-board-card-deadline-badge-canvas-card-deadline"]:visible').first(),
+  ).toContainText('D-2')
+
+  await page.locator('[data-testid="planning-board-card-deadline-toggle-canvas-card-deadline"]:visible').first().click()
+
+  await page.waitForFunction(() => {
+    const rawMeta = window.localStorage.getItem('musk-planner-meta')
+    if (!rawMeta) {
+      return false
+    }
+
+    const parsedMeta = JSON.parse(rawMeta)
+    const deadline = parsedMeta?.deadlines?.find((item) => item.taskId === 'canvas-card-deadline')
+    return typeof deadline?.completedAt === 'string' && deadline.completedAt.length > 0
+  })
+
+  await expect(
+    page.locator('[data-testid="planning-board-card-deadline-badge-canvas-card-deadline"]:visible').first(),
+  ).toContainText('완료')
 })
 
 test('planning canvas moves cards between uncategorized and category stacks', async ({ page }) => {

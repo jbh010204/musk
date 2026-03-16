@@ -91,7 +91,8 @@ function App() {
   } = useCategoryMeta()
   const { templates, addTemplate, updateTemplate, removeTemplate, clearTemplateCategory, reloadTemplates } =
     useTemplateMeta()
-  const { deadlines, upsertDeadline, removeDeadlineForLinkedTask, reloadDeadlines } = useDeadlineMeta()
+  const { deadlines, upsertDeadline, removeDeadlineForLinkedTask, toggleDeadlineCompletion, reloadDeadlines } =
+    useDeadlineMeta()
   const categories = useMemo(
     () =>
       buildManagedCategoryViewModels(rawCategories, {
@@ -492,6 +493,7 @@ function App() {
       categories={categories}
       taskCards={data.taskCards}
       deadlines={deadlines}
+      onToggleDeadlineCompletion={toggleDeadlineCompletion}
       bigThree={data.bigThree}
       templates={templates}
       weeklyReport={weeklyReport}

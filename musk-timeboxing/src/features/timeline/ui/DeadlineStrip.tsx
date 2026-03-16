@@ -16,6 +16,7 @@ interface DeadlineStripProps {
   title?: string
   items?: DeadlineStripItem[]
   onOpenDate?: (dateStr: string) => void
+  onToggleComplete?: (deadlineId: string) => void
 }
 
 const PRIORITY_LABEL: Record<DeadlinePriority, string> = {
@@ -35,6 +36,7 @@ function DeadlineStrip({
   title = '데드라인',
   items = [],
   onOpenDate = () => {},
+  onToggleComplete = () => {},
 }: DeadlineStripProps) {
   return (
     <div className="mb-5 rounded-2xl bg-slate-50/80 p-3 dark:bg-slate-800/35" data-testid="deadline-strip">
@@ -50,28 +52,42 @@ function DeadlineStrip({
       {items.length > 0 ? (
         <div className="mt-3 flex flex-wrap gap-2" data-testid="deadline-strip-items">
           {items.map((item) => (
-            <button
+            <div
               key={item.id}
-              type="button"
-              data-testid={`deadline-chip-${item.id}`}
-              onClick={() => onOpenDate(item.dueDate)}
-              className="group inline-flex max-w-full items-center gap-2 rounded-2xl bg-white px-3 py-2 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-900 dark:hover:bg-slate-800"
+              className="group inline-flex max-w-full items-stretch gap-1 rounded-2xl bg-white p-1 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800"
             >
-              <span className={`rounded-xl px-2 py-1 text-[11px] font-semibold ${URGENCY_CLASS[item.urgency.kind]}`}>
-                {item.urgency.label}
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {item.title}
+              <button
+                type="button"
+                data-testid={`deadline-chip-${item.id}`}
+                onClick={() => onOpenDate(item.dueDate)}
+                className="inline-flex min-w-0 items-center gap-2 rounded-[1rem] px-2 py-1 text-left focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <span className={`rounded-xl px-2 py-1 text-[11px] font-semibold ${URGENCY_CLASS[item.urgency.kind]}`}>
+                  {item.urgency.label}
                 </span>
-                <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
-                  {item.dueDate} · {PRIORITY_LABEL[item.priority]}
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {item.title}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
+                    {item.dueDate} · {PRIORITY_LABEL[item.priority]}
+                  </span>
                 </span>
-              </span>
-              <Badge tone="neutral" className="shrink-0">
-                마감
-              </Badge>
-            </button>
+                <Badge tone="neutral" className="shrink-0">
+                  마감
+                </Badge>
+              </button>
+
+              <button
+                type="button"
+                data-testid={`deadline-complete-${item.id}`}
+                aria-label={`${item.title} 데드라인 완료`}
+                onClick={() => onToggleComplete(item.id)}
+                className="rounded-[1rem] bg-emerald-500/10 px-3 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-500/16 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-emerald-300"
+              >
+                완료
+              </button>
+            </div>
           ))}
         </div>
       ) : null}

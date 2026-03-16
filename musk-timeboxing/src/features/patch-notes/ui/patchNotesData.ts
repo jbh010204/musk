@@ -10,6 +10,24 @@ export interface PatchNoteEntry {
 
 export const PATCH_NOTES: PatchNoteEntry[] = [
   {
+    version: 'v0.22.12',
+    date: '2026-03-16',
+    title: 'Deadline visibility: badges on cards, instant complete from strips',
+    summary:
+      '데드라인이 주간/월간 상단 strip에만 보이던 상태에서, 이제 캔버스 카드 표면에도 직접 보입니다. 동시에 주간 strip과 카드에서 deadline 완료/재열기를 바로 처리할 수 있게 해 상태 확인과 실행을 같은 표면으로 묶었습니다.',
+    focus: [
+      '카드 표면에서 linked deadline의 `D-n / 오늘 / 지남 / 완료` 상태를 직접 노출해 마감 압박을 편집 모달에 들어가지 않고도 읽을 수 있게 정리',
+      '주간/월간 deadline strip에 `완료` 액션을 붙여 urgency scan과 상태 전환을 같은 strip에서 닫을 수 있게 함',
+      'deadline 조회는 활성 항목만이 아니라 마지막 linked deadline까지 읽게 바꿔, 완료 처리 후에도 카드에서 즉시 완료 상태를 볼 수 있게 조정',
+    ],
+    improvements: [
+      '`deadlines.ts`, `useDeadlineMeta.ts`에 linked deadline 조회와 completion toggle 경로를 추가하고, `PlanningCanvas.tsx`/`CategoryStackLane.tsx`/`BoardCard.tsx`가 이를 공용으로 사용하도록 정리',
+      '`DeadlineStrip.tsx`, `WeeklyCalendarView.tsx`, `MonthlyCalendarView.tsx`, `Timeline/index.tsx`, `App.tsx`를 수정해 strip 완료 버튼과 상위 상태 경로를 연결',
+      '`planning-canvas.spec.js`, `weekly-calendar-view.spec.js`에 카드 badge 노출과 strip 완료 토글 회귀를 추가',
+    ],
+    validation: ['lint/build 통과', 'E2E 전체 회귀 통과 (65 passed)'],
+  },
+  {
     version: 'v0.22.11',
     date: '2026-03-16',
     title: 'Deadline layer: weekly and monthly planning gets an upper urgency strip',

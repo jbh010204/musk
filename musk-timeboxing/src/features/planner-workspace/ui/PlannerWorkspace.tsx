@@ -34,6 +34,7 @@ interface PlannerWorkspaceProps {
   updateTaskCard: (...args: unknown[]) => void
   applyTaskCardBoardLayout: (...args: unknown[]) => void
   updateStackCanvasState: (patch: Record<string, unknown>) => void
+  onToggleDeadlineCompletion?: (deadlineId: string) => void
   onOpenCategoryManager: () => void
   onSendCardsToBigThree: (cardIds: string[]) => number
   onScheduleBoardCard: (cardId: string, startSlot: number) => boolean
@@ -73,6 +74,7 @@ function PlannerWorkspace({
   updateTaskCard,
   applyTaskCardBoardLayout,
   updateStackCanvasState,
+  onToggleDeadlineCompletion = () => {},
   onOpenCategoryManager,
   onSendCardsToBigThree,
   onScheduleBoardCard,
@@ -188,6 +190,7 @@ function PlannerWorkspace({
               onApplyLayout={applyTaskCardBoardLayout}
               onOpenCategoryManager={onOpenCategoryManager}
               onOpenComposer={() => {}}
+              onToggleDeadlineCompletion={onToggleDeadlineCompletion}
               selectedCardId={selectedCardId}
               selectedCardIds={selectedCardIds}
               onSelectCard={handleSelectCard}

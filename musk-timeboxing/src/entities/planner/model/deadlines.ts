@@ -159,6 +159,35 @@ export const getActiveDeadlineForTask = (
   )
 }
 
+export const getLinkedDeadlineForTask = (
+  deadlines: DeadlineRecord[] = [],
+  taskId: string | null,
+  taskDate: string | null,
+): DeadlineRecord | null => {
+  if (!taskId) {
+    return null
+  }
+
+  const linkedDeadlines = deadlines.filter(
+    (deadline) => deadline.taskId === taskId && deadline.taskDate === taskDate,
+  )
+
+  if (linkedDeadlines.length === 0) {
+    return null
+  }
+
+  const activeDeadline = linkedDeadlines.find((deadline) => deadline.completedAt == null)
+  if (activeDeadline) {
+    return activeDeadline
+  }
+
+  return [...linkedDeadlines].sort((left, right) => {
+    const leftCompletedAt = left.completedAt ? Date.parse(left.completedAt) : 0
+    const rightCompletedAt = right.completedAt ? Date.parse(right.completedAt) : 0
+    return rightCompletedAt - leftCompletedAt
+  })[0]
+}
+
 export const upsertDeadlineForTask = (
   deadlines: DeadlineRecord[] = [],
   input: UpsertDeadlineInput,
@@ -217,6 +246,19 @@ export const completeDeadlineRecord = (
       ? {
           ...deadline,
           completedAt,
+        }
+      : deadline,
+  )
+
+export const toggleDeadlineCompletionRecord = (
+  deadlines: DeadlineRecord[] = [],
+  deadlineId: string,
+): DeadlineRecord[] =>
+  deadlines.map((deadline) =>
+    deadline.id === deadlineId
+      ? {
+          ...deadline,
+          completedAt: deadline.completedAt ? null : new Date().toISOString(),
         }
       : deadline,
   )

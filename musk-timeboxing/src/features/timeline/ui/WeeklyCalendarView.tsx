@@ -35,6 +35,7 @@ interface WeeklyCalendarViewProps {
   }>
   days?: WeeklyCalendarDay[]
   onOpenDate?: (dateStr: string) => void
+  onToggleDeadlineComplete?: (deadlineId: string) => void
   onQuickAdd?: (dateStr: string, label: string) => void
 }
 
@@ -43,11 +44,17 @@ function WeeklyCalendarView({
   deadlines = [],
   days = [],
   onOpenDate = () => {},
+  onToggleDeadlineComplete = () => {},
   onQuickAdd = () => {},
 }: WeeklyCalendarViewProps) {
   return (
     <Card className="mb-6 p-6" data-testid="calendar-view-week">
-      <DeadlineStrip title="이번 주 데드라인" items={deadlines} onOpenDate={onOpenDate} />
+      <DeadlineStrip
+        title="이번 주 데드라인"
+        items={deadlines}
+        onOpenDate={onOpenDate}
+        onToggleComplete={onToggleDeadlineComplete}
+      />
 
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>

@@ -88,4 +88,19 @@ test('weekly calendar view summarizes the week and can jump to a selected date',
 
   await expect(page.locator('[data-testid="timeline-day-view"]:visible').first()).toBeVisible()
   await expect(page.locator('[title="주간캘린더-테스트"]:visible').first()).toBeVisible()
+
+  await page.locator('[data-testid="timeline-view-week"]:visible').first().click()
+  await page.locator('[data-testid="deadline-complete-weekly-deadline-001"]:visible').first().click()
+
+  await expect(page.locator('[data-testid="deadline-chip-weekly-deadline-001"]:visible')).toHaveCount(0)
+  await page.waitForFunction(() => {
+    const rawMeta = window.localStorage.getItem('musk-planner-meta')
+    if (!rawMeta) {
+      return false
+    }
+
+    const parsedMeta = JSON.parse(rawMeta)
+    const deadline = parsedMeta?.deadlines?.find((item) => item.id === 'weekly-deadline-001')
+    return typeof deadline?.completedAt === 'string' && deadline.completedAt.length > 0
+  })
 })

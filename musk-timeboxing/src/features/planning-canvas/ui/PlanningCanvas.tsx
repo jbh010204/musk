@@ -17,7 +17,8 @@ import {
   buildBoardLayoutEntries,
   createStackCanvasCardSelectionPatch,
   getCategoryColor,
-  getActiveDeadlineForTask,
+  getDeadlineUrgency,
+  getLinkedDeadlineForTask,
   resolveStackCanvasSelectedCardIds,
   sanitizeStackCanvasCardSelection,
   getTaskCardStackCanvasStatus,
@@ -63,6 +64,7 @@ interface PlanningCanvasProps {
   onApplyLayout?: (entries: unknown[]) => void
   onOpenCategoryManager?: () => void
   onOpenComposer?: () => void
+  onToggleDeadlineCompletion?: (deadlineId: string) => void
   selectedCardId?: string | null
   selectedCardIds?: string[] | null
   onSelectCard?: ((cardId: string | null) => void) | null
@@ -113,6 +115,7 @@ function PlanningCanvas({
   onApplyLayout = () => {},
   onOpenCategoryManager = () => {},
   onOpenComposer = () => {},
+  onToggleDeadlineCompletion = () => {},
   selectedCardId: controlledSelectedCardId = null,
   selectedCardIds: controlledSelectedCardIds = null,
   onSelectCard = null,
@@ -198,12 +201,19 @@ function PlanningCanvas({
       new Map(
         taskCards
           .map((taskCard) => {
-            const deadline = getActiveDeadlineForTask(deadlines, taskCard.id, currentDate)
+            const deadline = getLinkedDeadlineForTask(deadlines, taskCard.id, currentDate)
             return deadline ? [taskCard.id, deadline] : null
           })
           .filter(Boolean) as [string, DeadlineRecord][],
       ),
     [currentDate, deadlines, taskCards],
+  )
+  const taskDeadlineUrgencyMap = useMemo(
+    () =>
+      new Map(
+        [...taskDeadlineMap.entries()].map(([taskId, deadline]) => [taskId, getDeadlineUrgency(deadline, currentDate)]),
+      ),
+    [currentDate, taskDeadlineMap],
   )
   const scheduledCards = taskCards.filter((item) => item.linkedTimeBoxIds?.length > 0).length
   const completedCards = taskCards.filter(
@@ -720,6 +730,9 @@ function PlanningCanvas({
               scheduleDraggable={scheduleDraggable}
               onScheduleDragStart={onScheduleDragStart}
               onScheduleDragEnd={onScheduleDragEnd}
+              deadlineMap={taskDeadlineMap}
+              deadlineUrgencyMap={taskDeadlineUrgencyMap}
+              onToggleDeadlineCompletion={onToggleDeadlineCompletion}
               compactSurface={embedded}
             />
           ) : null}
@@ -755,6 +768,9 @@ function PlanningCanvas({
               scheduleDraggable={scheduleDraggable}
               onScheduleDragStart={onScheduleDragStart}
               onScheduleDragEnd={onScheduleDragEnd}
+              deadlineMap={taskDeadlineMap}
+              deadlineUrgencyMap={taskDeadlineUrgencyMap}
+              onToggleDeadlineCompletion={onToggleDeadlineCompletion}
               compactSurface={embedded}
             />
           ) : (

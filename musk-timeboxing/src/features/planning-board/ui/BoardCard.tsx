@@ -1,19 +1,29 @@
 import { useRef, type DragEvent } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { TaskCard } from '../../../entities/planner/model/types'
+import type { DeadlineRecord, TaskCard } from '../../../entities/planner/model/types'
+import type { DeadlineUrgency } from '../../../entities/planner/model/deadlines'
 import { IconButton } from '../../../shared/ui'
 import { applyNativeCardDragPreview } from '../../planner-dnd/lib/nativeCardDragPreview'
 import { createBoardCardDragPayload } from '../../planner-dnd/lib/payloads'
 
 const formatDurationLabel = (estimateSlots = 1) => `${estimateSlots * 30}분`
+const DEADLINE_BADGE_CLASS: Record<DeadlineUrgency['kind'], string> = {
+  DONE: 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300',
+  OVERDUE: 'bg-rose-500/12 text-rose-700 dark:text-rose-300',
+  TODAY: 'bg-amber-500/14 text-amber-700 dark:text-amber-300',
+  UPCOMING: 'bg-indigo-500/12 text-indigo-700 dark:text-indigo-300',
+}
 
 interface BoardCardProps {
   item: TaskCard
   color?: string
+  deadline?: DeadlineRecord | null
+  deadlineUrgency?: DeadlineUrgency | null
   onEdit?: (item: TaskCard) => void
   onSelect?: (item: TaskCard) => void
   onToggleSelect?: (item: TaskCard) => void
+  onToggleDeadlineCompletion?: (deadlineId: string) => void
   sortable?: boolean
   isSelected?: boolean
   isMultiSelected?: boolean
@@ -26,9 +36,12 @@ interface BoardCardProps {
 function BoardCard({
   item,
   color = '#94a3b8',
+  deadline = null,
+  deadlineUrgency = null,
   onEdit = () => {},
   onSelect = () => {},
   onToggleSelect = () => {},
+  onToggleDeadlineCompletion = () => {},
   sortable = true,
   isSelected = false,
   isMultiSelected = false,
@@ -120,6 +133,17 @@ function BoardCard({
                   예정 {item.linkedTimeBoxIds.length}
                 </span>
               ) : null}
+              {deadline && deadlineUrgency ? (
+                <span
+                  data-testid={`planning-board-card-deadline-badge-${item.id}`}
+                  title={`${deadline.title} · ${deadline.dueDate}`}
+                  className={`rounded-xl px-2 py-0.5 font-medium ${DEADLINE_BADGE_CLASS[deadlineUrgency.kind]} ${
+                    compact ? 'text-[10px]' : 'text-[11px]'
+                  }`}
+                >
+                  {deadlineUrgency.label}
+                </span>
+              ) : null}
             </div>
             <p
               className={`font-semibold text-slate-900 dark:text-slate-100 ${
@@ -165,6 +189,26 @@ function BoardCard({
           </button>
           {sortable ? (
             <>
+              {deadline ? (
+                <button
+                  type="button"
+                  data-testid={`planning-board-card-deadline-toggle-${item.id}`}
+                  aria-label={deadline.completedAt ? '데드라인 다시 열기' : '데드라인 완료'}
+                  className={`rounded-full font-medium transition-colors ${
+                    compact ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-[11px]'
+                  } ${
+                    deadline.completedAt
+                      ? 'bg-emerald-500/12 text-emerald-700 hover:bg-emerald-500/18 dark:text-emerald-300'
+                      : 'bg-amber-500/12 text-amber-700 hover:bg-amber-500/18 dark:text-amber-300'
+                  }`}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onToggleDeadlineCompletion(deadline.id)
+                  }}
+                >
+                  {deadline.completedAt ? '↺' : '✓'}
+                </button>
+              ) : null}
               <IconButton
                 aria-label="카드 수정"
                 className={`text-slate-400 transition-opacity group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-200 ${

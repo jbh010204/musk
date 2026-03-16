@@ -61,6 +61,7 @@ interface MonthlyCalendarViewProps {
   busiestDay?: BusiestDaySummary | null
   selectedDateStr?: string | null
   onSelectDate?: (dateStr: string) => void
+  onToggleDeadlineComplete?: (deadlineId: string) => void
   onQuickAdd?: (dateStr: string, label: string) => void
 }
 
@@ -107,11 +108,17 @@ function MonthlyCalendarView({
   busiestDay = null,
   selectedDateStr = null,
   onSelectDate = () => {},
+  onToggleDeadlineComplete = () => {},
   onQuickAdd = () => {},
 }: MonthlyCalendarViewProps) {
   return (
     <Card className="mb-6 p-6" data-testid="calendar-view-month">
-      <DeadlineStrip title="이달 데드라인" items={deadlines} onOpenDate={onSelectDate} />
+      <DeadlineStrip
+        title="이달 데드라인"
+        items={deadlines}
+        onOpenDate={onSelectDate}
+        onToggleComplete={onToggleDeadlineComplete}
+      />
 
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>

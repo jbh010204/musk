@@ -1,7 +1,8 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { ReactNode } from 'react'
-import type { TaskCard } from '../../../entities/planner/model/types'
+import type { DeadlineRecord, TaskCard } from '../../../entities/planner/model/types'
+import type { DeadlineUrgency } from '../../../entities/planner/model/deadlines'
 import BoardCard from './BoardCard'
 import CategoryNode from './CategoryNode'
 
@@ -32,6 +33,9 @@ interface CategoryStackLaneProps {
   collapsed?: boolean
   collapsedMessage?: string
   compactSurface?: boolean
+  deadlineMap?: Map<string, DeadlineRecord>
+  deadlineUrgencyMap?: Map<string, DeadlineUrgency>
+  onToggleDeadlineCompletion?: (deadlineId: string) => void
 }
 
 function CategoryStackLane({
@@ -54,6 +58,9 @@ function CategoryStackLane({
   collapsed = false,
   collapsedMessage = '접힌 상태입니다.',
   compactSurface = false,
+  deadlineMap = new Map(),
+  deadlineUrgencyMap = new Map(),
+  onToggleDeadlineCompletion = () => {},
 }: CategoryStackLaneProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `lane:${lane.id}`,
@@ -157,9 +164,12 @@ function CategoryStackLane({
                   key={item.id}
                   item={item}
                   color={lane.color}
+                  deadline={deadlineMap.get(item.id) || null}
+                  deadlineUrgency={deadlineUrgencyMap.get(item.id) || null}
                   onEdit={onEditCard}
                   onSelect={onSelectCard}
                   onToggleSelect={onToggleCardSelect}
+                  onToggleDeadlineCompletion={onToggleDeadlineCompletion}
                   isSelected={selectedCardId === item.id}
                   isMultiSelected={selectedCardIds.includes(item.id)}
                   compact={compactSurface}
