@@ -547,9 +547,9 @@ function PlanningCanvas({
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-          Workspace Stack
+          Stack Canvas
         </p>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
+        <div className="mt-1.5 flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
             전체 {taskCards.length}
           </span>
@@ -578,7 +578,7 @@ function PlanningCanvas({
           className={embedded ? 'px-3 py-1.5 text-xs' : 'px-3 py-2 text-sm'}
           onClick={onOpenCategoryManager}
         >
-          카테고리 관리
+          카테고리
         </Button>
         {!embedded ? (
           <Button variant="secondary" className="px-3 py-2 text-sm" onClick={onOpenComposer}>
@@ -592,9 +592,9 @@ function PlanningCanvas({
   const canvasContent: ReactNode = (
     <div
       data-testid="planning-canvas-surface"
-      className={`rounded-[28px] bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.16)_1px,transparent_0)] bg-[length:24px_24px] ${embedded ? 'p-4' : 'p-5'} dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.24)_1px,transparent_0)]`}
+      className={`rounded-[28px] bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.14)_1px,transparent_0)] bg-[length:24px_24px] ${embedded ? 'p-3' : 'p-5'} dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.2)_1px,transparent_0)]`}
     >
-      <div className="space-y-5">
+      <div className="space-y-4">
         <CanvasSelectionBar
           selectedCount={selectedCardIds.length}
           onMovePrev={() => moveSelectionAcrossDock(-1)}
@@ -607,16 +607,14 @@ function PlanningCanvas({
         <div
           className={`${
             embedded
-              ? 'rounded-[1.65rem] border border-slate-200/75 bg-white/78 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:border-slate-800/75 dark:bg-slate-950/38'
+              ? 'rounded-[1.5rem] border border-slate-200/70 bg-white/72 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:border-slate-800/70 dark:bg-slate-950/28'
               : 'rounded-[1.85rem] border border-slate-200/70 bg-white/74 p-4 shadow-[0_12px_32px_rgba(15,23,42,0.05)] backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/35'
           }`}
         >
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                Categories
-              </p>
-            </div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+              Category Dock
+            </p>
             <button
               type="button"
               className="rounded-full border border-slate-200/80 bg-white/88 px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300/90 hover:text-slate-900 dark:border-slate-700/80 dark:bg-slate-900/82 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:text-slate-100"
@@ -627,7 +625,7 @@ function PlanningCanvas({
           </div>
 
           <div className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max items-stretch gap-2 rounded-[1.35rem] border border-slate-200/70 bg-slate-100/72 p-1.5 dark:border-slate-800/70 dark:bg-slate-900/55">
+            <div className="flex min-w-max items-stretch gap-2 rounded-[1.35rem] bg-slate-100/72 p-1.5 dark:bg-slate-900/55">
               {dockLanes.map((lane) => (
                 <CategoryNodeCompat
                   key={lane.id}
@@ -650,7 +648,7 @@ function PlanningCanvas({
           </div>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(17rem,18.5rem)_minmax(0,1fr)]">
+        <div className="grid gap-3 xl:grid-cols-[minmax(16rem,17.5rem)_minmax(0,1fr)]">
           {uncategorizedLane ? (
             <CategoryStackLaneCompat
               lane={inboxLane}
@@ -686,8 +684,8 @@ function PlanningCanvas({
               leadingContent={
                 <CanvasInlineCreateSlot
                   testId="planning-canvas-inbox-create"
-                  title="Inbox에 추가"
-                  placeholder="미분류 일정 내용을 적고 Enter"
+                  title="새 미분류 일정"
+                  placeholder="내용 입력 후 Enter"
                   color={inboxLane?.color}
                   onCreate={({ title, estimateSlots }) =>
                     handleInlineCreate({
@@ -721,8 +719,8 @@ function PlanningCanvas({
               leadingContent={
                 <CanvasInlineCreateSlot
                   testId="planning-canvas-open-create"
-                  title={`${activeLane.label}에 추가`}
-                  placeholder="이 스택에 바로 일정 추가"
+                  title={`${activeLane.label} 새 일정`}
+                  placeholder="여기서 바로 만들기"
                   color={activeLane.color}
                   onCreate={({ title, estimateSlots }) =>
                     handleInlineCreate({
@@ -748,7 +746,7 @@ function PlanningCanvas({
                 embedded ? 'bg-slate-50/85 dark:bg-slate-900/40' : 'bg-white/45 shadow-sm backdrop-blur-sm'
               }`}
             >
-              아직 카테고리가 없습니다. 먼저 카테고리를 만든 뒤, 위 도크에서 선택하면 해당 스택이 여기 열립니다.
+              카테고리를 하나 만들면 이 영역이 바로 작업 스택으로 바뀝니다.
             </div>
           )}
         </div>
@@ -759,7 +757,7 @@ function PlanningCanvas({
   return (
     <section data-testid="planning-canvas-view" className={embedded ? 'space-y-4' : 'space-y-6'}>
       {embedded ? (
-        <div className="rounded-2xl bg-slate-50/75 px-4 py-3 dark:bg-slate-900/40">{headerContent}</div>
+        <div className="border-b border-slate-200/70 px-1 pb-3 dark:border-slate-800/70">{headerContent}</div>
       ) : (
         <Card className="p-6">
           {headerContent}

@@ -10,6 +10,24 @@ export interface PatchNoteEntry {
 
 export const PATCH_NOTES: PatchNoteEntry[] = [
   {
+    version: 'v0.22.10',
+    date: '2026-03-16',
+    title: 'Workspace shell: main views stay clean, timeline scale comes inside',
+    summary:
+      '일간/주간/월간과 워크스페이스의 주 경로에서는 외부 브레인 덤프 rail을 걷어내고, 워크스페이스 우측 타임라인은 같은 시간 밀도 로직을 직접 공유하도록 다시 묶었습니다. 화면은 덜 쪼개지고, 배치는 더 즉시 보이게 정리했습니다.',
+    focus: [
+      '사용자 메인 경로에서는 외부 planning rail을 숨기고, 레거시 `CANVAS` 회귀 경로에서만 rail을 유지해 주 경로와 회귀 경로를 분리',
+      '워크스페이스 우측 rail이 일간과 같은 slot height / 30분·15분 밀도 전환을 공유하도록 바꿔 타임라인 규칙을 한 단계 더 직접 가져옴',
+      'Stack Canvas header, Focus Strip, Timeline Rail header의 설명 문구를 더 줄이고 같은 shell 안의 좌우 패널처럼 읽히도록 톤을 낮춤',
+    ],
+    improvements: [
+      '`PlannerShellLayout.tsx`, `usePlannerShellState.ts`, `App.tsx`를 수정해 주 경로에서는 rail 없는 main surface를 유지하고, hidden CANVAS fallback만 별도로 살림',
+      '`PlannerWorkspace.jsx`, `PlanningCanvas.jsx`, `CanvasSelectionBar.jsx`, `CategoryStackLane.jsx`, `WorkspaceBigThreeRail.jsx`를 조정해 shell chrome을 낮추고 우측 타임라인 스케일 전환을 내부로 편입',
+      '`planner-workspace.spec.js`를 포함한 전체 E2E를 현재 계약 기준으로 다시 통과시켜 회귀를 고정',
+    ],
+    validation: ['lint/build 통과', 'E2E 전체 회귀 통과 (64 passed)'],
+  },
+  {
     version: 'v0.22.9',
     date: '2026-03-12',
     title: 'Workspace shell: one surface, quieter chrome, denser rail',

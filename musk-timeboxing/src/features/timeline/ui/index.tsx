@@ -843,6 +843,9 @@ function Timeline({
           onTimerPause={onTimerPause}
           onTimerComplete={onTimerComplete}
           onJumpToDay={() => setViewMode('DAY')}
+          slotHeight={slotHeight}
+          timelineScale={timelineScale}
+          onTimelineScaleChange={onTimelineScaleChange}
           runSession={runSession}
           activeRunTimeBoxId={activeRunTimeBoxId}
         />

@@ -101,6 +101,7 @@ npm run build
 - `워크스페이스`: 메인 작업 화면
   - 상단 `Big3 Focus Strip`, 중앙 `Stack Canvas`, 우측 `Timeline Rail`을 하나의 workspace shell 안에 묶어 `캔버스 정리 -> Big3 확정 -> 일정 배치`를 같은 흐름으로 처리합니다.
   - 우측 rail은 별도 축약 편성기가 아니라 실제 일간 타임라인 surface를 공유하므로, 슬롯 클릭 배치/수동 인라인 생성/드래그 드롭/리사이즈/완료 처리까지 workspace 안에서 바로 이어집니다.
+  - 워크스페이스 우측 rail은 일간과 같은 slot height 로직을 공유하고, `30분/15분` 밀도 전환도 내부에서 바로 바꿀 수 있습니다.
   - Focus Strip, Canvas, Timeline을 각각 별도 카드처럼 설명하지 않고, 작은 상태 chip과 직접 액션만 남긴 compact header로 시각적 분리를 줄였습니다.
   - 세로로 긴 카테고리 목록 대신 상단 `Category Dock`에서 바로 분류하고, 카드가 선택되면 모든 도크가 은은하게 arm되며 목적지 도크는 카테고리 색 기반 gradient glow로 더 분명히 드러납니다.
   - 본문은 `Inbox + Active Category Stack`만 보여주고, 카드 생성도 별도 CTA보다 각 스택 상단 `ghost slot`에서 바로 인라인으로 시작합니다.
@@ -137,8 +138,8 @@ npm run build
 - 각 항목의 배터리를 눌러 중요도를 `미지정 -> 낮음 -> 보통 -> 높음 -> 최우선` 순으로 올릴 수 있습니다.
 - 현재 화면에서는 priority 변경 시 위치를 유지하고, 재진입 시 우선순위 순으로 정렬됩니다.
 - `빅3 추천채우기`는 중요도 상위 항목부터 빈 슬롯을 채웁니다.
-- Stack Canvas는 이 리스트를 대체하는 시각 작업면이며, 현재는 리스트 fallback과 함께 병행됩니다.
-- app-level 브레인 덤프 rail은 standalone `캔버스`, `편성기`에서만 보이고, `워크스페이스/일간/주간/월간`에서는 숨깁니다.
+- Stack Canvas는 이 리스트를 대체하는 시각 작업면이며, 현재는 레거시 `CANVAS` 회귀 경로와 함께 병행됩니다.
+- app-level 브레인 덤프 rail은 사용자 메인 경로(`워크스페이스/일간/주간/월간`)에서는 숨기고, 회귀 검증용 standalone `CANVAS` 경로에서만 유지합니다.
 
 ## 정적 배포
 

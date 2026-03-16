@@ -51,6 +51,9 @@ interface PlannerWorkspaceProps {
   onTimerPause: (id: string) => void
   onTimerComplete: (id: string) => void
   onJumpToDay: () => void
+  slotHeight?: number
+  timelineScale?: '15' | '30'
+  onTimelineScaleChange?: (scale: '15' | '30') => void
   runSession?: PlannerRunSession
   activeRunTimeBoxId?: string | null
 }
@@ -82,6 +85,9 @@ function PlannerWorkspace({
   onTimerPause,
   onTimerComplete,
   onJumpToDay,
+  slotHeight = WORKSPACE_LAYOUT.composerSlotHeightPx,
+  timelineScale = '30',
+  onTimelineScaleChange = () => {},
   runSession = { mode: 'IDLE', activeTimeBoxId: null },
   activeRunTimeBoxId = null,
 }: PlannerWorkspaceProps) {
@@ -142,7 +148,7 @@ function PlannerWorkspace({
 
   return (
     <section data-testid="planner-workspace-view" className="space-y-4">
-      <Card className="overflow-hidden p-0" data-testid="workspace-shell">
+      <Card className="overflow-hidden p-0 shadow-sm" data-testid="workspace-shell">
         <WorkspaceBigThreeRail
           bigThree={bigThree}
           taskCards={taskCards}
@@ -164,7 +170,7 @@ function PlannerWorkspace({
           className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(0,var(--workspace-timeline-rail))]"
           style={{ '--workspace-timeline-rail': WORKSPACE_LAYOUT.timelineRailWidth } as CSSProperties}
         >
-          <div className="min-w-0 p-5">
+          <div className="min-w-0 p-4 xl:p-5">
             <PlanningCanvasCompat
               key={`${currentDate}-workspace`}
               currentDate={currentDate}
@@ -192,13 +198,13 @@ function PlannerWorkspace({
           </div>
 
           <aside
-            className="min-w-0 border-t border-slate-200/80 bg-slate-50/55 p-4 dark:border-slate-800/80 dark:bg-slate-950/45 xl:border-l xl:border-t-0"
+            className="min-w-0 border-t border-slate-200/70 bg-transparent p-4 dark:border-slate-800/70 xl:border-l xl:border-t-0 xl:p-5"
             data-testid="workspace-timeline-rail"
           >
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-2">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2.5">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                  TIMELINE
+                  오늘 타임라인
                 </p>
                 {selectedBigThreeItem ? (
                   <span className="rounded-full bg-indigo-500/10 px-2.5 py-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300">
@@ -210,24 +216,50 @@ function PlannerWorkspace({
                   </span>
                 ) : (
                   <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
-                    카드 드래그 또는 빈 슬롯에서 바로 생성
+                    슬롯 클릭으로 바로 추가
                   </span>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={onJumpToDay}
-                className="rounded-xl px-3 py-1.5 text-xs text-slate-500 transition-colors hover:bg-white hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-              >
-                일간 전체 보기
-              </button>
+              <div className="flex items-center gap-2">
+                <div className="rounded-full bg-slate-100/90 p-1 dark:bg-slate-800/80">
+                  <button
+                    type="button"
+                    onClick={() => onTimelineScaleChange('30')}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                      timelineScale === '30'
+                        ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-slate-100'
+                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100'
+                    }`}
+                  >
+                    30분
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onTimelineScaleChange('15')}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                      timelineScale === '15'
+                        ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-slate-100'
+                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100'
+                    }`}
+                  >
+                    15분
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={onJumpToDay}
+                  className="rounded-xl px-3 py-1.5 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                >
+                  일간 보기
+                </button>
+              </div>
             </div>
 
             <TimelineRailSurface
               containerTestId="workspace-timeline-surface"
               timeBoxes={data.timeBoxes}
               categories={categories}
-              slotHeight={WORKSPACE_LAYOUT.composerSlotHeightPx}
+              slotHeight={slotHeight}
               labelWidth={WORKSPACE_LAYOUT.composerLabelWidthPx}
               slotTestIdPrefix="workspace-slot"
               blockTestIdPrefix="workspace-timeline-block"
@@ -251,7 +283,7 @@ function PlannerWorkspace({
               nativeDraggingCardId={nativeDraggingCardId}
               onNativeDragEnd={() => setNativeDraggingCardId(null)}
               emptyState={
-                <div className="rounded-2xl bg-white/85 px-4 py-3 text-sm text-slate-500 shadow-sm dark:bg-slate-900/60 dark:text-slate-400">
+                <div className="rounded-2xl bg-slate-100/85 px-4 py-3 text-sm text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
                   {selectedBigThreeItem
                     ? '원하는 시간 슬롯을 눌러 배치'
                     : selectedCardIds.length > 0

@@ -41,7 +41,7 @@ function CategoryStackLane({
   showNode = true,
   compactNode = false,
   isNodeActive = false,
-  emptyMessage = '카드를 이 노드로 드롭하면 여기 쌓입니다.',
+  emptyMessage = '아직 카드가 없습니다.',
   onEditCard = () => {},
   onSelectCard = () => {},
   onToggleCardSelect = () => {},
@@ -66,9 +66,9 @@ function CategoryStackLane({
   return (
     <section
       data-testid={`planning-board-lane-${lane.id}`}
-      className={`rounded-3xl ${compactSurface ? 'p-3.5' : 'p-4'} ${
+      className={`rounded-3xl ${compactSurface ? 'p-2.5' : 'p-4'} ${
         compactSurface
-          ? 'bg-slate-50/90 dark:bg-slate-900/40'
+          ? 'bg-white/40 dark:bg-slate-950/20'
           : 'bg-white/45 shadow-sm backdrop-blur-sm dark:bg-slate-950/35'
       }`}
     >
@@ -89,12 +89,12 @@ function CategoryStackLane({
       <div
         ref={setNodeRef}
         className={`${showNode ? 'mt-5' : ''} ${compactSurface ? 'min-h-[180px]' : 'min-h-[220px]'} rounded-2xl border border-dashed ${
-          compactSurface ? 'p-2.5' : 'p-3'
+          compactSurface ? 'p-2' : 'p-3'
         } transition-all ${
           isOver
-            ? 'border-indigo-400 bg-indigo-500/5'
+            ? 'border-indigo-400 bg-indigo-500/6 shadow-[0_0_0_1px_rgba(99,102,241,0.12)]'
             : compactSurface
-              ? 'border-slate-200/80 bg-white/80 dark:border-slate-800/80 dark:bg-slate-950/55'
+              ? 'border-slate-200/70 bg-white/70 dark:border-slate-800/70 dark:bg-slate-950/42'
               : 'border-slate-300/70 bg-slate-50/70 dark:border-slate-700/70 dark:bg-slate-900/45'
         }`}
       >
@@ -125,12 +125,12 @@ function CategoryStackLane({
                   : 'bg-slate-200/80 text-slate-600 dark:bg-slate-800/70 dark:text-slate-300'
               }`}
             >
-              {lane.items.length}개
-            </span>
-          </div>
+                {lane.items.length}개
+              </span>
+            </div>
 
-          {headerActions ? <div className="min-w-0">{headerActions}</div> : null}
-        </div>
+            {headerActions ? <div className="min-w-0">{headerActions}</div> : null}
+          </div>
 
         <SortableContext items={lane.items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
           <div className={compactSurface ? 'space-y-2.5' : 'space-y-3'}>

@@ -123,9 +123,9 @@ export function PlannerShellLayout({
         <div className="relative z-10 flex h-full flex-col overflow-hidden">
           {header}
 
-          <div className="hidden min-h-0 flex-1 gap-6 overflow-hidden px-6 pb-6 md:flex">
+          <div className="hidden min-h-0 flex-1 overflow-hidden px-6 pb-6 md:flex">
             {showDesktopPlanningRail ? (
-              <aside className="ui-panel-subtle w-80 flex-shrink-0 overflow-y-auto">
+              <aside className="ui-panel-subtle mr-6 w-80 flex-shrink-0 overflow-y-auto">
                 {dumpSection}
                 {bigThreeSection}
               </aside>

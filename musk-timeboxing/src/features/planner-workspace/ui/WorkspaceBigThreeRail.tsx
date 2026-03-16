@@ -52,7 +52,7 @@ function WorkspaceBigThreeRail({
   return (
     <section
       data-testid="workspace-bigthree-rail"
-      className="border-b border-slate-200/80 bg-white/80 px-5 py-3 backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/70"
+      className="border-b border-slate-200/80 bg-white/72 px-4 py-2.5 backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/60"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -62,9 +62,6 @@ function WorkspaceBigThreeRail({
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
             {bigThree.length}/3
           </span>
-          <p className="hidden text-[11px] text-slate-500 dark:text-slate-400 md:block">
-            오늘 핵심 3가지를 먼저 고정합니다
-          </p>
         </div>
 
         <Button
