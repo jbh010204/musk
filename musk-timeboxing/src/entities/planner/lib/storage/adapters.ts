@@ -2,10 +2,12 @@ import { createEmptyDay, createEmptyMeta, PLANNER_SCHEMA_VERSION } from './schem
 import { migratePersistedDayData, migratePersistedMeta } from './migrations'
 import { normalizeBoardCard } from '../boardCard'
 import { normalizeBigThreeRecord } from '../../model/bigThree'
+import { normalizeDeadlineRecord } from '../../model/deadlines'
 import { normalizeTaskCard } from '../../model/taskCards'
 import { normalizeTimeBoxRecord } from '../../model/timeBoxes'
 import type {
   BigThreeItem,
+  DeadlineRecord,
   PlannerDay,
   PlannerMetaModel,
   StackCanvasStateRecord,
@@ -224,6 +226,11 @@ export const toPlannerMetaModel = (persistedMeta: unknown): PlannerMetaModel => 
       ? (safeMeta.categories as PlannerMetaModel['categories'])
       : [],
     templates: Array.isArray(safeMeta.templates) ? safeMeta.templates : [],
+    deadlines: Array.isArray(safeMeta.deadlines)
+      ? safeMeta.deadlines
+          .map((deadline) => normalizeDeadlineRecord(deadline))
+          .filter((deadline): deadline is DeadlineRecord => Boolean(deadline))
+      : [],
   }
 }
 
@@ -231,6 +238,9 @@ export const fromPlannerMetaModel = (metaModel: Partial<PlannerMetaModel> | null
   schemaVersion: metaModel?.schemaVersion ?? PLANNER_SCHEMA_VERSION,
   categories: Array.isArray(metaModel?.categories) ? metaModel.categories : [],
   templates: Array.isArray(metaModel?.templates) ? metaModel.templates : [],
+  deadlines: Array.isArray(metaModel?.deadlines)
+    ? metaModel.deadlines.map((deadline) => normalizeDeadlineRecord(deadline)).filter(Boolean)
+    : [],
 })
 
 export const normalizePlannerMetaInput = (input: unknown): PlannerMetaModel =>

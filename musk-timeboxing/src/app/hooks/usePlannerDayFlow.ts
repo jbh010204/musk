@@ -80,6 +80,7 @@ interface UsePlannerDayFlowOptions {
   addTimeBox: (timeBox: TimeBox) => string | null
   reloadCurrentDay: () => void
   reloadCategories: () => void
+  reloadDeadlines: () => void
   reloadTemplates: () => void
 }
 
@@ -115,6 +116,7 @@ export const usePlannerDayFlow = ({
   addTimeBox,
   reloadCurrentDay,
   reloadCategories,
+  reloadDeadlines,
   reloadTemplates,
 }: UsePlannerDayFlowOptions) => {
   const [isTimelineInsightsLoading, setIsTimelineInsightsLoading] = useState(true)
@@ -237,6 +239,7 @@ export const usePlannerDayFlow = ({
 
   const handleImported = () => {
     reloadCategories()
+    reloadDeadlines()
     reloadTemplates()
     reloadCurrentDay()
     bumpCrossDateRevision()

@@ -13,6 +13,7 @@ import QuickAddModal from './features/timeline/ui/QuickAddModal'
 import {
   useCategoryMeta,
   useDailyData,
+  useDeadlineMeta,
   usePlannerDayFlow,
   usePlannerMetaActions,
   usePlannerShellState,
@@ -90,6 +91,7 @@ function App() {
   } = useCategoryMeta()
   const { templates, addTemplate, updateTemplate, removeTemplate, clearTemplateCategory, reloadTemplates } =
     useTemplateMeta()
+  const { deadlines, upsertDeadline, removeDeadlineForLinkedTask, reloadDeadlines } = useDeadlineMeta()
   const categories = useMemo(
     () =>
       buildManagedCategoryViewModels(rawCategories, {
@@ -200,6 +202,7 @@ function App() {
     addTimeBox,
     reloadCurrentDay,
     reloadCategories,
+    reloadDeadlines,
     reloadTemplates,
   })
   const {
@@ -274,12 +277,103 @@ function App() {
   const weekCalendar = buildWeekCalendarSnapshot({
     currentDate,
     currentDayData: data,
+    deadlines,
   })
   const monthCalendar = buildMonthCalendarSnapshot({
     currentDate,
     currentDayData: data,
     categories,
+    deadlines,
   })
+  const syncTaskDeadlineFromEditor = useCallback(
+    (
+      taskId: string | null,
+      payload: {
+        title?: unknown
+        deadlineDate?: unknown
+        deadlinePriority?: unknown
+        deadlineNote?: unknown
+      },
+    ) => {
+      if (!taskId) {
+        return
+      }
+
+      const dueDate = typeof payload.deadlineDate === 'string' ? payload.deadlineDate.trim() : ''
+      if (!dueDate) {
+        removeDeadlineForLinkedTask(taskId, currentDate)
+        return
+      }
+
+      const title = typeof payload.title === 'string' ? payload.title.trim() : ''
+      if (!title) {
+        return
+      }
+
+      upsertDeadline({
+        taskId,
+        taskDate: currentDate,
+        title,
+        dueDate,
+        priority:
+          payload.deadlinePriority === 'LOW' || payload.deadlinePriority === 'HIGH'
+            ? payload.deadlinePriority
+            : 'MEDIUM',
+        note: typeof payload.deadlineNote === 'string' ? payload.deadlineNote : '',
+      })
+    },
+    [currentDate, removeDeadlineForLinkedTask, upsertDeadline],
+  )
+  const handleCreateBoardCardWithDeadline = useCallback(
+    (payload: {
+      title?: unknown
+      categoryId?: string | null
+      estimateSlots?: number
+      note?: string
+      deadlineDate?: unknown
+      deadlinePriority?: unknown
+      deadlineNote?: unknown
+    }) => {
+      const nextTaskId = addBoardCard({
+        title: typeof payload.title === 'string' ? payload.title : '',
+        categoryId: payload.categoryId ?? null,
+        estimateSlots: typeof payload.estimateSlots === 'number' ? payload.estimateSlots : 1,
+        note: payload.note,
+      })
+
+      if (!nextTaskId) {
+        return false
+      }
+
+      syncTaskDeadlineFromEditor(nextTaskId, payload)
+      return true
+    },
+    [addBoardCard, syncTaskDeadlineFromEditor],
+  )
+  const handleUpdateTaskCardWithDeadline = useCallback(
+    (
+      id: string,
+      payload: {
+        title?: unknown
+        categoryId?: string | null
+        estimateSlots?: number
+        note?: string
+        deadlineDate?: unknown
+        deadlinePriority?: unknown
+        deadlineNote?: unknown
+      },
+    ) => {
+      updateTaskCard(id, {
+        title: typeof payload.title === 'string' ? payload.title : undefined,
+        categoryId: Object.prototype.hasOwnProperty.call(payload, 'categoryId') ? payload.categoryId ?? null : undefined,
+        estimateSlots: typeof payload.estimateSlots === 'number' ? payload.estimateSlots : undefined,
+        note: typeof payload.note === 'string' ? payload.note : undefined,
+      })
+
+      syncTaskDeadlineFromEditor(id, payload)
+    },
+    [syncTaskDeadlineFromEditor, updateTaskCard],
+  )
   const bigThreeProgress = useMemo(
     () => deriveBigThreeProgress(data.bigThree, data.timeBoxes),
     [data.bigThree, data.timeBoxes],
@@ -397,6 +491,7 @@ function App() {
       currentDate={currentDate}
       categories={categories}
       taskCards={data.taskCards}
+      deadlines={deadlines}
       bigThree={data.bigThree}
       templates={templates}
       weeklyReport={weeklyReport}
@@ -419,11 +514,11 @@ function App() {
       focusMode={isTimelineFocusMode}
       onToggleFocusMode={toggleTimelineFocusMode}
       addTimeBox={addTimeBox}
-      addBoardCard={addBoardCard}
+      addBoardCard={handleCreateBoardCardWithDeadline}
       addBigThreeItem={addBigThreeItem}
       removeBigThreeItem={removeBigThreeItem}
       onSendCardsToBigThree={handleSendCardsToBigThree}
-      updateTaskCard={updateTaskCard}
+      updateTaskCard={handleUpdateTaskCardWithDeadline}
       applyTaskCardBoardLayout={applyTaskCardBoardLayout}
       updateStackCanvasState={updateStackCanvasState}
       updateTimeBox={handleUpdateTimeBox}

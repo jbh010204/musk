@@ -12,6 +12,8 @@ import {
 import type {
   BigThreeItem,
   CategoryViewModel,
+  DeadlineRecord,
+  DeadlinePriority,
   PlannerRunSession,
   PlannerDay,
   PlannerTemplate,
@@ -117,6 +119,16 @@ interface WeekCalendarDay {
 
 interface WeekCalendarSnapshot {
   rangeLabel: string
+  deadlines: Array<{
+    id: string
+    title: string
+    dueDate: string
+    priority: DeadlinePriority
+    urgency: {
+      kind: 'DONE' | 'OVERDUE' | 'TODAY' | 'UPCOMING'
+      label: string
+    }
+  }>
   days: WeekCalendarDay[]
 }
 
@@ -165,6 +177,16 @@ interface MonthCalendarCell {
 
 interface MonthCalendarSnapshot {
   monthLabel: string
+  deadlines: Array<{
+    id: string
+    title: string
+    dueDate: string
+    priority: DeadlinePriority
+    urgency: {
+      kind: 'DONE' | 'OVERDUE' | 'TODAY' | 'UPCOMING'
+      label: string
+    }
+  }>
   cells: MonthCalendarCell[]
   legend: MonthLegendItem[]
   scheduledDays: number
@@ -196,6 +218,7 @@ interface TimelineProps {
   currentDate: string
   categories: CategoryViewModel[]
   taskCards?: TaskCard[]
+  deadlines?: DeadlineRecord[]
   bigThree?: BigThreeItem[]
   templates?: TemplateSummary[]
   weeklyReport: WeeklyReport
@@ -228,6 +251,9 @@ interface TimelineProps {
     categoryId?: string | null
     estimateSlots?: number
     note?: string
+    deadlineDate?: string
+    deadlinePriority?: DeadlinePriority
+    deadlineNote?: string
   }) => boolean
   addBigThreeItem?: (content: string) => boolean
   removeBigThreeItem?: (id: string) => void
@@ -236,7 +262,11 @@ interface TimelineProps {
     id: string,
     changes: Partial<
       Pick<TaskCard, 'title' | 'isDone' | 'priority' | 'categoryId' | 'estimateSlots' | 'note' | 'origin'>
-    >,
+    > & {
+      deadlineDate?: string
+      deadlinePriority?: DeadlinePriority
+      deadlineNote?: string
+    },
   ) => void
   applyTaskCardBoardLayout?: (
     layoutEntries?: Array<{ id?: string; categoryId?: string | null; stackOrder?: number }>,
@@ -334,13 +364,15 @@ function Timeline({
   currentDate,
   categories,
   taskCards = [],
+  deadlines = [],
   bigThree = [],
   templates = [],
   weeklyReport,
   weeklyPlanningPreview = [],
-  weekCalendar = { rangeLabel: '', days: [] },
+  weekCalendar = { rangeLabel: '', deadlines: [], days: [] },
   monthCalendar = {
     monthLabel: '',
+    deadlines: [],
     cells: [],
     legend: [],
     scheduledDays: 0,
@@ -821,6 +853,7 @@ function Timeline({
           data={data}
           categories={categories}
           taskCards={taskCards}
+          deadlines={deadlines}
           bigThree={bigThree}
           addBoardCard={addBoardCard}
           addBigThreeItem={addBigThreeItem}
@@ -1001,6 +1034,7 @@ function Timeline({
       {!isDayView && viewMode === 'WEEK' ? (
         <WeeklyCalendarView
           rangeLabel={weekCalendar.rangeLabel}
+          deadlines={weekCalendar.deadlines}
           days={weekCalendar.days}
           onOpenDate={handleOpenCalendarDate}
           onQuickAdd={(dateStr, dateLabel) => onOpenQuickAdd(dateStr, { dateLabel })}
@@ -1011,6 +1045,7 @@ function Timeline({
         <div className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
           <MonthlyCalendarView
             monthLabel={monthCalendar.monthLabel}
+            deadlines={monthCalendar.deadlines}
             cells={monthCalendar.cells}
             legend={monthCalendar.legend}
             scheduledDays={monthCalendar.scheduledDays}
@@ -1032,9 +1067,11 @@ function Timeline({
       {isCanvasView ? (
         <PlanningCanvas
           key={currentDate}
+          currentDate={currentDate}
           stackCanvasState={data.stackCanvasState}
           taskCards={taskCards}
           categories={categories}
+          deadlines={deadlines}
           timeBoxes={data.timeBoxes}
           onUpdateStackCanvasState={updateStackCanvasState}
           onCreateCard={addBoardCard}

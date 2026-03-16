@@ -1,13 +1,14 @@
 import { createEmptyStackCanvasState } from '../stackCanvasState'
 import type {
   CategoryRecord,
+  DeadlinePriority,
   StackCanvasStateRecord,
   TaskCardOrigin,
   TaskCardPriority,
   TimeBoxStatus,
 } from '../../model/types'
 
-export const PLANNER_SCHEMA_VERSION = 4
+export const PLANNER_SCHEMA_VERSION = 5
 export const PLANNER_META_KEY = 'musk-planner-meta'
 export const PLANNER_DAY_KEY_PREFIX = 'musk-planner-'
 export const PLANNER_DAY_KEY_PATTERN = /^musk-planner-\d{4}-\d{2}-\d{2}$/
@@ -61,6 +62,17 @@ export interface PersistedPlannerTemplate {
   categoryId: string | null
 }
 
+export interface PersistedPlannerDeadline {
+  id: string
+  title: string
+  dueDate: string
+  taskId: string | null
+  taskDate: string | null
+  priority: DeadlinePriority
+  note: string
+  completedAt: string | null
+}
+
 export interface PersistedPlannerDay {
   schemaVersion: number
   date: string
@@ -74,6 +86,7 @@ export interface PersistedPlannerMeta {
   schemaVersion: number
   categories: CategoryRecord[]
   templates: PersistedPlannerTemplate[]
+  deadlines: PersistedPlannerDeadline[]
 }
 
 export const createEmptyDay = (dateStr: string): PersistedPlannerDay => ({
@@ -89,6 +102,7 @@ export const createEmptyMeta = (): PersistedPlannerMeta => ({
   schemaVersion: PLANNER_SCHEMA_VERSION,
   categories: [],
   templates: [],
+  deadlines: [],
 })
 
 export const getDayKey = (dateStr: string): string => `${PLANNER_DAY_KEY_PREFIX}${dateStr}`

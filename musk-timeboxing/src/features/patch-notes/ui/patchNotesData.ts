@@ -10,6 +10,24 @@ export interface PatchNoteEntry {
 
 export const PATCH_NOTES: PatchNoteEntry[] = [
   {
+    version: 'v0.22.11',
+    date: '2026-03-16',
+    title: 'Deadline layer: weekly and monthly planning gets an upper urgency strip',
+    summary:
+      'timeBox와 별도로 마감 압박을 표현하는 deadline 레이어를 추가했습니다. 카드 편집에서 마감일을 지정하면 주간/월간 상단 strip에 D-n, 오늘, 지남 상태로 먼저 보이고, 일간 타임라인은 계속 실행 블록만 담당합니다.',
+    focus: [
+      'planner meta에 deadline 저장 계층을 추가하고, overdue/urgency는 저장하지 않고 현재 날짜 기준 파생 상태로만 계산',
+      '카드 편집 모달에서 task 1개당 활성 deadline 1개를 만들거나 수정하는 흐름을 붙여 task와 deadline 연결 규칙을 단순화',
+      '주간/월간 view 상단에 deadline strip을 추가해 일정 밀도와 별개로 마감 위험도를 먼저 스캔할 수 있게 정리',
+    ],
+    improvements: [
+      '`types.ts`, `deadlines.ts`, storage schema/migration/adapter, `useDeadlineMeta.ts`를 추가·확장해 deadline model과 persistence 경계를 도입',
+      '`BoardCardEditorModal.tsx`, `PlanningCanvas.tsx`, `PlannerWorkspace.tsx`, `App.tsx`를 수정해 카드 편집에서 deadline 생성/수정/삭제를 연결',
+      '`WeeklyCalendarView.tsx`, `MonthlyCalendarView.tsx`, `DeadlineStrip.tsx`, 관련 Playwright 회귀를 추가해 주간/월간 상단 strip 계약을 고정',
+    ],
+    validation: ['lint/build 통과', 'E2E 전체 회귀 통과 (65 passed)'],
+  },
+  {
     version: 'v0.22.10',
     date: '2026-03-16',
     title: 'Workspace shell: main views stay clean, timeline scale comes inside',

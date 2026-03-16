@@ -17,13 +17,14 @@ import {
   buildBoardLayoutEntries,
   createStackCanvasCardSelectionPatch,
   getCategoryColor,
+  getActiveDeadlineForTask,
   resolveStackCanvasSelectedCardIds,
   sanitizeStackCanvasCardSelection,
   getTaskCardStackCanvasStatus,
   groupBoardCardsByCategory,
   UNCATEGORIZED_BOARD_LANE,
 } from '../../../entities/planner'
-import type { CategoryViewModel, TaskCard, TimeBox } from '../../../entities/planner/model/types'
+import type { CategoryViewModel, DeadlineRecord, TaskCard, TimeBox } from '../../../entities/planner/model/types'
 import { Button, Card } from '../../../shared/ui'
 import { INBOX_FILTER_OPTIONS, filterInboxItems, type InboxFilterValue } from '../lib/inboxFilters'
 import { COMPACT_CARD_DRAG_OVERLAY_MODIFIER } from '../../planner-dnd/lib/dragOverlay'
@@ -50,9 +51,11 @@ interface LaneViewModel {
 }
 
 interface PlanningCanvasProps {
+  currentDate?: string
   stackCanvasState?: Record<string, unknown>
   taskCards?: TaskCard[]
   categories?: CategoryViewModel[]
+  deadlines?: DeadlineRecord[]
   timeBoxes?: TimeBox[]
   onUpdateStackCanvasState?: (patch: Record<string, unknown>) => void
   onCreateCard?: (payload: Record<string, unknown>) => boolean
@@ -98,9 +101,11 @@ const areIdsEqual = (left: string[] = [], right: string[] = []) =>
   left.length === right.length && left.every((itemId, index) => itemId === right[index])
 
 function PlanningCanvas({
+  currentDate = '',
   stackCanvasState,
   taskCards = [],
   categories = [],
+  deadlines = [],
   timeBoxes = [],
   onUpdateStackCanvasState = () => {},
   onCreateCard = () => false,
@@ -188,6 +193,18 @@ function PlanningCanvas({
   )
 
   const activeCard = activeCardId ? cardMap.get(activeCardId) || null : null
+  const taskDeadlineMap = useMemo(
+    () =>
+      new Map(
+        taskCards
+          .map((taskCard) => {
+            const deadline = getActiveDeadlineForTask(deadlines, taskCard.id, currentDate)
+            return deadline ? [taskCard.id, deadline] : null
+          })
+          .filter(Boolean) as [string, DeadlineRecord][],
+      ),
+    [currentDate, deadlines, taskCards],
+  )
   const scheduledCards = taskCards.filter((item) => item.linkedTimeBoxIds?.length > 0).length
   const completedCards = taskCards.filter(
     (item) => getTaskCardStackCanvasStatus(item, timeBoxes) === 'COMPLETED',
@@ -813,6 +830,7 @@ function PlanningCanvas({
         <BoardCardEditorModalCompat
           categories={categories}
           initialCard={editingCard}
+          initialDeadline={editingCard?.id ? taskDeadlineMap.get(editingCard.id) || null : null}
           onClose={() => setEditingCard(null)}
           onSubmit={handleSubmitEditor}
         />

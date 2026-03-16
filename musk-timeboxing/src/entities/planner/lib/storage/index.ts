@@ -94,6 +94,7 @@ type ImportPlannerResult =
       skippedDays: number
       importedCategories: number
       importedTemplates: number
+      importedDeadlines: number
     }
   | {
       ok: false
@@ -200,6 +201,7 @@ const saveMetaLocal = (
   const payload = toPersistedMeta({
     categories: Array.isArray(meta?.categories) ? meta.categories : currentMeta.categories,
     templates: Array.isArray(meta?.templates) ? meta.templates : currentMeta.templates,
+    deadlines: Array.isArray(meta?.deadlines) ? meta.deadlines : currentMeta.deadlines,
   })
 
   window.localStorage.setItem(META_KEY, JSON.stringify(payload))
@@ -295,6 +297,7 @@ const hasPlannerLocalData = (): boolean => {
       .some((key) => hasMeaningfulPersistedDayData(loadDay(key.replace(DAY_KEY_PREFIX, '')))) ||
     loadMeta().categories.length > 0 ||
     loadMeta().templates.length > 0 ||
+    loadMeta().deadlines.length > 0 ||
     loadLastActiveDate() !== null ||
     loadLastFocus() !== null ||
     loadLastViewMode() !== null
@@ -465,6 +468,7 @@ export const saveMeta = (
   const payload = toPersistedMeta({
     categories: Array.isArray(meta?.categories) ? meta.categories : loadMeta().categories,
     templates: Array.isArray(meta?.templates) ? meta.templates : loadMeta().templates,
+    deadlines: Array.isArray(meta?.deadlines) ? meta.deadlines : loadMeta().deadlines,
   })
 
   saveMetaLocal(payload)
@@ -663,19 +667,24 @@ export const importPlannerData = (
 
   let importedCategories = 0
   let importedTemplates = 0
+  let importedDeadlines = 0
   if (meta && Array.isArray(meta.categories)) {
     saveMetaLocal({
       categories: meta.categories,
       templates: Array.isArray(meta.templates) ? meta.templates : loadMeta().templates,
+      deadlines: Array.isArray(meta.deadlines) ? meta.deadlines : loadMeta().deadlines,
     })
     importedCategories = meta.categories.length
     importedTemplates = Array.isArray(meta.templates) ? meta.templates.length : 0
-  } else if (meta && Array.isArray(meta.templates)) {
+    importedDeadlines = Array.isArray(meta.deadlines) ? meta.deadlines.length : 0
+  } else if (meta && (Array.isArray(meta.templates) || Array.isArray(meta.deadlines))) {
     saveMetaLocal({
       categories: loadMeta().categories,
-      templates: meta.templates,
+      templates: Array.isArray(meta.templates) ? meta.templates : loadMeta().templates,
+      deadlines: Array.isArray(meta.deadlines) ? meta.deadlines : loadMeta().deadlines,
     })
-    importedTemplates = meta.templates.length
+    importedTemplates = Array.isArray(meta.templates) ? meta.templates.length : 0
+    importedDeadlines = Array.isArray(meta.deadlines) ? meta.deadlines.length : 0
   }
 
   if (lastActiveDate) {
@@ -699,6 +708,7 @@ export const importPlannerData = (
     skippedDays,
     importedCategories,
     importedTemplates,
+    importedDeadlines,
   }
 }
 

@@ -4,6 +4,7 @@ import {
   addManualBigThreeItem,
   addManyTaskCardsToBigThree,
   addTaskCardRecord,
+  createTaskCardRecord,
   addTaskCardToBigThree,
   addTimeBoxRecord,
   applyTaskCardBoardLayout as applyTaskCardBoardLayoutCommand,
@@ -212,26 +213,30 @@ export const useDailyData = () => {
     categoryId = null,
     estimateSlots = 1,
     note = '',
-  }: AddBoardCardInput): boolean => {
+  }: AddBoardCardInput): string | null => {
     const trimmed = String(title || '').trim()
     if (!trimmed) {
-      return false
+      return null
     }
 
-    commitTaskCards((taskCards) =>
-      addTaskCardRecord(taskCards, {
-          title: trimmed,
-          isDone: false,
-          priority: 0,
-          categoryId,
-          estimateSlots,
-          linkedTimeBoxIds: [],
-          note,
-          origin: 'board',
-      }),
-    )
+    const nextTaskCard = createTaskCardRecord(data.taskCards, {
+      title: trimmed,
+      isDone: false,
+      priority: 0,
+      categoryId,
+      estimateSlots,
+      linkedTimeBoxIds: [],
+      note,
+      origin: 'board',
+    })
 
-    return true
+    if (!nextTaskCard) {
+      return null
+    }
+
+    commitTaskCards((taskCards) => [...taskCards, nextTaskCard])
+
+    return nextTaskCard.id
   }
 
   const removeTaskCard = (id: string): void => {

@@ -1,6 +1,7 @@
 import { Badge, Button, Card } from '../../../shared/ui'
 import { slotToTime } from '../../../entities/planner'
-import type { TimeBoxStatus } from '../../../entities/planner/model/types'
+import type { DeadlinePriority, TimeBoxStatus } from '../../../entities/planner/model/types'
+import DeadlineStrip from './DeadlineStrip'
 
 interface WeeklyCalendarPreviewItem {
   id: string
@@ -22,6 +23,16 @@ interface WeeklyCalendarDay {
 
 interface WeeklyCalendarViewProps {
   rangeLabel: string
+  deadlines?: Array<{
+    id: string
+    title: string
+    dueDate: string
+    priority: DeadlinePriority
+    urgency: {
+      kind: 'DONE' | 'OVERDUE' | 'TODAY' | 'UPCOMING'
+      label: string
+    }
+  }>
   days?: WeeklyCalendarDay[]
   onOpenDate?: (dateStr: string) => void
   onQuickAdd?: (dateStr: string, label: string) => void
@@ -29,12 +40,15 @@ interface WeeklyCalendarViewProps {
 
 function WeeklyCalendarView({
   rangeLabel,
+  deadlines = [],
   days = [],
   onOpenDate = () => {},
   onQuickAdd = () => {},
 }: WeeklyCalendarViewProps) {
   return (
     <Card className="mb-6 p-6" data-testid="calendar-view-week">
+      <DeadlineStrip title="이번 주 데드라인" items={deadlines} onOpenDate={onOpenDate} />
+
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">

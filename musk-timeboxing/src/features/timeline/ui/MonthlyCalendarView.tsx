@@ -1,5 +1,7 @@
 import { Badge, Button, Card } from '../../../shared/ui'
 import { hexToRgba } from '../../../entities/planner'
+import type { DeadlinePriority } from '../../../entities/planner/model/types'
+import DeadlineStrip from './DeadlineStrip'
 
 const WEEK_HEADER_LABELS = ['월', '화', '수', '목', '금', '토', '일']
 const HEAT_LEVEL_LABELS: Record<number, string> = {
@@ -42,6 +44,16 @@ interface BusiestDaySummary {
 
 interface MonthlyCalendarViewProps {
   monthLabel: string
+  deadlines?: Array<{
+    id: string
+    title: string
+    dueDate: string
+    priority: DeadlinePriority
+    urgency: {
+      kind: 'DONE' | 'OVERDUE' | 'TODAY' | 'UPCOMING'
+      label: string
+    }
+  }>
   cells?: MonthlyCalendarCell[]
   legend?: CalendarLegendItem[]
   scheduledDays?: number
@@ -87,6 +99,7 @@ const getHeatOverlayStyle = (cell: MonthlyCalendarCell) => {
 
 function MonthlyCalendarView({
   monthLabel,
+  deadlines = [],
   cells = [],
   legend = [],
   scheduledDays = 0,
@@ -98,6 +111,8 @@ function MonthlyCalendarView({
 }: MonthlyCalendarViewProps) {
   return (
     <Card className="mb-6 p-6" data-testid="calendar-view-month">
+      <DeadlineStrip title="이달 데드라인" items={deadlines} onOpenDate={onSelectDate} />
+
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">

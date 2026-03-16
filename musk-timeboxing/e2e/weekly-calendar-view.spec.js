@@ -25,6 +25,26 @@ test('weekly calendar view summarizes the week and can jump to a selected date',
 
     window.localStorage.setItem('musk-planner-last-date', today)
     window.localStorage.setItem(
+      'musk-planner-meta',
+      JSON.stringify({
+        schemaVersion: 5,
+        categories: [],
+        templates: [],
+        deadlines: [
+          {
+            id: 'weekly-deadline-001',
+            title: '주간 데드라인 테스트',
+            dueDate: targetDate,
+            taskId: null,
+            taskDate: null,
+            priority: 'HIGH',
+            note: '',
+            completedAt: null,
+          },
+        ],
+      }),
+    )
+    window.localStorage.setItem(
       `musk-planner-${targetDate}`,
       JSON.stringify({
         schemaVersion: 2,
@@ -57,11 +77,14 @@ test('weekly calendar view summarizes the week and can jump to a selected date',
 
   await page.locator('[data-testid="timeline-view-week"]:visible').first().click()
   await expect(page.locator('[data-testid="calendar-view-week"]:visible').first()).toBeVisible()
+  await expect(page.locator('[data-testid="deadline-chip-weekly-deadline-001"]:visible').first()).toContainText(
+    '주간 데드라인 테스트',
+  )
   await expect(
     page.locator(`[data-testid="week-calendar-day-${setup.targetDate}"]:visible`).first(),
   ).toContainText('주간캘린더-테스트')
 
-  await page.locator(`[data-testid="week-calendar-day-${setup.targetDate}"]:visible`).first().click()
+  await page.locator('[data-testid="deadline-chip-weekly-deadline-001"]:visible').first().click()
 
   await expect(page.locator('[data-testid="timeline-day-view"]:visible').first()).toBeVisible()
   await expect(page.locator('[title="주간캘린더-테스트"]:visible').first()).toBeVisible()

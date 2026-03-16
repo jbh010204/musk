@@ -3,6 +3,7 @@ export type TaskCardOrigin = 'board' | 'list'
 export type BigThreeStatus = 'EMPTY' | 'DONE' | 'PENDING'
 export type TimeBoxStatus = 'PLANNED' | 'COMPLETED' | 'SKIPPED'
 export type RunMode = 'IDLE' | 'RUNNING' | 'PAUSED'
+export type DeadlinePriority = 'LOW' | 'MEDIUM' | 'HIGH'
 
 export interface TaskCard {
   id: string
@@ -49,6 +50,17 @@ export interface PlannerTemplate {
   content: string
   durationSlots: number
   categoryId: string | null
+}
+
+export interface DeadlineRecord {
+  id: string
+  title: string
+  dueDate: string
+  taskId: string | null
+  taskDate: string | null
+  priority: DeadlinePriority
+  note: string
+  completedAt: string | null
 }
 
 export interface TimeBox {
@@ -105,6 +117,7 @@ export interface PlannerMetaModel {
   schemaVersion: number
   categories: CategoryRecord[]
   templates: PlannerTemplate[]
+  deadlines: DeadlineRecord[]
 }
 
 export interface LastFocusSnapshot {

@@ -1,4 +1,4 @@
-# Musk Planner Task Execution Board (90 Tasks)
+# Musk Planner Task Execution Board (94 Tasks)
 
 이 문서는 현재 합의된 작업을 한 번에 처리하지 않고,
 작업 단위를 쪼개서 순차 실행하기 위한 운영 보드다.
@@ -116,6 +116,10 @@
   - `T88` custom task card shape 구현
   - `T89` brainDump/timeBoxes -> custom shape projection 및 stable shape id 동기화
   - `T90` Planning Canvas inspector/edit flow 연결
+  - `T91` deadline meta schema / model layer 추가
+  - `T92` task editor deadline 연결
+  - `T93` 주간/월간 상단 deadline strip 추가
+  - `T94` deadline E2E / 문서 / 패치노트 동기화
 
 ## 3. Prioritized Task List
 

@@ -1,5 +1,6 @@
 export { useCategoryMeta } from './useCategoryMeta'
 export { useDailyData } from './useDailyData'
+export { useDeadlineMeta } from './useDeadlineMeta'
 export { usePlannerDayFlow } from './usePlannerDayFlow'
 export { usePlannerMetaActions } from './usePlannerMetaActions'
 export { usePlannerShellState } from './usePlannerShellState'

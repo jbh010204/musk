@@ -8,6 +8,7 @@ import {
 import type {
   BigThreeItem,
   CategoryViewModel,
+  DeadlineRecord,
   PlannerDay,
   PlannerRunSession,
   TaskCard,
@@ -25,6 +26,7 @@ interface PlannerWorkspaceProps {
   data: PlannerDay
   categories: CategoryViewModel[]
   taskCards: TaskCard[]
+  deadlines?: DeadlineRecord[]
   bigThree?: BigThreeItem[]
   addBoardCard: (...args: unknown[]) => boolean
   addBigThreeItem: (content: string) => boolean
@@ -63,6 +65,7 @@ function PlannerWorkspace({
   data,
   categories,
   taskCards,
+  deadlines = [],
   bigThree = [],
   addBoardCard,
   addBigThreeItem,
@@ -177,6 +180,7 @@ function PlannerWorkspace({
               stackCanvasState={data.stackCanvasState}
               taskCards={taskCards}
               categories={categories}
+              deadlines={deadlines}
               timeBoxes={data.timeBoxes}
               onUpdateStackCanvasState={updateStackCanvasState}
               onCreateCard={addBoardCard}

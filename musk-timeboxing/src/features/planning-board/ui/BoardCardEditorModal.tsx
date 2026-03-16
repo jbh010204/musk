@@ -1,5 +1,10 @@
 import { useMemo, useState } from 'react'
-import type { CategoryViewModel, TaskCard } from '../../../entities/planner/model/types'
+import type {
+  CategoryViewModel,
+  DeadlinePriority,
+  DeadlineRecord,
+  TaskCard,
+} from '../../../entities/planner/model/types'
 import { Button, Card } from '../../../shared/ui'
 
 const DURATION_OPTIONS = [
@@ -12,18 +17,23 @@ const DURATION_OPTIONS = [
 interface BoardCardEditorModalProps {
   categories?: CategoryViewModel[]
   initialCard?: Partial<TaskCard> | null
+  initialDeadline?: DeadlineRecord | null
   onClose?: () => void
   onSubmit?: (payload: {
     title: string
     categoryId: string
     estimateSlots: number
     note: string
+    deadlineDate: string
+    deadlinePriority: DeadlinePriority
+    deadlineNote: string
   }) => boolean | void
 }
 
 function BoardCardEditorModal({
   categories = [],
   initialCard = null,
+  initialDeadline = null,
   onClose = () => {},
   onSubmit = () => false,
 }: BoardCardEditorModalProps) {
@@ -40,6 +50,11 @@ function BoardCardEditorModal({
   const [categoryId, setCategoryId] = useState(initialCard?.categoryId ?? '')
   const [estimateSlots, setEstimateSlots] = useState(initialDuration)
   const [note, setNote] = useState(initialCard?.note ?? '')
+  const [deadlineDate, setDeadlineDate] = useState(initialDeadline?.dueDate ?? '')
+  const [deadlinePriority, setDeadlinePriority] = useState<DeadlinePriority>(
+    initialDeadline?.priority ?? 'MEDIUM',
+  )
+  const [deadlineNote, setDeadlineNote] = useState(initialDeadline?.note ?? '')
 
   const handleSubmit = () => {
     const trimmed = title.trim()
@@ -52,6 +67,9 @@ function BoardCardEditorModal({
       categoryId,
       estimateSlots: Number(estimateSlots),
       note,
+      deadlineDate,
+      deadlinePriority,
+      deadlineNote,
     })
 
     if (result !== false) {
@@ -140,6 +158,60 @@ function BoardCardEditorModal({
                 onChange={(event) => setNote(event.target.value)}
                 className="ui-input min-h-[88px] resize-none"
                 placeholder="실행 전 참고할 조건이나 준비물을 적습니다."
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label
+                  className="mb-1 block text-sm text-slate-500 dark:text-slate-400"
+                  htmlFor="board-card-deadline-date"
+                >
+                  마감일
+                </label>
+                <input
+                  id="board-card-deadline-date"
+                  type="date"
+                  value={deadlineDate}
+                  onChange={(event) => setDeadlineDate(event.target.value)}
+                  className="ui-input"
+                />
+              </div>
+
+              <div>
+                <label
+                  className="mb-1 block text-sm text-slate-500 dark:text-slate-400"
+                  htmlFor="board-card-deadline-priority"
+                >
+                  마감 중요도
+                </label>
+                <select
+                  id="board-card-deadline-priority"
+                  value={deadlinePriority}
+                  onChange={(event) => setDeadlinePriority(event.target.value as DeadlinePriority)}
+                  className="ui-select"
+                >
+                  <option value="LOW">낮음</option>
+                  <option value="MEDIUM">보통</option>
+                  <option value="HIGH">높음</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label
+                className="mb-1 block text-sm text-slate-500 dark:text-slate-400"
+                htmlFor="board-card-deadline-note"
+              >
+                데드라인 메모
+              </label>
+              <textarea
+                id="board-card-deadline-note"
+                rows={2}
+                value={deadlineNote}
+                onChange={(event) => setDeadlineNote(event.target.value)}
+                className="ui-input min-h-[72px] resize-none"
+                placeholder="예: 중간발표 자료 제출 전날 검토"
               />
             </div>
           </div>

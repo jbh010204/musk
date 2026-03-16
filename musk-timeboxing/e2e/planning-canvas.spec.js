@@ -72,6 +72,96 @@ test('planning canvas creates a card and keeps it after reload', async ({ page }
   expect(stored.stackCanvasState.version).toBe(2)
 })
 
+test('planning canvas editor stores a linked deadline in planner meta', async ({ page }) => {
+  await page.goto('/')
+
+  const setup = await page.evaluate(() => {
+    window.localStorage.clear()
+
+    const formatDate = (date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    const today = formatDate(new Date())
+    const due = formatDate(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000))
+    window.localStorage.setItem('musk-planner-last-date', today)
+    window.localStorage.setItem('musk-planner-last-view-mode', 'CANVAS')
+    window.localStorage.setItem(
+      'musk-planner-meta',
+      JSON.stringify({
+        schemaVersion: 5,
+        categories: [{ id: 'cat-deadline', name: 'Deadline', color: '#ef4444', parentId: null, order: 0 }],
+        templates: [],
+        deadlines: [],
+      }),
+    )
+    window.localStorage.setItem(
+      `musk-planner-${today}`,
+      JSON.stringify({
+        schemaVersion: 5,
+        date: today,
+        brainDump: [
+          {
+            id: 'canvas-card-deadline',
+            content: '마감 저장 테스트',
+            isDone: false,
+            priority: 0,
+            categoryId: 'cat-deadline',
+            stackOrder: 0,
+            estimatedSlots: 2,
+            linkedTimeBoxIds: [],
+            note: '',
+            createdFrom: 'board',
+          },
+        ],
+        bigThree: [],
+        timeBoxes: [],
+        stackCanvasState: {
+          version: 2,
+          layoutMode: 'stack',
+          selectedCardId: null,
+          focusedLaneId: 'cat-deadline',
+          migratedFromLegacyBoard: false,
+          lastSyncedAt: null,
+        },
+      }),
+    )
+
+    return { today, due }
+  })
+
+  await page.reload()
+
+  const card = page.locator('[data-testid="planning-board-card-canvas-card-deadline"]:visible').first()
+  await card.getByLabel('카드 수정').click()
+  await page.locator('#board-card-deadline-date').fill(setup.due)
+  await page.locator('#board-card-deadline-priority').selectOption('HIGH')
+  await page.locator('#board-card-deadline-note').fill('중요도 높은 마감')
+  await page.getByRole('button', { name: '저장', exact: true }).click()
+
+  await page.waitForFunction(
+    ({ today, due }) => {
+      const rawMeta = window.localStorage.getItem('musk-planner-meta')
+      if (!rawMeta) {
+        return false
+      }
+
+      const parsedMeta = JSON.parse(rawMeta)
+      const deadline = parsedMeta?.deadlines?.find((item) => item.taskId === 'canvas-card-deadline')
+      return (
+        deadline?.dueDate === due &&
+        deadline?.priority === 'HIGH' &&
+        deadline?.taskDate === today &&
+        deadline?.note === '중요도 높은 마감'
+      )
+    },
+    { today: setup.today, due: setup.due },
+  )
+})
+
 test('planning canvas moves cards between uncategorized and category stacks', async ({ page }) => {
   await page.goto('/')
 

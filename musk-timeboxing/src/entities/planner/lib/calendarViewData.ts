@@ -1,7 +1,8 @@
 import { getCategoryColor, getCategoryLabel } from './categoryVisual'
 import { loadDay } from './storage'
 import { slotDurationMinutes } from './timeSlot'
-import type { CategoryRecord, TimeBoxStatus } from '../model/types'
+import { selectDeadlineStripItems } from '../model'
+import type { CategoryRecord, DeadlineRecord, TimeBoxStatus } from '../model/types'
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -24,6 +25,7 @@ interface CalendarDayData {
 interface CalendarSummaryArgs {
   currentDate: string
   currentDayData: CalendarDayData | null | undefined
+  deadlines?: DeadlineRecord[]
 }
 
 interface MonthCalendarArgs extends CalendarSummaryArgs {
@@ -216,15 +218,23 @@ const summarizeCalendarDay = (
   }
 }
 
-export const buildWeekCalendarSnapshot = ({ currentDate, currentDayData }: CalendarSummaryArgs) => {
+export const buildWeekCalendarSnapshot = ({ currentDate, currentDayData, deadlines = [] }: CalendarSummaryArgs) => {
   const startDate = startOfWeekMonday(parseDate(currentDate))
   const endDate = new Date(startDate)
   endDate.setDate(startDate.getDate() + 6)
+  const rangeStartDate = formatDate(startDate)
+  const rangeEndDate = formatDate(endDate)
 
   return {
     rangeLabel: `${startDate.getMonth() + 1}.${String(startDate.getDate()).padStart(2, '0')} - ${
       endDate.getMonth() + 1
     }.${String(endDate.getDate()).padStart(2, '0')}`,
+    deadlines: selectDeadlineStripItems(deadlines, {
+      currentDate,
+      rangeStartDate,
+      rangeEndDate,
+      limit: 5,
+    }),
     days: Array.from({ length: 7 }, (_, index) => {
       const date = new Date(startDate)
       date.setDate(startDate.getDate() + index)
@@ -237,11 +247,13 @@ export const buildMonthCalendarSnapshot = ({
   currentDate,
   currentDayData,
   categories = [],
+  deadlines = [],
 }: MonthCalendarArgs) => {
   const targetDate = parseDate(currentDate)
   const currentMonthIndex = targetDate.getMonth()
   const firstDay = new Date(targetDate.getFullYear(), currentMonthIndex, 1)
   const gridStart = startOfWeekMonday(firstDay)
+  const lastDay = new Date(targetDate.getFullYear(), currentMonthIndex + 1, 0)
   const monthLabel = new Intl.DateTimeFormat('ko-KR', {
     year: 'numeric',
     month: 'long',
@@ -308,6 +320,12 @@ export const buildMonthCalendarSnapshot = ({
 
   return {
     monthLabel,
+    deadlines: selectDeadlineStripItems(deadlines, {
+      currentDate,
+      rangeStartDate: formatDate(firstDay),
+      rangeEndDate: formatDate(lastDay),
+      limit: 6,
+    }),
     cells,
     legend,
     scheduledDays,

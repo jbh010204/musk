@@ -2,9 +2,10 @@ import { normalizeBoardCard } from '../boardCard'
 import { normalizeStackCanvasState } from '../stackCanvasState'
 import { sortBrainDumpItems } from '../brainDumpPriority'
 import { TOTAL_SLOTS } from '../timeSlot'
-import { normalizeCategoryRecords } from '../../model'
+import { normalizeCategoryRecords, normalizeDeadlineRecord } from '../../model'
 import { createEmptyDay, createEmptyMeta, PLANNER_SCHEMA_VERSION } from './schema'
 import type {
+  PersistedPlannerDeadline,
   PersistedBigThreeItem,
   PersistedBrainDumpItem,
   PersistedPlannerDay,
@@ -42,6 +43,11 @@ const normalizeTemplate = (
         : null,
   }
 }
+
+const normalizeDeadline = (
+  deadline: unknown,
+): PersistedPlannerDeadline | null =>
+  normalizeDeadlineRecord(deadline) as PersistedPlannerDeadline | null
 
 const normalizeTimeBox = (box: unknown): PersistedTimeBox => {
   const safeBox = isRecord(box) ? box : {}
@@ -163,6 +169,11 @@ export const migratePersistedMeta = (rawMeta: unknown): PersistedPlannerMeta => 
       ? parsed.templates
           .map((template) => normalizeTemplate(template))
           .filter((template): template is PersistedPlannerTemplate => Boolean(template))
+      : [],
+    deadlines: Array.isArray(parsed.deadlines)
+      ? parsed.deadlines
+          .map((deadline) => normalizeDeadline(deadline))
+          .filter((deadline): deadline is PersistedPlannerDeadline => Boolean(deadline))
       : [],
   }
 }
