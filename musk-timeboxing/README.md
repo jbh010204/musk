@@ -2,6 +2,11 @@
 
 할 일 목록이 아니라 시간 블록 설계에 집중하는 로컬 웹 플래너입니다.
 
+체험 링크: [https://jbh010204.github.io/musk/](https://jbh010204.github.io/musk/)
+
+- 정적 체험판이라 데이터는 각 브라우저 `localStorage`에만 저장됩니다.
+- 실제 사용/검증은 아래 로컬 실행 또는 Docker 실행을 권장합니다.
+
 ## 바로 실행 (Docker)
 
 ```bash
