@@ -163,20 +163,33 @@ npm run build
 
 ## 정적 배포
 
+이 앱은 정적 배포 기준으로 바로 체험 가능합니다. 프로덕션에서는 `.env.production`에서 `VITE_SERVER_STORAGE=false`를 강제해 브라우저 `localStorage` 모드로 동작합니다.
+
 `vite.config.js`의 `base: './'`가 설정되어 있어 상대 경로 정적 호스팅이 가능합니다.
 
-### GitHub Pages
+### GitHub Pages 자동 배포
 
-1. `npm run build`
-2. 생성된 `dist/` 내용을 배포 브랜치(`gh-pages`) 또는 `docs/`로 업로드
-3. 저장소 Settings > Pages에서 배포 브랜치/폴더 선택
+저장소 루트의 GitHub Actions 워크플로가 `main` 푸시마다 `musk-timeboxing/`를 빌드해 Pages로 배포합니다.
 
-### Vercel
+1. 저장소 Settings > Pages에서 **Source = GitHub Actions**로 설정
+2. `main`에 푸시
+3. Actions의 `Deploy Static Frontend`가 `musk-timeboxing/dist`를 배포
 
-1. 프로젝트를 Vercel에 연결
-2. Build Command: `npm run build`
-3. Output Directory: `dist`
-4. Deploy
+워크플로 파일:
+- `/Users/bohyeong/Desktop/공부/project/musk/.github/workflows/deploy-static-pages.yml`
+
+### Vercel / Netlify
+
+다른 정적 호스팅도 바로 가능합니다.
+
+- Root Directory: `musk-timeboxing`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Env: `VITE_SERVER_STORAGE=false`
+
+### 제약
+
+정적 배포는 체험용에 적합합니다. 데이터는 각 사용자 브라우저의 `localStorage`에만 저장되며, 기기/브라우저 간 공유는 되지 않습니다. 공유 저장이 필요하면 별도 API 배포가 필요합니다.
 
 ## 참고
 
