@@ -10,6 +10,23 @@ export interface PatchNoteEntry {
 
 export const PATCH_NOTES: PatchNoteEntry[] = [
   {
+    version: 'v0.22.13',
+    date: '2026-03-17',
+    title: 'Weekly strip: clear highlight residue on rapid date changes',
+    summary:
+      '주간 스트립에서 날짜를 빠르게 넘기거나 연속 선택할 때 이전 활성 카드의 강조가 잠깐 남던 잔상을 제거했습니다. 이제 마지막으로 선택한 날짜만 즉시 강조되고, 빠른 입력에서도 활성 상태가 하나로 유지됩니다.',
+    focus: [
+      '빠른 이전/다음 날짜 이동과 연속 클릭에서도 주간 스트립 활성 카드가 하나만 남도록 상태 전환 기준을 정리',
+      '카드 전환에서 색상 변화만 부드럽게 남기고, 그림자·강조 잔상이 이전 카드에 남지 않게 조정',
+      '회귀 테스트를 추가해 rapid date change 이후 활성 카드와 강조 카드가 항상 동일한지 고정',
+    ],
+    improvements: [
+      '`Header.tsx`의 주간 스트립 날짜 카드 전환을 `transition-all`에서 색상 중심 전환으로 축소',
+      '`weekly-strip.spec.js`에 rapid date changes 이후 highlight residue가 남지 않는 회귀 테스트 추가',
+    ],
+    validation: ['build 통과', 'weekly-strip, weekly-strip-carousel 통과'],
+  },
+  {
     version: 'v0.22.12',
     date: '2026-03-16',
     title: 'Deadline visibility: badges on cards, instant complete from strips',

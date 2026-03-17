@@ -514,7 +514,7 @@ function Header({
                 type="button"
                 data-testid={`week-strip-day-${day.dateStr}`}
                 onClick={handleDayClick(day.dateStr)}
-                className={`relative w-[112px] shrink-0 snap-center overflow-hidden rounded-2xl px-3 py-3 text-center transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 md:w-[128px] ${
+                className={`relative w-[112px] shrink-0 snap-center overflow-hidden rounded-2xl px-3 py-3 text-center transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-500 md:w-[128px] ${
                   day.isCurrent
                     ? 'bg-gradient-to-br from-indigo-600/35 via-indigo-600/25 to-cyan-500/20 text-gray-100 ring-1 ring-indigo-300/75 shadow-[0_8px_20px_rgba(79,70,229,0.18)]'
                     : 'bg-white/45 text-slate-600 hover:bg-white/80 dark:bg-slate-800/15 dark:text-slate-400 dark:hover:bg-slate-800/35'

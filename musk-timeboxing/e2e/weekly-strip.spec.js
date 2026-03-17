@@ -27,3 +27,32 @@ test('weekly strip allows direct date jump', async ({ page }) => {
   const lastDate = await page.evaluate(() => window.localStorage.getItem('musk-planner-last-date'))
   expect(lastDate).toBe(currentDate)
 })
+
+test('weekly strip does not leave highlight residue after rapid date changes', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => window.localStorage.clear())
+  await page.reload()
+
+  for (let i = 0; i < 5; i += 1) {
+    await page.getByRole('button', { name: '다음 날짜' }).click()
+  }
+
+  const stripState = await page.evaluate(() => {
+    const nodes = [...document.querySelectorAll('[data-testid^="week-strip-day-"]')]
+    return nodes.map((node) => {
+      const style = getComputedStyle(node)
+      return {
+        date: node.getAttribute('data-testid')?.replace('week-strip-day-', ''),
+        current: node.getAttribute('aria-current') === 'date',
+        boxShadow: style.boxShadow,
+      }
+    })
+  })
+
+  const highlighted = stripState.filter((item) => item.boxShadow !== 'none')
+  const current = stripState.filter((item) => item.current)
+
+  expect(current).toHaveLength(1)
+  expect(highlighted).toHaveLength(1)
+  expect(highlighted[0].date).toBe(current[0].date)
+})
