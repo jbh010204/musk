@@ -171,6 +171,10 @@ npm run build
 
 저장소 루트의 GitHub Actions 워크플로가 `main` 푸시마다 `musk-timeboxing/`를 빌드해 Pages로 배포합니다.
 
+배포 주소:
+- GitHub Pages: [https://jbh010204.github.io/musk/](https://jbh010204.github.io/musk/)
+  - 현재는 저장소 `Settings > Pages > Source = GitHub Actions`를 켜야 실제로 열립니다.
+
 1. 저장소 Settings > Pages에서 **Source = GitHub Actions**로 설정
 2. `main`에 푸시
 3. Actions의 `Deploy Static Frontend`가 `musk-timeboxing/dist`를 배포
@@ -183,6 +187,7 @@ npm run build
 다른 정적 호스팅도 바로 가능합니다.
 
 - Vercel: 저장소 루트에 [vercel.json](/Users/bohyeong/Desktop/공부/project/musk/vercel.json)을 추가해두었으므로, 저장소를 그대로 import하면 `musk-timeboxing` 하위 앱을 빌드합니다.
+  - 첫 배포 후 Vercel이 프로젝트 URL을 발급합니다. 이 URL은 Vercel 프로젝트 생성 뒤 확정됩니다.
 - Netlify: Root Directory를 `musk-timeboxing`로 지정
 
 공통 환경값:
