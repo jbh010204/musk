@@ -1,6 +1,6 @@
 # Musk Time-Boxing Planner
 
-할 일 목록이 아니라 시간 블록 설계에 집중하는 로컬 웹 플래너입니다.
+할 일 목록이 아니라 시간 블록 설계에 집중하는 로컬 웹 플래너입니다. Elon Musk의 timeboxing/time blocking 방식에서 영감을 받았고, 그 방식이 실제로 나에게도 필요하다고 느껴 만들기 시작했습니다.
 
 체험 링크: [https://jbh010204.github.io/musk/](https://jbh010204.github.io/musk/)
 
