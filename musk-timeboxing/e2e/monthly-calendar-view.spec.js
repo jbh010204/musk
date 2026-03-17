@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
 
+const formatMonthLabel = (dateStr) => {
+  const [year, month] = dateStr.split('-').map(Number)
+  return `${year}년 ${month}월`
+}
+
 test('monthly calendar view opens a detail sheet and can jump to a selected date', async ({ page }) => {
   await page.goto('/')
 
@@ -103,4 +108,45 @@ test('monthly calendar view opens a detail sheet and can jump to a selected date
 
   await expect(page.locator('[data-testid="timeline-day-view"]:visible').first()).toBeVisible()
   await expect(page.locator('[title="월간캘린더-테스트"]:visible').first()).toBeVisible()
+})
+
+test('monthly calendar view supports previous and next month navigation', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => window.localStorage.clear())
+  await page.reload()
+
+  const dates = await page.evaluate(() => {
+    const currentDate = window.localStorage.getItem('musk-planner-last-date')
+    const shiftMonth = (dateStr, delta) => {
+      const [year, month, day] = dateStr.split('-').map(Number)
+      const targetMonthIndex = month - 1 + delta
+      const targetYear = year + Math.floor(targetMonthIndex / 12)
+      const normalizedMonthIndex = ((targetMonthIndex % 12) + 12) % 12
+      const lastDay = new Date(targetYear, normalizedMonthIndex + 1, 0).getDate()
+      const clampedDay = Math.min(day, lastDay)
+      const nextMonth = String(normalizedMonthIndex + 1).padStart(2, '0')
+      const nextDay = String(clampedDay).padStart(2, '0')
+      return `${targetYear}-${nextMonth}-${nextDay}`
+    }
+
+    return {
+      currentDate,
+      prevDate: shiftMonth(currentDate, -1),
+      nextDate: shiftMonth(currentDate, 1),
+    }
+  })
+
+  await page.locator('[data-testid="timeline-view-month"]:visible').first().click()
+
+  const monthCard = page.locator('[data-testid="calendar-view-month"]:visible').first()
+  await expect(monthCard).toContainText(formatMonthLabel(dates.currentDate))
+  await expect(page.getByText('전체 일정을 캘린더 그리드로 확인합니다.')).toHaveCount(0)
+  await expect(monthCard.getByText('오늘')).toHaveCount(1)
+
+  await page.locator('[data-testid="month-calendar-prev"]:visible').first().click()
+  await expect(monthCard).toContainText(formatMonthLabel(dates.prevDate))
+  await expect(page.locator(`[data-testid="month-calendar-day-${dates.currentDate}"]:visible`)).toHaveCount(0)
+
+  await page.locator('[data-testid="month-calendar-next"]:visible').first().click()
+  await expect(monthCard).toContainText(formatMonthLabel(dates.currentDate))
 })

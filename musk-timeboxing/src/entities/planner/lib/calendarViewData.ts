@@ -110,6 +110,7 @@ const summarizeCalendarDay = (
   currentDayData: CalendarDayData | null | undefined,
   currentMonthIndex: number | null = null,
   categoryMap: Map<string, CategoryRecord> = new Map(),
+  todayDateStr: string | null = null,
 ) => {
   const date = parseDate(dateStr)
   const dayData = getSnapshotDayData(dateStr, currentDate, currentDayData)
@@ -214,6 +215,7 @@ const summarizeCalendarDay = (
       }
     }),
     isCurrent: dateStr === currentDate,
+    isToday: dateStr === todayDateStr,
     inCurrentMonth: currentMonthIndex == null ? true : date.getMonth() === currentMonthIndex,
   }
 }
@@ -250,6 +252,7 @@ export const buildMonthCalendarSnapshot = ({
   deadlines = [],
 }: MonthCalendarArgs) => {
   const targetDate = parseDate(currentDate)
+  const todayDateStr = formatDate(new Date())
   const currentMonthIndex = targetDate.getMonth()
   const firstDay = new Date(targetDate.getFullYear(), currentMonthIndex, 1)
   const gridStart = startOfWeekMonday(firstDay)
@@ -268,6 +271,7 @@ export const buildMonthCalendarSnapshot = ({
       currentDayData,
       currentMonthIndex,
       categoryMap,
+      todayDateStr,
     )
   })
   const currentMonthCells = cells.filter((cell) => cell.inCurrentMonth)

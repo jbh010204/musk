@@ -78,6 +78,38 @@ const formatKoreanDate = (dateStr: string) => {
   return `${year}년 ${month}월 ${day}일 (${weekday})`
 }
 
+const getWeekStripDayLabelClassName = (day: WeekStripDay) => {
+  if (day.isCurrent) {
+    return 'text-indigo-100/90'
+  }
+
+  if (day.dayLabel === '토') {
+    return 'text-sky-600 dark:text-sky-300'
+  }
+
+  if (day.dayLabel === '일') {
+    return 'text-rose-500 dark:text-rose-300'
+  }
+
+  return 'text-slate-500 dark:text-slate-400'
+}
+
+const getWeekStripDayNumberClassName = (day: WeekStripDay) => {
+  if (day.isCurrent) {
+    return 'text-gray-100'
+  }
+
+  if (day.dayLabel === '토') {
+    return 'text-sky-700 dark:text-sky-200'
+  }
+
+  if (day.dayLabel === '일') {
+    return 'text-rose-700 dark:text-rose-200'
+  }
+
+  return 'text-slate-700 dark:text-gray-100'
+}
+
 const getPersistenceBadge = (status: PlannerPersistenceStatusLike | null | undefined): { tone: PersistenceBadgeTone; label: string } => {
   if (!status?.serverEnabled) {
     return {
@@ -530,16 +562,12 @@ function Header({
                 ) : null}
                 <div className="relative z-10">
                   <div
-                    className={`text-[10px] ${
-                      day.isCurrent ? 'text-indigo-100/90' : 'text-slate-500 dark:text-slate-400'
-                    }`}
+                    className={`text-[10px] ${getWeekStripDayLabelClassName(day)}`}
                   >
                     {day.dayLabel}
                   </div>
                   <div
-                    className={`text-sm font-semibold ${
-                      day.isCurrent ? 'text-gray-100' : 'text-slate-700 dark:text-gray-100'
-                    }`}
+                    className={`text-sm font-semibold ${getWeekStripDayNumberClassName(day)}`}
                   >
                     {day.dayNumber}
                   </div>

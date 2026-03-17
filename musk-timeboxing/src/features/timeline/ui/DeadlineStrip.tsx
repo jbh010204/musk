@@ -38,18 +38,25 @@ function DeadlineStrip({
   onOpenDate = () => {},
   onToggleComplete = () => {},
 }: DeadlineStripProps) {
+  const isEmpty = items.length === 0
+
   return (
-    <div className="mb-5 rounded-2xl bg-slate-50/80 p-3 dark:bg-slate-800/35" data-testid="deadline-strip">
+    <div
+      className={`mb-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/35 ${
+        isEmpty ? 'px-3 py-2.5' : 'p-3'
+      }`}
+      data-testid="deadline-strip"
+    >
       <div className="flex flex-wrap items-center gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
           {title}
         </p>
-        {items.length === 0 ? (
+        {isEmpty ? (
           <span className="text-xs text-slate-500 dark:text-slate-400">열린 마감이 없습니다</span>
         ) : null}
       </div>
 
-      {items.length > 0 ? (
+      {!isEmpty ? (
         <div className="mt-3 flex flex-wrap gap-2" data-testid="deadline-strip-items">
           {items.map((item) => (
             <div

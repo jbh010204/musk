@@ -59,6 +59,28 @@ const shiftDateString = (dateStr: string | null | undefined, dayDelta: number): 
   return `${nextYear}-${nextMonth}-${nextDay}`
 }
 
+const shiftMonthString = (dateStr: string | null | undefined, monthDelta: number): string | null => {
+  if (typeof dateStr !== 'string') {
+    return null
+  }
+
+  const [year, month, day] = dateStr.split('-').map(Number)
+  if (![year, month, day].every(Number.isFinite)) {
+    return null
+  }
+
+  const targetMonthIndex = month - 1 + monthDelta
+  const targetYear = year + Math.floor(targetMonthIndex / 12)
+  const normalizedMonthIndex = ((targetMonthIndex % 12) + 12) % 12
+  const lastDayOfTargetMonth = new Date(targetYear, normalizedMonthIndex + 1, 0).getDate()
+  const clampedDay = Math.min(day, lastDayOfTargetMonth)
+
+  const nextYear = targetYear
+  const nextMonth = String(normalizedMonthIndex + 1).padStart(2, '0')
+  const nextDay = String(clampedDay).padStart(2, '0')
+  return `${nextYear}-${nextMonth}-${nextDay}`
+}
+
 interface TemplateSummary extends PlannerTemplate {}
 
 interface PreviewTimeBoxItem {
@@ -172,6 +194,7 @@ interface MonthCalendarCell {
   categoryMix: MonthCategorySummary[]
   detailItems: MonthDetailItem[]
   isCurrent: boolean
+  isToday?: boolean
   inCurrentMonth: boolean
 }
 
@@ -438,6 +461,8 @@ function Timeline({
   const nextWeekDate = weekCalendar.days[0]?.dateStr
     ? shiftDateString(weekCalendar.days[0].dateStr, 7)
     : null
+  const previousMonthDate = shiftMonthString(currentDate, -1)
+  const nextMonthDate = shiftMonthString(currentDate, 1)
 
   const sortedBoxes = useMemo(
     () => [...data.timeBoxes].sort((a, b) => a.startSlot - b.startSlot),
@@ -472,6 +497,17 @@ function Timeline({
   useEffect(() => {
     onViewModeChange(viewMode)
   }, [onViewModeChange, viewMode])
+
+  useEffect(() => {
+    if (!selectedMonthDate) {
+      return
+    }
+
+    const stillVisible = monthCalendar.cells.some((cell) => cell.dateStr === selectedMonthDate)
+    if (!stillVisible) {
+      setSelectedMonthDate(null)
+    }
+  }, [monthCalendar.cells, selectedMonthDate])
 
   const categoryLegend = useMemo(() => {
     const legendMap = new Map()
@@ -837,10 +873,6 @@ function Timeline({
             →
           </button>
         </div>
-      ) : !isDayView && !isWorkspaceView && !isCanvasView ? (
-        <div className="mb-6 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/35 dark:text-slate-300">
-          {monthCalendar.monthLabel} 전체 일정을 캘린더 그리드로 확인합니다.
-        </div>
       ) : null}
 
       {isCanvasView ? (
@@ -1056,6 +1088,16 @@ function Timeline({
             busiestDay={monthCalendar.busiestDay}
             selectedDateStr={selectedMonthDate}
             onSelectDate={handleSelectMonthDate}
+            onPrevMonth={() => {
+              if (previousMonthDate) {
+                onJumpToDate(previousMonthDate)
+              }
+            }}
+            onNextMonth={() => {
+              if (nextMonthDate) {
+                onJumpToDate(nextMonthDate)
+              }
+            }}
             onToggleDeadlineComplete={onToggleDeadlineCompletion}
             onQuickAdd={(dateStr, dateLabel) => onOpenQuickAdd(dateStr, { dateLabel })}
           />

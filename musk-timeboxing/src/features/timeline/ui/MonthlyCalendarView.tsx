@@ -34,6 +34,7 @@ interface MonthlyCalendarCell {
   heatLevel: number
   dominantCategory: DominantCategory | null
   isCurrent: boolean
+  isToday?: boolean
   inCurrentMonth: boolean
 }
 
@@ -61,6 +62,8 @@ interface MonthlyCalendarViewProps {
   busiestDay?: BusiestDaySummary | null
   selectedDateStr?: string | null
   onSelectDate?: (dateStr: string) => void
+  onPrevMonth?: () => void
+  onNextMonth?: () => void
   onToggleDeadlineComplete?: (deadlineId: string) => void
   onQuickAdd?: (dateStr: string, label: string) => void
 }
@@ -98,6 +101,34 @@ const getHeatOverlayStyle = (cell: MonthlyCalendarCell) => {
   }
 }
 
+const getWeekendHeaderClassName = (label: string) => {
+  if (label === '토') {
+    return 'text-sky-600 dark:text-sky-300'
+  }
+
+  if (label === '일') {
+    return 'text-rose-500 dark:text-rose-300'
+  }
+
+  return 'text-slate-500 dark:text-slate-400'
+}
+
+const getDayNumberClassName = (cell: MonthlyCalendarCell) => {
+  if (!cell.inCurrentMonth) {
+    return 'text-slate-400 dark:text-slate-500'
+  }
+
+  if (cell.dayLabel === '토') {
+    return 'text-sky-700 dark:text-sky-300'
+  }
+
+  if (cell.dayLabel === '일') {
+    return 'text-rose-700 dark:text-rose-300'
+  }
+
+  return 'text-slate-900 dark:text-slate-100'
+}
+
 function MonthlyCalendarView({
   monthLabel,
   deadlines = [],
@@ -108,6 +139,8 @@ function MonthlyCalendarView({
   busiestDay = null,
   selectedDateStr = null,
   onSelectDate = () => {},
+  onPrevMonth = () => {},
+  onNextMonth = () => {},
   onToggleDeadlineComplete = () => {},
   onQuickAdd = () => {},
 }: MonthlyCalendarViewProps) {
@@ -120,15 +153,33 @@ function MonthlyCalendarView({
         onToggleComplete={onToggleDeadlineComplete}
       />
 
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            월간 캘린더
-          </h3>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{monthLabel}</p>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            한 달을 훑고 날짜를 선택해 상세 시트에서 그날의 일정과 빠른 추가를 확인합니다.
-          </p>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-1 rounded-2xl bg-slate-50/80 p-1 dark:bg-slate-800/35">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="이전 달"
+              data-testid="month-calendar-prev"
+              className="h-9 w-9 rounded-xl text-slate-500 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+              onClick={onPrevMonth}
+            >
+              ←
+            </Button>
+            <p className="min-w-[8.5rem] px-1 text-center text-sm font-semibold text-slate-700 dark:text-slate-100">
+              {monthLabel}
+            </p>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="다음 달"
+              data-testid="month-calendar-next"
+              className="h-9 w-9 rounded-xl text-slate-500 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+              onClick={onNextMonth}
+            >
+              →
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -167,7 +218,7 @@ function MonthlyCalendarView({
         {WEEK_HEADER_LABELS.map((label) => (
           <div
             key={label}
-            className="px-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            className={`px-2 text-center text-xs font-semibold uppercase tracking-wide ${getWeekendHeaderClassName(label)}`}
           >
             {label}
           </div>
@@ -194,8 +245,10 @@ function MonthlyCalendarView({
             className={`group/day relative min-h-[148px] overflow-hidden rounded-2xl p-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
               selectedDateStr === cell.dateStr
                 ? 'ring-2 ring-indigo-400 shadow-sm'
+                : cell.isToday
+                ? 'ring-2 ring-sky-300 shadow-[0_0_0_1px_rgba(125,211,252,0.5)] dark:ring-cyan-300/70'
                 : cell.isCurrent
-                ? 'ring-1 ring-indigo-300/60 shadow-sm'
+                ? 'ring-2 ring-indigo-200 shadow-[0_0_0_1px_rgba(165,180,252,0.7)] dark:ring-indigo-300/70'
                 : cell.inCurrentMonth
                   ? 'bg-slate-50/80 hover:bg-slate-100 dark:bg-slate-800/35 dark:hover:bg-slate-800/50'
                   : 'bg-slate-100/60 text-slate-400 hover:bg-slate-100 dark:bg-slate-900/35 dark:text-slate-500 dark:hover:bg-slate-900/50'
@@ -223,13 +276,18 @@ function MonthlyCalendarView({
 
             <div className="relative z-10 flex h-full flex-col">
               <div className="flex items-start justify-between gap-2">
-                <p
-                  className={`text-sm font-semibold ${
-                    cell.inCurrentMonth ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'
-                  }`}
-                >
-                  {cell.dayNumber}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p
+                    className={`text-sm font-semibold ${getDayNumberClassName(cell)}`}
+                  >
+                    {cell.dayNumber}
+                  </p>
+                  {cell.isToday ? (
+                    <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700 dark:bg-cyan-500/16 dark:text-cyan-300">
+                      오늘
+                    </span>
+                  ) : null}
+                </div>
                 <div className="flex items-center gap-1">
                   {cell.total > 0 ? (
                     <span className="rounded-xl bg-slate-200/55 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800/55 dark:text-slate-300">
@@ -263,9 +321,7 @@ function MonthlyCalendarView({
                         완료율 {cell.completionRate}%
                       </p>
                     </>
-                  ) : (
-                    <p className="text-xs text-slate-400 dark:text-slate-500">선택해 상세 보기</p>
-                  )}
+                  ) : null}
 
                   {cell.dominantCategory ? (
                     <span

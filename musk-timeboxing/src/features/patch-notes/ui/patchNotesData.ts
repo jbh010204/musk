@@ -10,6 +10,29 @@ export interface PatchNoteEntry {
 
 export const PATCH_NOTES: PatchNoteEntry[] = [
   {
+    version: 'v0.22.14',
+    date: '2026-03-17',
+    title: 'Monthly view: tighter header, month nav, today marker, softer weekends',
+    summary:
+      '월간 뷰 상단을 더 압축해 `월 이동 + 요약`이 먼저 읽히게 정리하고, 실제 오늘 날짜는 별도 marker로 더 분명하게 보이도록 다듬었습니다. 주말은 약한 색으로만 구분해 heatmap보다 튀지 않게 유지했습니다.',
+    focus: [
+      '월간 뷰에서 설명성 배너를 줄이고 `이전 달 / 현재 월 / 다음 달` 탐색을 직접 노출해 월 스캔 흐름을 단순화',
+      '빈 날짜 셀의 보조 문구를 제거하고, 실제 오늘 날짜는 선택 상태와 별도로 바로 찾을 수 있게 marker를 추가',
+      '토/일은 약한 색으로만 구분하고, 열린 마감이 없을 때 데드라인 strip 높이도 줄여 상단 정보 밀도를 정리',
+    ],
+    improvements: [
+      '`Timeline/index.tsx`, `MonthlyCalendarView.tsx`에서 월간 설명 배너를 제거하고 월 이동 버튼과 month label을 같은 header cluster로 재구성',
+      '`calendarViewData.ts`에 실제 오늘(`isToday`) 계산을 추가하고, 월간 셀에 `오늘` 배지와 stronger ring을 적용',
+      '`DeadlineStrip.tsx` empty state를 compact하게 줄이고, `Header.tsx`/`MonthlyCalendarView.tsx`에 주말 약한 색상 구분을 추가',
+      '`monthly-calendar-view.spec.js`에 month navigation / today marker 회귀를 보강',
+    ],
+    validation: [
+      'build 통과',
+      'monthly-calendar-view, monthly-calendar-heatmap, calendar-quick-add 통과',
+      'weekly-strip, weekly-strip-carousel 통과',
+    ],
+  },
+  {
     version: 'v0.22.13',
     date: '2026-03-17',
     title: 'Weekly strip: clear highlight residue on rapid date changes',
