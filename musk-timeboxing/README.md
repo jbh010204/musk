@@ -161,41 +161,41 @@ npm run build
 - Stack Canvas는 이 리스트를 대체하는 시각 작업면이며, 현재는 레거시 `CANVAS` 회귀 경로와 함께 병행됩니다.
 - app-level 브레인 덤프 rail은 사용자 메인 경로(`워크스페이스/일간/주간/월간`)에서는 숨기고, 회귀 검증용 standalone `CANVAS` 경로에서만 유지합니다.
 
-## 정적 배포
+## 체험 및 실행
 
-이 앱은 정적 배포 기준으로 바로 체험 가능합니다. 프로덕션에서는 `.env.production`에서 `VITE_SERVER_STORAGE=false`를 강제해 브라우저 `localStorage` 모드로 동작합니다.
+### 체험 링크
 
-`vite.config.js`의 `base: './'`가 설정되어 있어 상대 경로 정적 호스팅이 가능합니다.
-
-### GitHub Pages 자동 배포
-
-저장소 루트의 GitHub Actions 워크플로가 `main` 푸시마다 `musk-timeboxing/`를 빌드해 Pages로 배포합니다.
-
-배포 주소:
 - GitHub Pages: [https://jbh010204.github.io/musk/](https://jbh010204.github.io/musk/)
-  - 현재는 저장소 `Settings > Pages > Source = GitHub Actions`를 켜야 실제로 열립니다.
 
-1. 저장소 Settings > Pages에서 **Source = GitHub Actions**로 설정
-2. `main`에 푸시
-3. Actions의 `Deploy Static Frontend`가 `musk-timeboxing/dist`를 배포
+이 링크는 **정적 체험판**입니다. 브라우저 `localStorage` 모드로 동작하므로, 데이터는 각 사용자 브라우저에만 저장됩니다.
 
-워크플로 파일:
-- `/Users/bohyeong/Desktop/공부/project/musk/.github/workflows/deploy-static-pages.yml`
+### 실제 실행 권장 방식
 
-### Vercel / Netlify
+실제로 써보거나 기능을 안정적으로 확인하려면 저장소를 클론해서 로컬에서 실행하는 방식을 권장합니다.
 
-다른 정적 호스팅도 바로 가능합니다.
+```bash
+git clone https://github.com/jbh010204/musk.git
+cd musk/musk-timeboxing
+npm ci
+npm run dev
+```
 
-- Vercel: 저장소 루트에 [vercel.json](/Users/bohyeong/Desktop/공부/project/musk/vercel.json)을 추가해두었으므로, 저장소를 그대로 import하면 `musk-timeboxing` 하위 앱을 빌드합니다.
-  - 첫 배포 후 Vercel이 프로젝트 URL을 발급합니다. 이 URL은 Vercel 프로젝트 생성 뒤 확정됩니다.
-- Netlify: Root Directory를 `musk-timeboxing`로 지정
+또는 Docker를 쓰는 경우:
 
-공통 환경값:
-- Env: `VITE_SERVER_STORAGE=false`
+```bash
+cd musk/musk-timeboxing
+./scripts/docker-dev.sh up
+```
 
-### 제약
+### 정적 배포 메모
 
-정적 배포는 체험용에 적합합니다. 데이터는 각 사용자 브라우저의 `localStorage`에만 저장되며, 기기/브라우저 간 공유는 되지 않습니다. 공유 저장이 필요하면 별도 API 배포가 필요합니다.
+정적 호스팅 자체는 계속 가능합니다.
+
+- GitHub Pages 자동 배포 워크플로: `/Users/bohyeong/Desktop/공부/project/musk/.github/workflows/deploy-static-pages.yml`
+- Vercel 설정: [vercel.json](/Users/bohyeong/Desktop/공부/project/musk/vercel.json)
+- 프로덕션 정적 배포는 `.env.production`에서 `VITE_SERVER_STORAGE=false`로 고정됩니다.
+
+공유 저장이나 기기 간 동기화가 필요하면 정적 배포가 아니라 별도 API 배포가 필요합니다.
 
 ## 참고
 
