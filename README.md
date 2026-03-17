@@ -4,9 +4,14 @@
 
 이 프로젝트는 `Brain Dump -> Stack Canvas -> Big 3 -> Timeline` 흐름으로 생각 수집부터 우선순위 정리, 실제 일정 배치까지 하나의 작업면에서 이어지도록 설계했습니다.
 
+체험은 정적 배포판에서 바로 가능합니다.
+- 체험 링크: [https://jbh010204.github.io/musk/](https://jbh010204.github.io/musk/)
+- 정적 체험판이라 데이터는 각 브라우저 `localStorage`에만 저장됩니다.
+- 실제 사용이나 안정적인 검증은 아래 로컬 실행 또는 Docker 실행을 권장합니다.
+
 - 메인 앱: [`musk-timeboxing/`](./musk-timeboxing/)
 - 상세 개발 문서: [`musk-timeboxing/README.md`](./musk-timeboxing/README.md)
-- 데모: 준비 중
+- 체험 링크: [https://jbh010204.github.io/musk/](https://jbh010204.github.io/musk/)
 
 ## 왜 만들었는가
 
@@ -130,6 +135,5 @@ musk/
 
 ## 앞으로 보강할 내용
 
-- 배포 주소 연결
 - 주요 화면별 사용자 시나리오 정리
 - 로드맵 및 개선 예정 항목 공개
