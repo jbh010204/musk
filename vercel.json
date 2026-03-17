@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "cd musk-timeboxing && npm ci",
+  "buildCommand": "cd musk-timeboxing && npm run build",
+  "outputDirectory": "musk-timeboxing/dist"
+}

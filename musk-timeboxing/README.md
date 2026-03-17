@@ -182,9 +182,10 @@ npm run build
 
 다른 정적 호스팅도 바로 가능합니다.
 
-- Root Directory: `musk-timeboxing`
-- Build Command: `npm run build`
-- Output Directory: `dist`
+- Vercel: 저장소 루트에 [vercel.json](/Users/bohyeong/Desktop/공부/project/musk/vercel.json)을 추가해두었으므로, 저장소를 그대로 import하면 `musk-timeboxing` 하위 앱을 빌드합니다.
+- Netlify: Root Directory를 `musk-timeboxing`로 지정
+
+공통 환경값:
 - Env: `VITE_SERVER_STORAGE=false`
 
 ### 제약
