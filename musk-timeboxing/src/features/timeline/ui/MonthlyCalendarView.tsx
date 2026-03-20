@@ -27,6 +27,7 @@ interface DominantCategory {
 
 interface MonthlyCalendarCell {
   dateStr: string
+  dayLabel: string
   dayNumber: number
   total: number
   completed: number
