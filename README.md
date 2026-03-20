@@ -127,6 +127,7 @@ musk/
 - 세션 플레이북과 가이드를 통해 AI가 동일한 기준선 위에서 작업하도록 설정
 - 구조 리팩터링과 TypeScript 전환 작업을 단계적으로 분해해 진행
 - `lint`, `build`, `e2e`, 문서 동기화를 포함한 검증 루프로 결과물 관리
+- 비사소한 프론트 기능/리팩토링은 구현 전에 `/fqa <기능명>`으로 intent, happy path, edge case, guard, invariant를 먼저 고정
 
 ## 문서
 
