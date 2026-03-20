@@ -5,6 +5,7 @@ import { createTimelineSlotDropPayload } from '../../planner-dnd/lib/payloads'
 interface TimeSlotRowProps {
   slotIndex: number
   onSlotClick: (slotIndex: number) => void
+  suppressClick: boolean
   showDropGuide: boolean
   rowHeight: number
   showQuarterDividers: boolean
@@ -19,6 +20,7 @@ interface TimeSlotRowProps {
 function TimeSlotRow({
   slotIndex,
   onSlotClick,
+  suppressClick,
   showDropGuide,
   rowHeight,
   showQuarterDividers,
@@ -53,7 +55,13 @@ function TimeSlotRow({
         type="button"
         data-timeline-slot-index={slotIndex}
         data-testid={slotTestIdPrefix ? `${slotTestIdPrefix}-${slotIndex}` : undefined}
-        onClick={() => onSlotClick(slotIndex)}
+        onClick={() => {
+          if (suppressClick) {
+            return
+          }
+
+          onSlotClick(slotIndex)
+        }}
         className={`relative block flex-1 text-left transition-colors ${
           guideActive
             ? 'bg-indigo-500/5 hover:bg-indigo-500/10'
@@ -113,6 +121,7 @@ function TimeSlotRow({
 
 interface TimeSlotGridProps {
   onSlotClick: (slotIndex: number) => void
+  suppressClick?: boolean
   showDropGuide?: boolean
   rowHeight?: number
   showQuarterDividers?: boolean
@@ -126,6 +135,7 @@ interface TimeSlotGridProps {
 
 function TimeSlotGrid({
   onSlotClick,
+  suppressClick = false,
   showDropGuide = false,
   rowHeight = 32,
   showQuarterDividers = false,
@@ -143,6 +153,7 @@ function TimeSlotGrid({
           key={slotIndex}
           slotIndex={slotIndex}
           onSlotClick={onSlotClick}
+          suppressClick={suppressClick}
           showDropGuide={showDropGuide}
           rowHeight={rowHeight}
           showQuarterDividers={showQuarterDividers}

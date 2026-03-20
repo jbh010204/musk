@@ -269,6 +269,151 @@ test('planner workspace uses category dock and slot click as the primary schedul
   )
 })
 
+test('planner workspace can reclassify the same card across dock lanes repeatedly', async ({ page }) => {
+  await page.goto('/')
+
+  await page.evaluate(() => {
+    window.localStorage.clear()
+
+    const formatDate = (date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    const today = formatDate(new Date())
+    window.localStorage.setItem('musk-planner-last-date', today)
+    window.localStorage.setItem(
+      'musk-planner-meta',
+      JSON.stringify({
+        schemaVersion: 4,
+        categories: [
+          { id: 'cat-personal', name: '개인', color: '#8b5cf6', parentId: null, order: 0 },
+          { id: 'cat-club', name: '동아리', color: '#fb7185', parentId: null, order: 1 },
+        ],
+        templates: [],
+      }),
+    )
+    window.localStorage.setItem(
+      `musk-planner-${today}`,
+      JSON.stringify({
+        schemaVersion: 4,
+        date: today,
+        brainDump: [
+          {
+            id: 'workspace-reclassify-card',
+            content: '카테고리 반복 이동',
+            isDone: false,
+            priority: 0,
+            categoryId: null,
+            stackOrder: 0,
+            estimatedSlots: 1,
+            linkedTimeBoxIds: [],
+            note: '',
+            createdFrom: 'board',
+          },
+        ],
+        bigThree: [],
+        timeBoxes: [],
+        stackCanvasState: {
+          version: 2,
+          layoutMode: 'stack',
+          selectedCardId: null,
+          selectedCardIds: [],
+          focusedLaneId: 'uncategorized',
+          migratedFromLegacyBoard: false,
+          lastSyncedAt: null,
+        },
+      }),
+    )
+  })
+
+  await page.reload()
+  await expect(page.locator('[data-testid="timeline-view-workspace"][aria-pressed="true"]:visible').first()).toBeVisible()
+
+  const card = page.locator('[data-testid="planning-board-card-workspace-reclassify-card"]:visible').first()
+  await card.click()
+  await page.locator('[data-testid="planning-board-node-cat-personal"]:visible').first().click()
+  await expect(page.locator('[data-testid="planning-board-lane-cat-personal"]:visible').first()).toContainText(
+    '카테고리 반복 이동',
+  )
+
+  await page.locator('[data-testid="planning-board-card-workspace-reclassify-card"]:visible').first().click()
+  await page.locator('[data-testid="planning-board-node-cat-club"]:visible').first().click()
+  await expect(page.locator('[data-testid="planning-board-lane-cat-club"]:visible').first()).toContainText(
+    '카테고리 반복 이동',
+  )
+
+  await page.locator('[data-testid="planning-board-card-workspace-reclassify-card"]:visible').first().click()
+  await page.locator('[data-testid="planning-board-node-uncategorized"]:visible').first().click()
+  await expect(page.locator('[data-testid="planning-board-lane-uncategorized"]:visible').first()).toContainText(
+    '카테고리 반복 이동',
+  )
+})
+
+test('planner workspace timeline supports vertical drag scroll', async ({ page }) => {
+  await page.goto('/')
+
+  await page.evaluate(() => {
+    window.localStorage.clear()
+
+    const formatDate = (date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    const today = formatDate(new Date())
+    window.localStorage.setItem('musk-planner-last-date', today)
+    window.localStorage.setItem(
+      'musk-planner-meta',
+      JSON.stringify({
+        schemaVersion: 4,
+        categories: [{ id: 'cat-scroll', name: '스크롤', color: '#22c55e', parentId: null, order: 0 }],
+        templates: [],
+      }),
+    )
+    window.localStorage.setItem(
+      `musk-planner-${today}`,
+      JSON.stringify({
+        schemaVersion: 4,
+        date: today,
+        brainDump: [],
+        bigThree: [],
+        timeBoxes: [],
+        stackCanvasState: {
+          version: 2,
+          layoutMode: 'stack',
+          selectedCardId: null,
+          selectedCardIds: [],
+          focusedLaneId: 'cat-scroll',
+          migratedFromLegacyBoard: false,
+          lastSyncedAt: null,
+        },
+      }),
+    )
+  })
+
+  await page.reload()
+  await page.locator('[data-testid="timeline-view-workspace"]:visible').first().click()
+
+  const surface = page.locator('[data-testid="workspace-timeline-surface"]:visible').first()
+  const scrollContainer = surface.locator('[data-timeline-scroll-container="true"]').first()
+  const beforeScrollTop = await scrollContainer.evaluate((node) => node.scrollTop)
+  await scrollContainer.evaluate((node) => {
+    const down = new MouseEvent('mousedown', { bubbles: true, clientY: 500, button: 0 })
+    node.dispatchEvent(down)
+    window.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientY: 320, button: 0 }))
+    window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientY: 320, button: 0 }))
+  })
+
+  await expect
+    .poll(async () => scrollContainer.evaluate((node) => node.scrollTop))
+    .toBeGreaterThan(beforeScrollTop)
+})
+
 test('planner workspace can bulk schedule multiple selected canvas cards', async ({ page }) => {
   await page.goto('/')
 

@@ -218,6 +218,7 @@ function TimeBoxCard({
       role="button"
       tabIndex={0}
       data-timebox-dragging={isDragging ? 'true' : 'false'}
+      data-timebox-card="true"
       data-run-mode={isActiveRunTarget ? runMode : 'IDLE'}
       data-timebox-title={timeBox.content}
       data-testid={testId}

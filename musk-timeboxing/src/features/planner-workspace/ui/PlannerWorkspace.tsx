@@ -289,6 +289,7 @@ function PlannerWorkspace({
               activeRunTimeBoxId={activeRunTimeBoxId}
               nativeDraggingCardId={nativeDraggingCardId}
               onNativeDragEnd={() => setNativeDraggingCardId(null)}
+              enableVerticalDragScroll
               emptyState={
                 <div className="rounded-2xl bg-slate-100/85 px-4 py-3 text-sm text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
                   {selectedBigThreeItem

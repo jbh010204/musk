@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { resolveStackCanvasSelectedCardIds, slotToTime } from '../../../entities/planner'
 import type {
   BigThreeItem,
@@ -65,6 +65,7 @@ interface TimelineRailSurfaceProps {
   children?: ReactNode
   runMode?: RunMode
   activeRunTimeBoxId?: string | null
+  enableVerticalDragScroll?: boolean
 }
 
 function TimelineRailSurface({
@@ -100,6 +101,7 @@ function TimelineRailSurface({
   children = null,
   runMode = 'IDLE',
   activeRunTimeBoxId = null,
+  enableVerticalDragScroll = false,
 }: TimelineRailSurfaceProps) {
   const [pendingInput, setPendingInput] = useState<PendingManualInput | null>(null)
   const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null)
@@ -107,6 +109,14 @@ function TimelineRailSurface({
   const [isComposing, setIsComposing] = useState(false)
   const [timerNow, setTimerNow] = useState(0)
   const [nativeOverSlot, setNativeOverSlot] = useState<number | null>(null)
+  const [suppressSlotClick, setSuppressSlotClick] = useState(false)
+  const [isDragScrolling, setIsDragScrolling] = useState(false)
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+  const dragScrollRef = useRef({
+    startY: 0,
+    startScrollTop: 0,
+    dragged: false,
+  })
 
   const sortedBoxes = useMemo(
     () => [...timeBoxes].sort((left, right) => left.startSlot - right.startSlot),
@@ -245,16 +255,93 @@ function TimelineRailSurface({
     onNativeDragEnd()
   }
 
+  useEffect(() => {
+    if (!enableVerticalDragScroll) {
+      return undefined
+    }
+
+    const scrollContainer = scrollContainerRef.current
+    if (!scrollContainer) {
+      return undefined
+    }
+
+    const handleMouseDown = (event: MouseEvent) => {
+      if (event.button !== 0) {
+        return
+      }
+
+      const target = event.target instanceof HTMLElement ? event.target : null
+      if (!target) {
+        return
+      }
+
+      const blockedTarget = target.closest(
+        '[data-timebox-card="true"], [data-card-schedule-drag-handle="true"], input, select, textarea, a, button:not([data-timeline-slot-index])',
+      )
+      if (blockedTarget) {
+        return
+      }
+
+      dragScrollRef.current = {
+        startY: event.clientY,
+        startScrollTop: scrollContainer.scrollTop,
+        dragged: false,
+      }
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        const deltaY = moveEvent.clientY - dragScrollRef.current.startY
+        if (!dragScrollRef.current.dragged && Math.abs(deltaY) < 6) {
+          return
+        }
+
+        dragScrollRef.current.dragged = true
+        setIsDragScrolling(true)
+        setSuppressSlotClick(true)
+        scrollContainer.scrollTop = dragScrollRef.current.startScrollTop - deltaY
+        moveEvent.preventDefault()
+      }
+
+      const handleMouseUp = () => {
+        window.removeEventListener('mousemove', handleMouseMove)
+        window.removeEventListener('mouseup', handleMouseUp)
+
+        if (!dragScrollRef.current.dragged) {
+          return
+        }
+
+        dragScrollRef.current.dragged = false
+        setIsDragScrolling(false)
+        window.setTimeout(() => setSuppressSlotClick(false), 0)
+      }
+
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp)
+    }
+
+    scrollContainer.addEventListener('mousedown', handleMouseDown)
+    return () => {
+      scrollContainer.removeEventListener('mousedown', handleMouseDown)
+    }
+  }, [enableVerticalDragScroll])
+
   return (
-    <div className={className} data-testid={containerTestId || undefined}>
+    <div
+      className={`${className} ${enableVerticalDragScroll ? (isDragScrolling ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+      data-testid={containerTestId || undefined}
+    >
       {children}
 
-      <div className="overflow-x-auto">
+      <div
+        ref={scrollContainerRef}
+        data-timeline-scroll-container="true"
+        className={enableVerticalDragScroll ? 'max-h-[72vh] overflow-x-auto overflow-y-auto pr-1' : 'overflow-x-auto'}
+      >
         {sortedBoxes.length === 0 && emptyState ? <div className="mb-3">{emptyState}</div> : null}
 
         <div className="relative min-w-[420px]" data-timeline-grid-shell="true">
           <TimeSlotGrid
             onSlotClick={handleSlotClick}
+            suppressClick={suppressSlotClick}
             showDropGuide={showDropGuide || hasSelection}
             rowHeight={slotHeight}
             labelWidth={labelWidth}

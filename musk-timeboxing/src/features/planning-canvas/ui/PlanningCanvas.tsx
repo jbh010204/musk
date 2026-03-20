@@ -282,31 +282,43 @@ function PlanningCanvas({
     }
   }, [onSelectCard, onSelectCards, rawSelectedCardId, resolvedRawSelectedCardIds, selectedCardId, selectedCardIds])
 
-  const applySelection = (nextSelectedCardIds: string[], nextSelectedCardId: string | null = null) => {
+  const applySelection = (
+    nextSelectedCardIds: string[],
+    nextSelectedCardId: string | null = null,
+    focusedLaneIdOverride?: string,
+  ) => {
     const nextSelectionPatch = createStackCanvasCardSelectionPatch(
       cardMap,
       nextSelectedCardIds,
       nextSelectedCardId,
     )
+    const resolvedPatch = {
+      ...nextSelectionPatch,
+      focusedLaneId: focusedLaneIdOverride ?? nextSelectionPatch.focusedLaneId,
+    }
 
     if (onSelectCards) {
-      onSelectCards(nextSelectionPatch.selectedCardIds)
+      onSelectCards(resolvedPatch.selectedCardIds)
     } else {
-      setInternalSelectedCardIds(nextSelectionPatch.selectedCardIds)
+      setInternalSelectedCardIds(resolvedPatch.selectedCardIds)
     }
 
     if (onSelectCard) {
-      onSelectCard(nextSelectionPatch.selectedCardId)
+      onSelectCard(resolvedPatch.selectedCardId)
     } else {
-      setInternalSelectedCardId(nextSelectionPatch.selectedCardId)
+      setInternalSelectedCardId(resolvedPatch.selectedCardId)
     }
 
-    onUpdateStackCanvasState(nextSelectionPatch)
+    onUpdateStackCanvasState(resolvedPatch)
   }
 
   const setSelectedCard = (itemOrId: TaskCard | string | null) => {
     const nextId = typeof itemOrId === 'string' ? itemOrId : itemOrId?.id || null
-    applySelection(nextId ? [nextId] : [], nextId)
+    const focusedLaneIdOverride =
+      typeof itemOrId === 'string' || !itemOrId
+        ? undefined
+        : itemOrId.categoryId || UNCATEGORIZED_BOARD_LANE
+    applySelection(nextId ? [nextId] : [], nextId, focusedLaneIdOverride)
   }
 
   const toggleSelectedCard = (itemOrId: TaskCard | string | null) => {
@@ -322,7 +334,11 @@ function PlanningCanvas({
       return
     }
 
-    applySelection([...selectedCardIds, nextId], nextId)
+    const focusedLaneIdOverride =
+      typeof itemOrId === 'string' || !itemOrId
+        ? undefined
+        : itemOrId.categoryId || UNCATEGORIZED_BOARD_LANE
+    applySelection([...selectedCardIds, nextId], nextId, focusedLaneIdOverride)
   }
 
   const commitLaneState = useCallback((nextLaneState: LaneStateEntry[]) => {
